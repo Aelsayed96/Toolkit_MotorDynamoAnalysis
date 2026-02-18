@@ -7,7 +7,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;400;500;600;700&display=swap');
 :root{
@@ -152,6 +151,7 @@ tbody td{padding:4px 8px;color:var(--text);white-space:nowrap;}
 .rb.rt{background:var(--abg);color:var(--accent);border:1px solid var(--border);}
 .rb.me{background:rgba(46,112,0,.1);color:var(--accent3);border:1px solid rgba(46,112,0,.25);}
 .rb.cu{background:rgba(119,0,187,.1);color:#7700bb;border:1px solid rgba(119,0,187,.3);}
+.rb.ek{background:rgba(180,80,0,.1);color:#b45000;border:1px solid rgba(180,80,0,.3);}
 .rb.df{background:rgba(0,102,204,.07);color:var(--accent);border:1px solid var(--border);}
 
 /* FULL TAB AREAS */
@@ -264,6 +264,14 @@ tbody td{padding:4px 8px;color:var(--text);white-space:nowrap;}
           <div class="lci" id="lci">T<sub>L</sub>=K·(2π/60·N)² · K auto-fitted</div>
         </div>
         <div><label class="fl">Rated Value</label><input type="number" id="rpv" value="0" step="any"/></div>
+        <div id="krow" style="display:flex;flex-direction:column;gap:5px;">
+          <div style="display:flex;flex-direction:column;gap:2px;">
+            <label class="fl">Load Curve K₁ <span style="color:var(--ok);font-size:.58rem;">(auto-fit if 0)</span></label>
+            <input type="number" id="lcK" value="0" step="any" min="0" placeholder="0 = auto-fit"/>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:3px;" id="extraKList"></div>
+          <button class="btn bg2" id="addKBtn" style="padding:3px 8px;font-size:.62rem;">+ Add Another K Curve</button>
+        </div>
         <div><label class="fl">Speed Region Start (RPM)</label><input type="number" id="srs" value="0" step="1"/></div>
         <div><label class="fl">Hide Axis (e.g. pf)</label><input type="text" id="da" placeholder="e.g. pf"/></div>
       </div>
@@ -327,11 +335,11 @@ tbody td{padding:4px 8px;color:var(--text);white-space:nowrap;}
       <button class="btn bs" id="demo">Demo</button>
     </div>
     <div class="bg">
-      <button class="btn bo" id="expAn" style="flex:1">⬇ Export Analyze ZIP</button>
+      <button class="btn bo" id="expAn" style="flex:1">⬇ Export Analyze</button>
       <button class="btn bs" id="clr">✕ Clear</button>
     </div>
     <div class="bg">
-      <button class="btn bw" id="expAP" style="flex:1">🖼 Export All Plots ZIP</button>
+      <button class="btn bw" id="expAP" style="flex:1">🖼 Export All Plots</button>
       <button class="btn bgh" id="shot">📷 Save Plot</button>
     </div>
   </div>
@@ -397,7 +405,7 @@ tbody td{padding:4px 8px;color:var(--text);white-space:nowrap;}
     </div>
     <button class="btn bp" id="rcmp">↻ Update</button>
     <button class="btn bgh" id="cmpPng">🖼 Chart PNG</button>
-    <button class="btn bo" id="expCmp">⬇ Export Compare ZIP</button>
+    <button class="btn bo" id="expCmp">⬇ Export Compare</button>
   </div>
   <div class="cc2">
     <div class="cc2h">
@@ -432,7 +440,7 @@ tbody td{padding:4px 8px;color:var(--text);white-space:nowrap;}
     </div>
     <input type="file" id="sfi" multiple accept=".csv,.xlsx,.xls" style="display:none;">
     <button class="btn bp" id="rsts">↻ Compute</button>
-    <button class="btn bo" id="expSts">⬇ Export Stats ZIP</button>
+    <button class="btn bo" id="expSts">⬇ Export Stats</button>
   </div>
   <div id="sc2">
     <div class="ec" style="position:relative;padding:60px 20px;"><div class="eci">⊠</div><p>Load files or use processed files, then click Compute</p></div>
@@ -488,12 +496,105 @@ document.querySelectorAll('.ntab').forEach(t=>{
 let PF={},curChart=null,cmpChart=null,curCt='all',uplFiles=[],stsFiles=[],CRs=[],spd={};
 
 // ════════════════════════════
+//  EXTRA K CURVES LIST
+// ════════════════════════════
+let extraKs=[];   // array of {id, value}
+let ekIdSeq=0;
+
+function renderExtraKList(){
+  const el=$('extraKList');el.innerHTML='';
+  extraKs.forEach(ek=>{
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:4px;';
+    row.innerHTML=`
+      <input type="number" value="${ek.value||''}" step="any" min="0" placeholder="K value"
+        style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:.71rem;padding:4px 7px;border-radius:4px;outline:none;"
+        data-ekid="${ek.id}"/>
+      <button onclick="removeExtraK(${ek.id})" style="background:none;border:1px solid rgba(187,34,51,.35);color:var(--err);border-radius:4px;padding:2px 6px;cursor:pointer;font-size:.65rem;font-family:var(--mono);">✕</button>`;
+    el.appendChild(row);
+    row.querySelector('input').addEventListener('input',e=>{
+      const ek2=extraKs.find(x=>x.id===ek.id);
+      if(ek2){ek2.value=parseFloat(e.target.value)||0;}
+      refreshLC();
+    });
+  });
+}
+
+function removeExtraK(id){
+  extraKs=extraKs.filter(x=>x.id!==id);
+  renderExtraKList();
+  refreshLC();
+}
+
+$('addKBtn').addEventListener('click',()=>{
+  extraKs.push({id:++ekIdSeq,value:0});
+  renderExtraKList();
+});
+
+// ════════════════════════════
+//  LOAD CURVE — recompute & refresh
+// ════════════════════════════
+function getAutoK(data){
+  const ip=data.ip,Sp=data.speed;
+  const maxS=Math.max(...Sp);
+  return Math.max(...ip.Torque)/Math.pow(2*Math.PI*maxS/60,2);
+}
+
+function recomputeLC(data){
+  const userK=parseFloat($('lcK').value)||0;
+  const Sp=data.speed,ip=data.ip;
+  // K1: 0 = auto-fit, >0 = manual
+  const K1=userK>0?userK:getAutoK(data);
+  data.lc =Sp.map(s=>K1*Math.pow(2*Math.PI*s/60,2));
+  data.lcK =K1;
+  data.lcK1Manual=(userK>0);
+  // Extra K curves + their rated intersection regions
+  data.extraLcs=[];
+  data.ekRegs=[];
+  extraKs.filter(ek=>ek.value>0).forEach((ek,ei)=>{
+    const lc=Sp.map(s=>ek.value*Math.pow(2*Math.PI*s/60,2));
+    data.extraLcs.push({K:ek.value,lc,idx:ei});
+    // Find intersection: last index where lc < motor torque
+    let rI=Math.floor(Sp.length*0.75);
+    for(let i=Sp.length-1;i>=0;i--){if(lc[i]<ip.Torque[i]){rI=i;break;}}
+    const reg=mkR(`Rated K${ei+2}=${ek.value.toFixed(4)}`,rI,Sp,ip,data.mdf);
+    reg.isEK=true;reg.ekIdx=ei;
+    data.ekRegs.push(reg);
+  });
+  // Recompute K1 rated point
+  if(data.rp===0){
+    let rI=Math.floor(Sp.length*0.75);
+    for(let i=Sp.length-1;i>=0;i--){if(data.lc[i]<ip.Torque[i]){rI=i;break;}}
+    data.rSpdV=Sp[rI]||0;
+    const mdf=data.mdf;
+    data.regs=[
+      mkR('No-Load',ip.Torque.indexOf(Math.min(...ip.Torque)),Sp,ip,mdf),
+      mkR('Max Eff.',ip.eff.indexOf(Math.max(...ip.eff)),Sp,ip,mdf),
+      mkR('Rated',rI,Sp,ip,mdf),
+      mkR('MaxPout',ip.Pout.indexOf(Math.max(...ip.Pout)),Sp,ip,mdf),
+      mkR('Locked',0,Sp,ip,mdf)
+    ];
+  }
+}
+
+function refreshLC(){
+  const s=$('fs');if(!s.value||!PF[s.value])return;
+  const data=PF[s.value];
+  recomputeLC(data);
+  rc(data,curCt);rT(data);
+}
+
+$('lcK').addEventListener('input',refreshLC);
+
+// ════════════════════════════
 //  RATED PARAM TOGGLE
 // ════════════════════════════
 document.querySelectorAll('input[name="rp"]').forEach(r=>{
   r.addEventListener('change',()=>{
-    $('lci').style.display=r.value==='0'&&r.checked?'inline-flex':'none';
-    const s=$('fs');if(s.value&&PF[s.value]){PF[s.value].rp=parseInt(r.value);rc(PF[s.value],curCt);}
+    const isLC=r.value==='0'&&r.checked;
+    $('lci').style.display=isLC?'inline-flex':'none';
+    $('krow').style.display=isLC?'flex':'none';
+    const s=$('fs');if(s.value&&PF[s.value]){PF[s.value].rp=parseInt(r.value);recomputeLC(PF[s.value]);rc(PF[s.value],curCt);rT(PF[s.value]);}
   });
 });
 
@@ -568,7 +669,7 @@ function procData(parsed){
   else{const r2=[...ip.Pout].reverse();const fi2=r2.findIndex(p=>p>rpv2);if(fi2>=0)rI=Sp.length-1-fi2;}
   const regs=[mkR('No-Load',ip.Torque.indexOf(Math.min(...ip.Torque)),Sp,ip,mdf),mkR('Max Eff.',ip.eff.indexOf(Math.max(...ip.eff)),Sp,ip,mdf),mkR('Rated',rI,Sp,ip,mdf),mkR('MaxPout',ip.Pout.indexOf(Math.max(...ip.Pout)),Sp,ip,mdf),mkR('Locked',0,Sp,ip,mdf)];
   const fn=`${name.toUpperCase()}_${dir.toString().toUpperCase()}`;
-  return{key:fn,name:fn,speed:Sp,ip,regs,cRegs:[],lc,lcK:K,rSpdV:Sp[rI]||0,volt:Volt,freq,dir,mdf,rp:rpn};
+  return{key:fn,name:fn,speed:Sp,ip,regs,cRegs:[],ekRegs:[],lc,lcK:K,rSpdV:Sp[rI]||0,volt:Volt,freq,dir,mdf,rp:rpn};
 }
 function mkR(lbl,idx,Sp,ip,mdf){return{Region:lbl,Speed:Sp[idx]||0,Torque:ip.Torque[idx]||0,Pin:ip.Pin[idx]||0,Po:ip.Pout[idx]||0,Eff:ip.eff[idx]||0,pf:ip.PF[idx]||0,It:ip.It[idx]||0,Im:(mdf===0&&ip.Im)?ip.Im[idx]||0:null,Ia:(mdf===0&&ip.Ia)?ip.Ia[idx]||0:null};}
 
@@ -626,7 +727,7 @@ function bDemo(key,f=1){
   const lc=Sp.map(s=>K*Math.pow(2*Math.PI*s/60,2));
   let rI=Math.floor(Sp.length*0.75);for(let i=Sp.length-1;i>=0;i--){if(lc[i]<ip.Torque[i]){rI=i;break;}}
   const regs=[mkR('No-Load',0,Sp,ip,0),mkR('Max Eff.',Math.floor(Sp.length*0.6),Sp,ip,0),mkR('Rated',rI,Sp,ip,0),mkR('MaxPout',Sp.length-5,Sp,ip,0),mkR('Locked',0,Sp,ip,0)];
-  return{key,name:key,speed:Sp,ip,regs,cRegs:[],lc,lcK:K,rSpdV:Sp[rI],volt:220,freq:50,dir:'FWD',mdf:0,rp:0};
+  return{key,name:key,speed:Sp,ip,regs,cRegs:[],ekRegs:[],lc,lcK:K,rSpdV:Sp[rI],volt:220,freq:50,dir:'FWD',mdf:0,rp:0};
 }
 
 // ════════════════════════════
@@ -635,9 +736,21 @@ function bDemo(key,f=1){
 function updUI(){
   const keys=Object.keys(PF);if(!keys.length)return;
   $('fs').innerHTML=keys.map(k=>`<option value="${k}">${k}</option>`).join('');
-  rc(PF[keys[0]],curCt);rT(PF[keys[0]]);
+  const isLC=document.querySelector('input[name="rp"]:checked').value==='0';
+  $('krow').style.display=isLC?'flex':'none';
+  $('lci').style.display=isLC?'inline-flex':'none';
+  const d=PF[keys[0]];
+  const autoK=getAutoK(d);
+  if(!(parseFloat($('lcK').value)>0))$('lcK').placeholder=autoK.toFixed(5)+' (auto)';
+  rc(d,curCt);rT(d);
 }
-$('fs').addEventListener('change',e=>{const d=PF[e.target.value];if(d){rc(d,curCt);rT(d);}});
+$('fs').addEventListener('change',e=>{
+  const d=PF[e.target.value];
+  if(d){
+    if(!(parseFloat($('lcK').value)>0))$('lcK').placeholder=getAutoK(d).toFixed(5)+' (auto)';
+    rc(d,curCt);rT(d);
+  }
+});
 document.querySelectorAll('.ctab').forEach(t=>{
   t.addEventListener('click',()=>{
     document.querySelectorAll('.ctab').forEach(x=>x.classList.remove('active'));
@@ -652,14 +765,41 @@ document.querySelectorAll('.ctab').forEach(t=>{
 const CP={c:['#005faa','#c04000','#2e7000','#8a6000','#7700bb','#aa0033'],dim:'#5a6890',grid:'rgba(100,120,180,.18)',grid2:'rgba(100,120,180,.10)',bg:'#fff',border:'#c8d0e8',tip:'#fff',op:'rgba(0,80,200,.5)',lc:'rgba(30,120,0,.8)'};
 const MONO="'Share Tech Mono',monospace";
 
+// extra LC colours (distinct from main palette)
+const LCC=['rgba(30,120,0,.85)','rgba(180,80,0,.85)','rgba(0,100,160,.85)','rgba(130,0,130,.85)','rgba(160,130,0,.85)'];
+
 function bDS(data,tab){
   const S=data.speed,ip=data.ip;
   const ha=$('da').value.toLowerCase().trim();
   const slc=data.rp===0;
   let ds=[];
+
+  // ── y0 axis max ──────────────────────────────────────────────
+  // When load curve mode: axis driven by the HIGHEST load curve value
+  // (so T_Load is always fully visible, motor torque fits inside it naturally)
+  // When not load curve mode: driven by motor torque only
+  let y0Max;
+  if(slc && data.lc){
+    const k1Max=Math.max(...data.lc);
+    const extraMax=(data.extraLcs&&data.extraLcs.length)?Math.max(...data.extraLcs.map(e=>Math.max(...e.lc))):0;
+    y0Max=Math.max(k1Max,extraMax,Math.max(...ip.Torque))*1.15;
+  } else {
+    y0Max=Math.max(...ip.Torque)*1.15;
+  }
+
   if(tab==='all'||tab==='power'){
     ds.push({label:'Torque (N·m)',yAxisID:'y0',borderColor:CP.c[0],borderWidth:2.5,pointRadius:0,tension:.3,data:S.map((s,i)=>({x:s,y:ip.Torque[i]}))});
-    if(slc&&data.lc)ds.push({label:`T_Load [K=${data.lcK.toFixed(4)}]`,yAxisID:'y0',borderColor:CP.lc,borderWidth:2,borderDash:[8,5],pointRadius:0,tension:.3,data:S.map((s,i)=>({x:s,y:data.lc[i]}))});
+    // K1 load curve
+    if(slc&&data.lc){
+      const lbl=data.lcK1Manual?`T_Load K₁=${data.lcK.toFixed(4)}`:`T_Load K₁=${data.lcK.toFixed(4)} (auto)`;
+      ds.push({label:lbl,yAxisID:'y0',borderColor:LCC[0],borderWidth:2,borderDash:[8,5],pointRadius:0,tension:.3,data:S.map((s,i)=>({x:s,y:data.lc[i]}))});
+    }
+    // Extra K curves
+    if(slc&&data.extraLcs){
+      data.extraLcs.forEach((e,ei)=>{
+        ds.push({label:`T_Load K${ei+2}=${e.K.toFixed(4)}`,yAxisID:'y0',borderColor:LCC[(ei+1)%LCC.length],borderWidth:1.8,borderDash:[5,3],pointRadius:0,tension:.3,data:S.map((s,i)=>({x:s,y:e.lc[i]}))});
+      });
+    }
     ds.push({label:'Pin (W)',yAxisID:'y1',borderColor:CP.c[1],borderWidth:2,pointRadius:0,tension:.3,data:S.map((s,i)=>({x:s,y:ip.Pin[i]}))});
     ds.push({label:'Pout (W)',yAxisID:'y1',borderColor:CP.c[2],borderWidth:2,pointRadius:0,tension:.3,data:S.map((s,i)=>({x:s,y:ip.Pout[i]}))});
   }
@@ -668,30 +808,41 @@ function bDS(data,tab){
     if(ha!=='pf')ds.push({label:'Power Factor',yAxisID:'y2',borderColor:CP.c[4],borderWidth:2,pointRadius:0,tension:.3,data:S.map((s,i)=>({x:s,y:ip.PF[i]}))});
     ds.push({label:'It (A)',yAxisID:'y3',borderColor:CP.c[5],borderWidth:2,pointRadius:0,tension:.3,data:S.map((s,i)=>({x:s,y:ip.It[i]}))});
   }
-  const rs=data.rSpdV,ym=Math.max(...ip.Torque)*1.15;
-  ds.push({label:`Op.Pt (${rs.toFixed(0)} RPM)`,yAxisID:'y0',borderColor:CP.op,borderWidth:1.5,borderDash:[5,4],pointRadius:0,tension:0,data:[{x:rs,y:0},{x:rs,y:ym}]});
-  return ds;
+  const rs=data.rSpdV;
+  ds.push({label:`Op.Pt K₁ (${rs.toFixed(0)} RPM)`,yAxisID:'y0',borderColor:CP.op,borderWidth:1.5,borderDash:[5,4],pointRadius:0,tension:0,data:[{x:rs,y:0},{x:rs,y:y0Max}]});
+  // Extra K rated Op.Pt lines
+  if(slc&&data.ekRegs){
+    data.ekRegs.forEach((reg,ei)=>{
+      const col=LCC[(ei+1)%LCC.length];
+      ds.push({label:`Op.Pt K${ei+2} (${reg.Speed.toFixed(0)} RPM)`,yAxisID:'y0',borderColor:col,borderWidth:1.2,borderDash:[3,4],pointRadius:0,tension:0,data:[{x:reg.Speed,y:0},{x:reg.Speed,y:y0Max}]});
+    });
+  }
+  return{ds,y0Max};
 }
-function cOpts(S){
+function cOpts(S,y0Max){
   const ax=(l,c)=>({type:'linear',title:{display:true,text:l,color:c,font:{family:MONO,size:10}},ticks:{color:c,font:{family:MONO,size:9}},grid:{display:false}});
   return{responsive:true,maintainAspectRatio:false,animation:{duration:300},interaction:{mode:'index',intersect:false},
     plugins:{legend:{labels:{color:CP.dim,font:{family:MONO,size:10},boxWidth:15,padding:8}},tooltip:{backgroundColor:CP.tip,borderColor:CP.border,borderWidth:1,titleColor:CP.dim,bodyColor:CP.dim,titleFont:{family:MONO,size:10},bodyFont:{family:MONO,size:10},callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y?.toFixed(3)}`}}},
-    scales:{x:{type:'linear',title:{display:true,text:'Speed (RPM)',color:CP.dim,font:{family:MONO,size:10}},ticks:{color:CP.dim,font:{family:MONO,size:9}},grid:{color:CP.grid},min:Math.min(...S),max:Math.max(...S)},y0:{type:'linear',position:'left',title:{display:true,text:'Torque (N·m)',color:CP.c[0],font:{family:MONO,size:10}},ticks:{color:CP.c[0],font:{family:MONO,size:9}},grid:{color:CP.grid2}},y1:{...ax('Power (W)',CP.c[1]),position:'right'},y2:{...ax('Eff / PF',CP.c[3]),position:'right',offset:true},y3:{...ax('Current (A)',CP.c[5]),position:'right',offset:true}}
+    scales:{x:{type:'linear',title:{display:true,text:'Speed (RPM)',color:CP.dim,font:{family:MONO,size:10}},ticks:{color:CP.dim,font:{family:MONO,size:9}},grid:{color:CP.grid},min:Math.min(...S),max:Math.max(...S)},y0:{type:'linear',position:'left',min:0,max:y0Max,title:{display:true,text:'Torque (N·m)',color:CP.c[0],font:{family:MONO,size:10}},ticks:{color:CP.c[0],font:{family:MONO,size:9}},grid:{color:CP.grid2}},y1:{...ax('Power (W)',CP.c[1]),position:'right'},y2:{...ax('Eff / PF',CP.c[3]),position:'right',offset:true},y3:{...ax('Current (A)',CP.c[5]),position:'right',offset:true}}
   };
 }
 
 function rc(data,tab){
   $('ec').style.display='none';$('mc').style.display='block';$('cttl').textContent=data.name;
   if(curChart){curChart.destroy();curChart=null;}
-  curChart=new Chart($('mc').getContext('2d'),{type:'line',data:{datasets:bDS(data,tab)},options:cOpts(data.speed)});
+  const {ds,y0Max}=bDS(data,tab);
+  curChart=new Chart($('mc').getContext('2d'),{type:'line',data:{datasets:ds},options:cOpts(data.speed,y0Max)});
 }
-function allR(data){return[...data.regs,...(data.cRegs||[])];}
+function allR(data){return[...data.regs,...(data.cRegs||[]),...(data.ekRegs||[])];}
 function rT(data){
   $('rs2').textContent=data.name;const tb=$('rb');tb.innerHTML='';
   allR(data).forEach(r=>{
-    const bc=r.isC?'cu':{'No-Load':'nl','Max Eff.':'me','Rated':'rt'}[r.Region]||'df';
+    let bc;
+    if(r.isC) bc='cu';
+    else if(r.isEK) bc='ek';
+    else bc={'No-Load':'nl','Max Eff.':'me','Rated':'rt'}[r.Region]||'df';
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td><span class="rb ${bc}">${r.Region}</span></td><td>${r.Speed.toFixed(1)}</td><td>${r.Torque.toFixed(3)}</td><td>${r.Pin.toFixed(1)}</td><td>${r.Po.toFixed(1)}</td><td>${r.Eff.toFixed(2)}</td><td>${r.pf.toFixed(3)}</td><td>${r.It.toFixed(3)}</td><td>${r.Im!==null?r.Im.toFixed(3):'—'}</td><td>${r.Ia!==null?r.Ia.toFixed(3):'—'}</td>`;
+    tr.innerHTML=`<td><span class="rb ${bc}">${r.Region}</span></td><td>${r.Speed.toFixed(1)}</td><td>${r.Torque.toFixed(3)}</td><td>${r.Pin.toFixed(1)}</td><td>${r.Po.toFixed(1)}</td><td>${r.Eff.toFixed(2)}</td><td>${r.pf.toFixed(3)}</td><td>${r.Im!==null?r.Im.toFixed(3):'—'}</td><td>${r.Ia!==null?r.Ia.toFixed(3):'—'}</td>`;
     tb.appendChild(tr);
   });
 }
@@ -703,7 +854,8 @@ function tblRows(data){return allR(data).map(r=>[r.Region,r.Speed.toFixed(1),r.T
 async function mkCombined(data,tab,W=1200,H=650){
   // Render to offscreen
   const off=document.createElement('canvas');off.width=W;off.height=H;
-  const tmpC=new Chart(off,{type:'line',data:{datasets:bDS(data,tab)},options:{...cOpts(data.speed),animation:{duration:0},responsive:false,maintainAspectRatio:false}});
+  const {ds,y0Max}=bDS(data,tab);
+  const tmpC=new Chart(off,{type:'line',data:{datasets:ds},options:{...cOpts(data.speed,y0Max),animation:{duration:0},responsive:false,maintainAspectRatio:false}});
   await new Promise(r=>setTimeout(r,180));
   const rows=tblRows(data);
   const rH=20,cW=[110,80,80,74,74,80,64,68,68,68];
@@ -727,24 +879,20 @@ async function mkCombined(data,tab,W=1200,H=650){
 }
 
 // ════════════════════════════
-//  EXPORT ALL PLOTS ZIP
+//  EXPORT ALL PLOTS (separate PNGs)
 // ════════════════════════════
 $('expAP').addEventListener('click',async()=>{
   const keys=Object.keys(PF);if(!keys.length){toast('No data. Process first.','err');return;}
   showEO('Exporting all plots…');
-  const zip=new JSZip();const folder=zip.folder('Analyze_Plots');
   const ts=new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
   for(let i=0;i<keys.length;i++){
     const k=keys[i],data=PF[k];
-    setEO(`Rendering ${i+1}/${keys.length}: ${k}`,((i+1)/keys.length)*88);
+    setEO(`Rendering ${i+1}/${keys.length}: ${k}`,((i+1)/keys.length)*95);
     const combined=await mkCombined(data,curCt);
-    const b64=combined.toDataURL('image/png').split(',')[1];
-    folder.file(`${k}_${ts}.png`,b64,{base64:true});
+    const a=document.createElement('a');a.href=combined.toDataURL('image/png');a.download=`${k}_${ts}.png`;a.click();
+    await new Promise(r=>setTimeout(r,300));
   }
-  setEO('Building ZIP…',95);
-  const blob=await zip.generateAsync({type:'blob'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`Analyze_Plots_${ts}.zip`;a.click();
-  hideEO();toast(`${keys.length} plots exported!`,'ok');log(`🖼 All plots ZIP: Analyze_Plots_${ts}.zip`,'ok');
+  hideEO();toast(`${keys.length} plots exported!`,'ok');log(`🖼 ${keys.length} PNGs downloaded separately`,'ok');
 });
 
 // ════════════════════════════
@@ -780,28 +928,43 @@ $('rtpng').addEventListener('click',()=>{
 });
 
 // ════════════════════════════
-//  EXPORT ANALYZE ZIP
+//  EXPORT ANALYZE (separate files)
 // ════════════════════════════
 $('expAn').addEventListener('click',async()=>{
   const keys=Object.keys(PF);if(!keys.length){toast('No data.','err');return;}
   const d1=$('ex1').checked,d2=$('ex2').checked,d3=$('ex3').checked,d4=$('ex4').checked;
   if(!d1&&!d2&&!d3&&!d4){toast('Select an export option.','err');return;}
-  showEO('Building Analyze export…');
-  const zip=new JSZip();const folder=zip.folder('Analyze_Export');
+  showEO('Exporting files…');
   const ts=new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
-  let n=0,total=(d1?keys.length:0)+(d2?1:0)+(d3?keys.length:0)+(d4?1:0);
+  let n=0;
   for(const k of keys){
     const data=PF[k];
-    if(d1){setEO(`XLSX: ${data.name}`,n/total*85);n++;folder.file(`${data.name}_${ts}.xlsx`,xlB(data));}
-    if(d3){setEO(`CSV: ${data.name}`,n/total*85);n++;folder.file(`${data.name}_regions_${ts}.csv`,csvS(data));}
-    await new Promise(r=>setTimeout(r,25));
+    if(d1){
+      setEO(`XLSX: ${data.name}`,20);
+      const blob=new Blob([xlB(data)],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+      const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${data.name}_${ts}.xlsx`;a.click();
+      n++;await new Promise(r=>setTimeout(r,250));
+    }
+    if(d3){
+      setEO(`CSV: ${data.name}`,40);
+      const blob=new Blob([csvS(data)],{type:'text/csv'});
+      const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${data.name}_regions_${ts}.csv`;a.click();
+      n++;await new Promise(r=>setTimeout(r,250));
+    }
   }
-  if(d2){setEO('Summary TXT…',88);n++;folder.file(`Summary_${ts}.txt`,sumS());}
-  if(d4){setEO('Combined XLSX…',92);n++;folder.file(`AllFiles_Combined_${ts}.xlsx`,allB());}
-  setEO('ZIP…',96);
-  const blob=await zip.generateAsync({type:'blob'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`Analyze_Export_${ts}.zip`;a.click();
-  hideEO();toast('Analyze export done!','ok');log('=== Analyze_Export ZIP downloaded ===','ok');
+  if(d2){
+    setEO('Summary TXT…',70);
+    const blob=new Blob([sumS()],{type:'text/plain'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`Summary_${ts}.txt`;a.click();
+    n++;await new Promise(r=>setTimeout(r,250));
+  }
+  if(d4){
+    setEO('Combined XLSX…',90);
+    const blob=new Blob([allB()],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`AllFiles_Combined_${ts}.xlsx`;a.click();
+    n++;await new Promise(r=>setTimeout(r,250));
+  }
+  hideEO();toast(`${n} file(s) exported!`,'ok');log(`=== Analyze: ${n} files downloaded ===`,'ok');
 });
 
 // ════════════════════════════
@@ -845,8 +1008,7 @@ $('cmpPng').addEventListener('click',()=>{
 
 $('expCmp').addEventListener('click',async()=>{
   const keys=Object.keys(PF);if(!keys.length){toast('No data.','err');return;}
-  showEO('Building Compare export…');
-  const zip=new JSZip();const folder=zip.folder('Compare_Export');
+  showEO('Exporting Compare files…');
   const ts=new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
   // XLSX
   setEO('Compare XLSX…',30);
@@ -855,13 +1017,18 @@ $('expCmp').addEventListener('click',async()=>{
   const rows=[['Region','Parameter',...keys.map(k=>PF[k].name)]];
   rN.forEach(rNm=>{flds.forEach((f,fi)=>{const row=[fi===0?rNm:'',fLbl[fi]];keys.forEach(k=>{const r=allR(PF[k]).find(x=>x.Region===rNm);const v=r?r[f]:null;row.push(v!==null&&v!==undefined?+v.toFixed(4):'');});rows.push(row);});});
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'Comparison');
-  folder.file(`Comparison_${ts}.xlsx`,XLSX.write(wb,{type:'array',bookType:'xlsx'}));
+  const xlsxBlob=new Blob([XLSX.write(wb,{type:'array',bookType:'xlsx'})],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const a1=document.createElement('a');a1.href=URL.createObjectURL(xlsxBlob);a1.download=`Comparison_${ts}.xlsx`;a1.click();
+  await new Promise(r=>setTimeout(r,300));
   // Chart PNG
-  if(cmpChart){setEO('Chart PNG…',60);const src=$('cmpChart');const off=document.createElement('canvas');off.width=src.width;off.height=src.height;const ctx=off.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,off.width,off.height);ctx.drawImage(src,0,0);folder.file(`Compare_${$('cm').value}_${ts}.png`,off.toDataURL('image/png').split(',')[1],{base64:true});}
-  setEO('ZIP…',92);
-  const blob=await zip.generateAsync({type:'blob'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`Compare_Export_${ts}.zip`;a.click();
-  hideEO();toast('Compare export done!','ok');log('=== Compare_Export ZIP downloaded ===','ok');
+  if(cmpChart){
+    setEO('Chart PNG…',70);
+    const src=$('cmpChart');const off=document.createElement('canvas');off.width=src.width;off.height=src.height;
+    const ctx=off.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,off.width,off.height);ctx.drawImage(src,0,0);
+    const a2=document.createElement('a');a2.href=off.toDataURL('image/png');a2.download=`Compare_${$('cm').value}_${ts}.png`;a2.click();
+    await new Promise(r=>setTimeout(r,300));
+  }
+  hideEO();toast('Compare files exported!','ok');log('=== Compare files downloaded ===','ok');
 });
 
 // ════════════════════════════
@@ -908,20 +1075,23 @@ $('rsts').addEventListener('click',renderSts);
 
 $('expSts').addEventListener('click',async()=>{
   if(!Object.keys(spd).length){toast('Compute first.','err');return;}
-  showEO('Building Statistics export…');
-  const zip=new JSZip();const folder=zip.folder('Statistics_Export');
+  showEO('Exporting Statistics files…');
   const ts=new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
   const k=parseFloat($('sk').value)||3;
+  // XLSX
   setEO('Stats XLSX…',35);
   const rows=[['Region','Parameter','N','Mean','Std Dev','Min','Max',`Lower (-${k}σ)`,`Upper (+${k}σ)`]];
   Object.entries(spd).forEach(([rNm,rD])=>{Object.entries(rD).forEach(([f,s])=>{if(!s||!s.n)return;rows.push([rNm,s.label,s.n,+s.mean.toFixed(4),+s.std.toFixed(4),+s.min.toFixed(4),+s.max.toFixed(4),+s.lo.toFixed(4),+s.hi.toFixed(4)]);});});
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'Statistics');
-  folder.file(`Statistics_${ts}.xlsx`,XLSX.write(wb,{type:'array',bookType:'xlsx'}));
-  setEO('Summary TXT…',65);folder.file(`Stats_Summary_${ts}.txt`,stsSum(k));
-  setEO('ZIP…',92);
-  const blob=await zip.generateAsync({type:'blob'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`Statistics_Export_${ts}.zip`;a.click();
-  hideEO();toast('Statistics export done!','ok');log('=== Statistics_Export ZIP downloaded ===','ok');
+  const xlsxBlob=new Blob([XLSX.write(wb,{type:'array',bookType:'xlsx'})],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const a1=document.createElement('a');a1.href=URL.createObjectURL(xlsxBlob);a1.download=`Statistics_${ts}.xlsx`;a1.click();
+  await new Promise(r=>setTimeout(r,300));
+  // Summary TXT
+  setEO('Summary TXT…',70);
+  const blob2=new Blob([stsSum(k)],{type:'text/plain'});
+  const a2=document.createElement('a');a2.href=URL.createObjectURL(blob2);a2.download=`Stats_Summary_${ts}.txt`;a2.click();
+  await new Promise(r=>setTimeout(r,300));
+  hideEO();toast('Statistics files exported!','ok');log('=== Statistics files downloaded ===','ok');
 });
 function stsSum(k){const L=['PRODUCTION STATISTICS','='.repeat(55),`Generated: ${new Date().toLocaleString()}`,`k = ${k}`,``];Object.entries(spd).forEach(([rNm,rD])=>{L.push(`REGION: ${rNm}`,'-'.repeat(40));Object.entries(rD).forEach(([f,s])=>{if(!s||!s.n)return;L.push(`  ${s.label}:`,`    n: ${s.n}`,`    Mean: ${s.mean.toFixed(4)}  Std: ${s.std.toFixed(4)}`,`    Min: ${s.min.toFixed(4)}  Max: ${s.max.toFixed(4)}`,`    Lower(-${k}σ): ${s.lo.toFixed(4)}  Upper(+${k}σ): ${s.hi.toFixed(4)}`,'');});L.push('');});return L.join('\n');}
 
@@ -955,6 +1125,8 @@ $('clr').addEventListener('click',()=>{
   $('cttl').textContent='— No Data Loaded —';$('rs2').textContent='No data';
   $('rb').innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--dim);padding:12px;">No results yet</td></tr>';
   $('fs').innerHTML='<option value="">Select…</option>';
+  $('lcK').value='';$('lcK').placeholder='0 = auto';
+  extraKs=[];ekIdSeq=0;renderExtraKList();
   $('cmpEc').style.display='flex';$('sc2').innerHTML='<div class="ec" style="position:relative;padding:50px 20px;"><div class="eci">⊠</div><p>No data.</p></div>';
   log('Cleared','warn');toast('Cleared');setst('READY');
 });
@@ -964,10 +1136,8 @@ $('clr').addEventListener('click',()=>{
 // ════════════════════════════
 $('ltg').addEventListener('click',()=>{const o=$('lp').classList.toggle('open');$('la').textContent=o?'▼':'▲';});
 
-log('Dynamometer Analysis Tool v3.1 ready','ok');
-log('Sidebar: scrollable panels, buttons always visible at bottom');
-log('🖼 Export All Plots: all charts + tables → ZIP');
-log('Each tab exports to its own folder inside a ZIP');
+log('Dynamometer Analysis Tool v3.5 ready','ok');
+log('Each extra K curve adds a Rated K=… region row with its own Op.Pt line');
 </script>
 </body>
 </html>
