@@ -1,888 +1,973 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Dynamometer Analysis Tool</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;400;500;600;700&display=swap');
+:root{
+  --bg:#f0f2f8;--surface:#fff;--surface2:#edf0f8;--border:#c8d0e8;
+  --accent:#0066cc;--abg:rgba(0,102,204,.08);--accent2:#d94c00;
+  --accent3:#2e7000;--text:#1a2040;--dim:#5a6890;--inv:#fff;
+  --ok:#1a7a40;--err:#bb2233;--warn:#906600;
+  --grid:rgba(100,120,180,.18);--grid2:rgba(100,120,180,.10);
+  --glow:0 2px 14px rgba(0,102,204,.07);
+  --hg:linear-gradient(90deg,rgba(0,102,204,.06),transparent);
+  --bgg:rgba(0,102,204,.025);--sh:0 2px 12px rgba(0,0,0,.09);
+  --c0:#005faa;--c1:#c04000;--c2:#2e7000;--c3:#8a6000;--c4:#7700bb;--c5:#aa0033;
+  --mono:'Share Tech Mono',monospace;--sans:'Barlow',sans-serif;
+  --sw:306px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--bgg) 1px,transparent 1px),linear-gradient(90deg,var(--bgg) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
 
-  /* ══ DARK THEME ══ */
-  :root, [data-theme="dark"] {
-    --bg:         #0d0f14;
-    --surface:    #141720;
-    --surface2:   #1c2030;
-    --border:     #2a3050;
-    --accent:     #00e5ff;
-    --accent-bg:  rgba(0,229,255,0.10);
-    --accent2:    #ff6b35;
-    --accent3:    #a8ff3e;
-    --text:       #d0daf0;
-    --text-dim:   #6070a0;
-    --text-inv:   #000;
-    --success:    #4cff91;
-    --error:      #ff4d6d;
-    --warn:       #ffd60a;
-    --grid-line:  rgba(42,48,80,0.5);
-    --grid-line2: rgba(42,48,80,0.3);
-    --panel-glow: 0 0 28px rgba(0,229,255,0.05);
-    --header-grad:linear-gradient(90deg,rgba(0,229,255,0.07),transparent);
-    --body-grid:  rgba(0,229,255,0.03);
-    --shadow:     0 4px 20px rgba(0,0,0,0.4);
-    --chart-bg:   #141720;
-    --lc-color:   rgba(168,255,62,0.85);
-    --op-color:   rgba(0,229,255,0.55);
-    --tooltip-bg: #141720;
-    --c0:#00e5ff; --c1:#ff6b35; --c2:#a8ff3e; --c3:#ffd60a; --c4:#bf5af2; --c5:#ff375f;
-    --mono:'Share Tech Mono',monospace;
-    --sans:'Barlow',sans-serif;
-  }
+/* HEADER */
+header{position:relative;z-index:10;display:flex;align-items:center;gap:13px;padding:8px 18px;border-bottom:1px solid var(--border);background:var(--hg);box-shadow:var(--sh);flex-shrink:0;}
+.logo-link{display:flex;align-items:center;text-decoration:none;}
+.logo-img{height:34px;width:auto;object-fit:contain;}
+.ht h1{font-family:var(--mono);font-size:.83rem;letter-spacing:.12em;color:var(--accent);text-transform:uppercase;}
+.ht span{font-family:var(--mono);font-size:.61rem;color:var(--dim);letter-spacing:.08em;}
+.hr{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.sp{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:.68rem;color:var(--dim);background:var(--surface);border:1px solid var(--border);padding:4px 11px;border-radius:20px;}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 6px var(--ok);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
-  /* ══ LIGHT THEME ══ */
-  [data-theme="light"] {
-    --bg:         #f0f2f8;
-    --surface:    #ffffff;
-    --surface2:   #edf0f8;
-    --border:     #c8d0e8;
-    --accent:     #0066cc;
-    --accent-bg:  rgba(0,102,204,0.08);
-    --accent2:    #d94c00;
-    --accent3:    #2e7000;
-    --text:       #1a2040;
-    --text-dim:   #5a6890;
-    --text-inv:   #ffffff;
-    --success:    #1a7a40;
-    --error:      #bb2233;
-    --warn:       #906600;
-    --grid-line:  rgba(100,120,180,0.18);
-    --grid-line2: rgba(100,120,180,0.10);
-    --panel-glow: 0 2px 14px rgba(0,102,204,0.07);
-    --header-grad:linear-gradient(90deg,rgba(0,102,204,0.06),transparent);
-    --body-grid:  rgba(0,102,204,0.025);
-    --shadow:     0 2px 12px rgba(0,0,0,0.09);
-    --chart-bg:   #ffffff;
-    --lc-color:   rgba(30,120,0,0.80);
-    --op-color:   rgba(0,80,200,0.50);
-    --tooltip-bg: #ffffff;
-    --c0:#005faa; --c1:#c04000; --c2:#2e7000; --c3:#8a6000; --c4:#7700bb; --c5:#aa0033;
-  }
+/* NAV TABS */
+.nav{display:flex;border-bottom:2px solid var(--border);background:var(--surface);z-index:9;padding:0 12px;flex-shrink:0;}
+.ntab{padding:8px 17px;font-family:var(--mono);font-size:.69rem;letter-spacing:.07em;cursor:pointer;border:none;background:none;color:var(--dim);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .18s;white-space:nowrap;}
+.ntab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:700;}
+.ntab:hover{color:var(--text);}
 
-  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
-  body { background:var(--bg); color:var(--text); font-family:var(--sans); min-height:100vh; overflow-x:hidden; transition:background .25s, color .25s; }
-  body::before { content:''; position:fixed; inset:0; background-image: linear-gradient(var(--body-grid) 1px,transparent 1px), linear-gradient(90deg,var(--body-grid) 1px,transparent 1px); background-size:40px 40px; pointer-events:none; z-index:0; }
+/* PAGES */
+.page{display:none;flex:1;overflow:hidden;}
+.page.active{display:flex;}
 
-  /* ══ HEADER ══ */
-  header { position:relative; z-index:10; display:flex; align-items:center; gap:16px; padding:12px 26px; border-bottom:1px solid var(--border); background:var(--header-grad); box-shadow:var(--shadow); }
-  .logo-icon { width:36px; height:36px; flex-shrink:0; background:var(--accent); clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%); display:grid; place-items:center; color:var(--text-inv); font-family:var(--mono); font-size:12px; font-weight:bold; }
-  .header-titles h1 { font-family:var(--mono); font-size:.96rem; letter-spacing:.12em; color:var(--accent); text-transform:uppercase; }
-  .header-titles span { font-family:var(--mono); font-size:.66rem; color:var(--text-dim); letter-spacing:.08em; }
-  .header-right { margin-left:auto; display:flex; align-items:center; gap:10px; }
+/* APP SHELL */
+.shell{display:flex;flex-direction:column;height:100vh;overflow:hidden;position:relative;z-index:1;}
 
-  /* ── theme toggle ── */
-  .theme-toggle { display:flex; align-items:center; background:var(--surface2); border:1px solid var(--border); border-radius:20px; padding:3px; cursor:pointer; }
-  .theme-btn { padding:4px 10px; border-radius:16px; font-family:var(--mono); font-size:.67rem; letter-spacing:.04em; transition:all .2s; color:var(--text-dim); user-select:none; cursor:pointer; }
-  .theme-btn.active { background:var(--accent); color:var(--text-inv); font-weight:700; }
+/* ═══ SIDEBAR ═══
+   Key fix: flex column, sidebar-scroll grows, sidebar-footer is fixed at bottom */
+.sidebar{
+  width:var(--sw);flex-shrink:0;
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  height:100%;background:var(--bg);overflow:hidden;
+}
+/* This grows and scrolls */
+.sb-scroll{
+  flex:1;min-height:0;
+  overflow-y:auto;overflow-x:hidden;
+  padding:9px;
+  display:flex;flex-direction:column;gap:8px;
+  scrollbar-width:thin;scrollbar-color:var(--border) transparent;
+}
+/* This never shrinks — always at bottom */
+.sb-footer{
+  flex-shrink:0;
+  border-top:2px solid var(--border);
+  background:var(--surface);
+  padding:9px;
+  display:flex;flex-direction:column;gap:5px;
+  box-shadow:0 -3px 12px rgba(0,102,204,.08);
+}
+.sb-footer-label{font-family:var(--mono);font-size:.59rem;color:var(--dim);letter-spacing:.09em;text-transform:uppercase;margin-bottom:1px;}
 
-  .status-pill { display:flex; align-items:center; gap:8px; font-family:var(--mono); font-size:.7rem; color:var(--text-dim); background:var(--surface); border:1px solid var(--border); padding:5px 12px; border-radius:20px; }
-  .status-dot { width:7px; height:7px; border-radius:50%; background:var(--success); box-shadow:0 0 6px var(--success); animation:pulse 2s infinite; }
-  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+/* PANELS */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:7px;overflow:hidden;box-shadow:var(--glow);}
+.ph{display:flex;align-items:center;gap:7px;padding:6px 10px;background:var(--hg);border-bottom:1px solid var(--border);font-family:var(--mono);font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);cursor:pointer;user-select:none;}
+.ph:hover{background:var(--abg);}
+.phi{width:10px;height:10px;flex-shrink:0;background:var(--accent);clip-path:polygon(50%0%,100%50%,50%100%,0%50%);opacity:.75;}
+.pha{margin-left:auto;font-size:.63rem;color:var(--dim);transition:transform .18s;}
+.pha.col{transform:rotate(-90deg);}
+.pb{padding:8px;display:flex;flex-direction:column;gap:7px;}
+.pb.hidden{display:none;}
 
-  /* ══ LAYOUT ══ */
-  .app { position:relative; z-index:1; display:grid; grid-template-columns:338px 1fr; height:calc(100vh - 63px); }
+/* FORM */
+.fl{display:block;font-size:.64rem;font-family:var(--mono);color:var(--dim);letter-spacing:.06em;margin-bottom:2px;}
+input[type="text"],input[type="number"],select{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:.73rem;padding:5px 8px;border-radius:4px;outline:none;transition:border-color .17s;}
+input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--abg);}
+.rg{display:flex;gap:4px;flex-wrap:wrap;}
+.ro input{display:none;}
+.ro span{display:block;padding:3px 8px;font-family:var(--mono);font-size:.62rem;border:1px solid var(--border);border-radius:4px;color:var(--dim);transition:all .14s;cursor:pointer;white-space:nowrap;}
+.ro input:checked+span{background:var(--abg);border-color:var(--accent);color:var(--accent);}
+.cg{display:flex;flex-direction:column;gap:4px;}
+.co{display:flex;align-items:center;gap:7px;cursor:pointer;font-size:.7rem;}
+.co input{display:none;}
+.cb{width:13px;height:13px;border:1px solid var(--border);border-radius:3px;flex-shrink:0;display:grid;place-items:center;transition:all .14s;}
+.co input:checked~.cb{background:var(--accent);border-color:var(--accent);}
+.co input:checked~.cb::after{content:'✓';font-size:8px;color:#fff;font-weight:bold;}
 
-  /* ══ SIDEBAR ══ */
-  .sidebar { border-right:1px solid var(--border); overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
-  .panel { background:var(--surface); border:1px solid var(--border); border-radius:8px; overflow:hidden; box-shadow:var(--panel-glow); transition:background .25s, border-color .25s; }
-  .panel-header { display:flex; align-items:center; gap:9px; padding:8px 13px; background:var(--header-grad); border-bottom:1px solid var(--border); font-family:var(--mono); font-size:.68rem; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); }
-  .ph-icon { width:13px; height:13px; flex-shrink:0; background:var(--accent); clip-path:polygon(50%0%,100%50%,50%100%,0%50%); opacity:.75; }
-  .panel-body { padding:11px; display:flex; flex-direction:column; gap:10px; }
+/* DROP ZONE */
+.dz{border:2px dashed var(--border);border-radius:7px;padding:12px 10px;text-align:center;cursor:pointer;transition:all .18s;background:var(--surface2);}
+.dz.over{border-color:var(--accent);background:var(--abg);}
+.dzi{font-size:1.35rem;color:var(--accent);opacity:.6;}
+.dz p{font-size:.68rem;color:var(--dim);line-height:1.5;}
+.dz strong{color:var(--text);}
+.flist{display:flex;flex-direction:column;gap:2px;max-height:90px;overflow-y:auto;}
+.fc{display:flex;align-items:center;gap:5px;background:var(--abg);border:1px solid var(--border);padding:2px 6px;border-radius:4px;font-family:var(--mono);font-size:.61rem;color:var(--text);}
+.fcd{width:5px;height:5px;background:var(--accent);border-radius:50%;flex-shrink:0;}
 
-  label { display:block; font-size:.68rem; font-family:var(--mono); color:var(--text-dim); letter-spacing:.06em; margin-bottom:3px; }
-  input[type="text"], input[type="number"] { width:100%; background:var(--surface2); border:1px solid var(--border); color:var(--text); font-family:var(--mono); font-size:.78rem; padding:6px 9px; border-radius:4px; outline:none; transition:border-color .2s, background .25s; }
-  input:focus { border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-bg); }
+/* BUTTONS */
+.btn{display:flex;align-items:center;justify-content:center;gap:5px;padding:6px 11px;border:none;border-radius:5px;font-family:var(--mono);font-size:.68rem;letter-spacing:.05em;cursor:pointer;transition:all .14s;text-transform:uppercase;white-space:nowrap;}
+.bp{background:var(--accent);color:#fff;font-weight:700;}.bp:hover{filter:brightness(1.1);}
+.bs{background:transparent;border:1px solid var(--border);color:var(--dim);}.bs:hover{border-color:var(--dim);color:var(--text);}
+.bo{background:var(--accent2);color:#fff;font-weight:600;}.bo:hover{filter:brightness(1.1);}
+.bg2{background:var(--ok);color:#fff;font-weight:600;}.bg2:hover{filter:brightness(1.1);}
+.bw{background:#906600;color:#fff;font-weight:600;}.bw:hover{filter:brightness(1.1);}
+.bgh{background:var(--surface2);border:1px solid var(--border);color:var(--dim);padding:5px 9px;font-size:.64rem;}.bgh:hover{border-color:var(--accent);color:var(--accent);}
+.bfu{width:100%;}
+.bg{display:flex;gap:5px;flex-wrap:wrap;}
 
-  .radio-group { display:flex; gap:5px; flex-wrap:wrap; }
-  .radio-option { cursor:pointer; }
-  .radio-option input { display:none; }
-  .radio-option span { display:block; padding:4px 9px; font-family:var(--mono); font-size:.67rem; border:1px solid var(--border); border-radius:4px; color:var(--text-dim); transition:all .15s; cursor:pointer; white-space:nowrap; }
-  .radio-option input:checked + span { background:var(--accent-bg); border-color:var(--accent); color:var(--accent); }
-  .radio-option span:hover { border-color:var(--accent); color:var(--text); }
+/* MAIN */
+.main-area{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.czone{flex:1;position:relative;padding:10px;display:flex;flex-direction:column;gap:7px;overflow:hidden;}
+.ctb{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+.ctitle{font-family:var(--mono);font-size:.74rem;color:var(--accent);letter-spacing:.08em;flex:1;min-width:70px;}
+.ctabs{display:flex;gap:3px;}
+.ctab{padding:3px 8px;font-family:var(--mono);font-size:.62rem;border:1px solid var(--border);border-radius:20px;color:var(--dim);cursor:pointer;transition:all .13s;}
+.ctab.active{background:var(--abg);border-color:var(--accent);color:var(--accent);}
+#cc{flex:1;position:relative;min-height:0;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:9px;}
+.ec{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--dim);}
+.eci{font-size:2rem;opacity:.28;}.ec p{font-size:.71rem;font-family:var(--mono);text-align:center;padding:0 18px;}
+#mc{display:none;width:100%!important;height:100%!important;}
 
-  .check-group { display:flex; flex-direction:column; gap:5px; }
-  .check-option { display:flex; align-items:center; gap:7px; cursor:pointer; font-size:.74rem; }
-  .check-option input { display:none; }
-  .check-box { width:14px; height:14px; border:1px solid var(--border); border-radius:3px; flex-shrink:0; display:grid; place-items:center; transition:all .15s; }
-  .check-option input:checked ~ .check-box { background:var(--accent); border-color:var(--accent); }
-  .check-option input:checked ~ .check-box::after { content:'✓'; font-size:9px; color:var(--text-inv); font-weight:bold; }
+/* REGIONS TABLE */
+.rarea{border-top:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;height:198px;flex-shrink:0;}
+.rh{display:flex;align-items:center;gap:7px;padding:4px 10px;border-bottom:1px solid var(--border);background:var(--hg);font-family:var(--mono);font-size:.62rem;letter-spacing:.08em;color:var(--accent3);flex-shrink:0;}
+.tw{flex:1;overflow:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+table{width:100%;border-collapse:collapse;font-size:.68rem;font-family:var(--mono);min-width:660px;}
+thead th{padding:4px 8px;background:var(--surface2);border-bottom:1px solid var(--border);text-align:left;color:var(--dim);font-weight:400;letter-spacing:.04em;white-space:nowrap;position:sticky;top:0;z-index:2;}
+tbody tr{border-bottom:1px solid var(--grid);transition:background .1s;}
+tbody tr:hover{background:var(--abg);}
+tbody td{padding:4px 8px;color:var(--text);white-space:nowrap;}
+.rb{display:inline-block;padding:1px 6px;border-radius:9px;font-size:.58rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;}
+.rb.nl{background:rgba(144,102,0,.1);color:var(--warn);border:1px solid rgba(144,102,0,.3);}
+.rb.rt{background:var(--abg);color:var(--accent);border:1px solid var(--border);}
+.rb.me{background:rgba(46,112,0,.1);color:var(--accent3);border:1px solid rgba(46,112,0,.25);}
+.rb.cu{background:rgba(119,0,187,.1);color:#7700bb;border:1px solid rgba(119,0,187,.3);}
+.rb.df{background:rgba(0,102,204,.07);color:var(--accent);border:1px solid var(--border);}
 
-  .drop-zone { border:2px dashed var(--border); border-radius:8px; padding:18px 14px; text-align:center; cursor:pointer; transition:all .2s; background:var(--surface2); }
-  .drop-zone.dragover { border-color:var(--accent); background:var(--accent-bg); }
-  .drop-zone .dz-icon { font-size:1.7rem; margin-bottom:5px; color:var(--accent); opacity:.6; }
-  .drop-zone p { font-size:.73rem; color:var(--text-dim); line-height:1.5; }
-  .drop-zone strong { color:var(--text); }
-  #fileInput { display:none; }
-  .file-list { display:flex; flex-direction:column; gap:3px; }
-  .file-chip { display:flex; align-items:center; gap:5px; background:var(--accent-bg); border:1px solid var(--border); padding:3px 7px; border-radius:4px; font-family:var(--mono); font-size:.65rem; color:var(--text); }
-  .fc-dot { width:5px; height:5px; background:var(--accent); border-radius:50%; flex-shrink:0; }
+/* FULL TAB AREAS */
+.fta{flex:1;display:flex;flex-direction:column;padding:12px;gap:10px;overflow-y:auto;overflow-x:hidden;}
+.ts{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:7px;}
+.tsl{font-family:var(--mono);font-size:.69rem;color:var(--accent);letter-spacing:.08em;font-weight:700;}
+.cc2{background:var(--surface);border:1px solid var(--border);border-radius:7px;overflow:hidden;}
+.cc2h{display:flex;align-items:center;justify-content:space-between;padding:6px 11px;border-bottom:1px solid var(--border);background:var(--hg);}
+.cc2h span{font-family:var(--mono);font-size:.67rem;color:var(--accent);letter-spacing:.07em;}
+.cc2b{height:310px;position:relative;padding:9px;}
 
-  /* ══ BUTTONS ══ */
-  .btn { display:flex; align-items:center; justify-content:center; gap:6px; padding:7px 13px; border:none; border-radius:5px; font-family:var(--mono); font-size:.73rem; letter-spacing:.05em; cursor:pointer; transition:all .15s; text-transform:uppercase; }
-  .btn-primary { background:var(--accent); color:var(--text-inv); font-weight:700; }
-  .btn-primary:hover { filter:brightness(1.12); box-shadow:0 0 14px rgba(0,180,220,.3); }
-  .btn-secondary { background:transparent; border:1px solid var(--border); color:var(--text-dim); }
-  .btn-secondary:hover { border-color:var(--text-dim); color:var(--text); }
-  .btn-accent2 { background:var(--accent2); color:#fff; font-weight:600; }
-  .btn-accent2:hover { filter:brightness(1.1); }
-  .btn-ghost { background:var(--surface2); border:1px solid var(--border); color:var(--text-dim); padding:6px 10px; font-size:.68rem; }
-  .btn-ghost:hover { border-color:var(--accent); color:var(--accent); }
-  .btn-group { display:flex; gap:6px; flex-wrap:wrap; }
+/* STATS */
+.sg{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;}
+.sc{background:var(--surface);border:1px solid var(--border);border-radius:7px;overflow:hidden;box-shadow:var(--glow);}
+.sch{padding:6px 10px;background:var(--hg);border-bottom:1px solid var(--border);font-family:var(--mono);font-size:.65rem;color:var(--accent);letter-spacing:.07em;}
+.scb{padding:8px;font-family:var(--mono);font-size:.67rem;}
+.sr{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid rgba(100,120,180,.08);}
+.sl{color:var(--dim);}.sv{color:var(--text);font-weight:600;}.slm{color:var(--err);font-size:.62rem;}
 
-  /* ══ MAIN ══ */
-  .main { display:grid; grid-template-rows:1fr 205px; overflow:hidden; }
-  .chart-area { position:relative; padding:14px; overflow:hidden; display:flex; flex-direction:column; gap:9px; }
-  .chart-toolbar { display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
-  .chart-title { font-family:var(--mono); font-size:.8rem; color:var(--accent); letter-spacing:.08em; flex:1; min-width:100px; }
-  .chart-tabs { display:flex; gap:3px; }
-  .tab { padding:3px 10px; font-family:var(--mono); font-size:.65rem; border:1px solid var(--border); border-radius:20px; color:var(--text-dim); cursor:pointer; transition:all .15s; }
-  .tab.active { background:var(--accent-bg); border-color:var(--accent); color:var(--accent); }
-  .file-selector select { background:var(--surface2); border:1px solid var(--border); color:var(--text); font-family:var(--mono); font-size:.72rem; padding:5px 8px; border-radius:4px; outline:none; cursor:pointer; transition:background .25s; }
-  .file-selector select:focus { border-color:var(--accent); }
+/* CUSTOM REGION FORM */
+.crf{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px;display:flex;flex-direction:column;gap:6px;}
+.crfr{display:flex;gap:6px;}
+.crff{flex:1;min-width:65px;}
 
-  #chartContainer { flex:1; position:relative; min-height:0; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:12px; transition:background .25s; }
-  .empty-chart { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:9px; color:var(--text-dim); }
-  .empty-chart .ec-icon { font-size:2.6rem; opacity:.3; }
-  .empty-chart p { font-size:.78rem; font-family:var(--mono); }
-  #motorChart { display:none; width:100% !important; height:100% !important; }
+/* MISC */
+.help{font-size:.62rem;color:var(--dim);line-height:1.5;padding:5px 7px;background:var(--surface2);border-radius:4px;border-left:2px solid var(--accent);}
+.lci{display:inline-flex;align-items:center;gap:4px;background:rgba(46,112,0,.07);border:1px solid rgba(46,112,0,.22);border-radius:4px;padding:3px 7px;font-family:var(--mono);font-size:.59rem;color:var(--accent3);margin-top:2px;}
 
-  /* ══ REGIONS TABLE ══ */
-  .regions-area { border-top:1px solid var(--border); background:var(--surface); overflow:hidden; display:flex; flex-direction:column; transition:background .25s; }
-  .regions-header { display:flex; align-items:center; gap:9px; padding:6px 13px; border-bottom:1px solid var(--border); background:linear-gradient(90deg,rgba(168,255,62,.05),transparent); font-family:var(--mono); font-size:.67rem; letter-spacing:.08em; color:var(--accent3); }
-  .table-wrap { flex:1; overflow-x:auto; overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
-  table { width:100%; border-collapse:collapse; font-size:.72rem; font-family:var(--mono); min-width:700px; }
-  thead th { padding:5px 10px; background:var(--surface2); border-bottom:1px solid var(--border); text-align:left; color:var(--text-dim); font-weight:400; letter-spacing:.05em; white-space:nowrap; }
-  tbody tr { border-bottom:1px solid var(--grid-line); transition:background .1s; }
-  tbody tr:hover { background:var(--accent-bg); }
-  tbody td { padding:5px 10px; color:var(--text); white-space:nowrap; }
-  .region-badge { display:inline-block; padding:2px 7px; border-radius:10px; font-size:.62rem; font-weight:600; text-transform:uppercase; letter-spacing:.05em; }
-  .region-badge.no-load   { background:rgba(255,214,10,.12); color:var(--warn);    border:1px solid rgba(255,214,10,.3); }
-  .region-badge.rated     { background:var(--accent-bg);     color:var(--accent);  border:1px solid var(--border); }
-  .region-badge.full-load { background:rgba(255,107,53,.10); color:var(--accent2); border:1px solid rgba(255,107,53,.3); }
-  .region-badge.max-eff   { background:rgba(168,255,62,.10); color:var(--accent3); border:1px solid rgba(168,255,62,.25); }
+/* PROGRESS / TOAST / LOG */
+#pb{position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0%;z-index:300;transition:width .3s,opacity .3s;}
+#toast{position:fixed;top:64px;right:16px;z-index:200;display:flex;flex-direction:column;gap:4px;pointer-events:none;}
+.ti{background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--accent);padding:6px 11px;border-radius:5px;font-family:var(--mono);font-size:.66rem;color:var(--text);min-width:175px;animation:sli .18s ease;pointer-events:all;}
+.ti.err{border-left-color:var(--err);}.ti.ok{border-left-color:var(--ok);}
+@keyframes sli{from{transform:translateX(12px);opacity:0}to{transform:none;opacity:1}}
+.lp{position:fixed;bottom:0;right:0;width:340px;background:var(--surface);border-left:1px solid var(--border);border-top:1px solid var(--border);z-index:100;display:flex;flex-direction:column;transform:translateY(calc(100% - 29px));transition:transform .26s;}
+.lp.open{transform:translateY(0);}
+.lt{display:flex;align-items:center;gap:6px;padding:5px 10px;cursor:pointer;font-family:var(--mono);font-size:.63rem;letter-spacing:.05em;color:var(--dim);border-bottom:1px solid var(--border);user-select:none;}
+.ltd{width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 4px var(--ok);}
+#lo{height:170px;overflow-y:auto;padding:5px 10px;font-family:var(--mono);font-size:.63rem;line-height:1.7;color:var(--dim);scrollbar-width:thin;}
+.ll{display:block;}.ll.ok{color:var(--ok);}.ll.warn{color:var(--warn);}.ll.err{color:var(--err);}
+.sf{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:999;animation:fl .33s ease;}
+@keyframes fl{0%{opacity:0}30%{opacity:.5}100%{opacity:0}}
 
-  /* ══ LOG ══ */
-  .log-panel { position:fixed; bottom:0; right:0; width:375px; background:var(--surface); border-left:1px solid var(--border); border-top:1px solid var(--border); z-index:100; display:flex; flex-direction:column; transform:translateY(calc(100% - 33px)); transition:transform .3s, background .25s; }
-  .log-panel.open { transform:translateY(0); }
-  .log-toggle { display:flex; align-items:center; gap:7px; padding:7px 13px; cursor:pointer; font-family:var(--mono); font-size:.67rem; letter-spacing:.05em; color:var(--text-dim); border-bottom:1px solid var(--border); user-select:none; }
-  .log-toggle:hover { color:var(--text); }
-  .lt-dot { width:6px; height:6px; border-radius:50%; background:var(--success); box-shadow:0 0 4px var(--success); }
-  #logOutput { height:185px; overflow-y:auto; padding:7px 13px; font-family:var(--mono); font-size:.67rem; line-height:1.7; color:var(--text-dim); scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
-  .log-line { display:block; }
-  .log-line.ok   { color:var(--success); }
-  .log-line.warn { color:var(--warn); }
-  .log-line.err  { color:var(--error); }
+/* SCROLLBARS */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
 
-  /* ══ TOAST ══ */
-  #toast { position:fixed; top:74px; right:22px; z-index:200; display:flex; flex-direction:column; gap:6px; }
-  .toast-item { background:var(--surface2); border:1px solid var(--border); border-left:3px solid var(--accent); padding:8px 13px; border-radius:5px; font-family:var(--mono); font-size:.69rem; color:var(--text); min-width:195px; animation:slideIn .2s ease; transition:background .25s; }
-  .toast-item.err { border-left-color:var(--error); }
-  .toast-item.ok  { border-left-color:var(--success); }
-  @keyframes slideIn{from{transform:translateX(18px);opacity:0}to{transform:none;opacity:1}}
-
-  #progressBar { position:fixed; top:0; left:0; height:2px; background:linear-gradient(90deg,var(--accent),var(--accent2)); width:0%; z-index:300; transition:width .3s,opacity .3s; }
-
-  .help-text { font-size:.66rem; color:var(--text-dim); line-height:1.5; padding:7px 9px; background:var(--surface2); border-radius:4px; border-left:2px solid var(--accent); }
-
-  /* ── Load curve info badge ── */
-  .lc-info { display:inline-flex; align-items:center; gap:5px; background:rgba(168,255,62,.07); border:1px solid rgba(168,255,62,.22); border-radius:4px; padding:3px 8px; font-family:var(--mono); font-size:.63rem; color:var(--accent3); margin-top:4px; }
-  [data-theme="light"] .lc-info { background:rgba(46,112,0,.07); border-color:rgba(46,112,0,.22); color:var(--accent3); }
-
-  /* ── Screenshot flash ── */
-  .screenshot-flash { position:fixed; inset:0; background:white; opacity:0; pointer-events:none; z-index:999; animation:flashAnim .35s ease; }
-  @keyframes flashAnim{0%{opacity:0}30%{opacity:.5}100%{opacity:0}}
-
-  @media(max-width:900px){
-    .app{grid-template-columns:1fr;grid-template-rows:auto 1fr;height:auto;}
-    .sidebar{border-right:none;border-bottom:1px solid var(--border);max-height:55vh;}
-    .main{height:68vh;}
-    .log-panel{width:100%;left:0;}
-  }
-  ::-webkit-scrollbar{width:6px;height:6px;}
-  ::-webkit-scrollbar-track{background:transparent;}
-  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+/* EXPORT OVERLAY */
+#eo{position:fixed;inset:0;background:rgba(26,32,64,.52);z-index:500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
+#eo.show{display:flex;}
+.eb{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:26px 34px;text-align:center;min-width:270px;box-shadow:0 8px 32px rgba(0,0,0,.15);}
+.eb h3{font-family:var(--mono);font-size:.83rem;color:var(--accent);letter-spacing:.1em;margin-bottom:10px;}
+.eb p{font-family:var(--mono);font-size:.7rem;color:var(--dim);margin-bottom:14px;}
+.epb{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;}
+.epf{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0%;transition:width .28s;border-radius:3px;}
 </style>
 </head>
 <body>
-<div id="progressBar"></div>
+<div id="pb"></div>
 <div id="toast"></div>
+<div id="eo"><div class="eb"><h3>EXPORTING…</h3><p id="em">Preparing…</p><div class="epb"><div class="epf" id="ef"></div></div></div></div>
 
+<div class="shell">
 <header>
-  <div class="logo-icon">DY</div>
-  <div class="header-titles">
+  <a class="logo-link" href="https://upload.wikimedia.org/wikipedia/commons/3/37/Elaraby-group-logo.png" target="_blank">
+    <img class="logo-img" src="https://upload.wikimedia.org/wikipedia/commons/3/37/Elaraby-group-logo.png" alt="El Araby"
+      onerror="this.style.display='none';this.parentElement.innerHTML='<div style=\'background:var(--accent);color:#fff;padding:4px 9px;border-radius:5px;font-family:var(--mono);font-size:.7rem;font-weight:bold\'>EA</div>';">
+  </a>
+  <div class="ht">
     <h1>Dynamometer Analysis Tool</h1>
-    <span>Motor Performance Analyzer · Web Edition</span>
+    <span>Motor Performance Analyzer · El Araby Group</span>
   </div>
-  <div class="header-right">
-    <div class="theme-toggle" id="themeToggle" title="Switch theme">
-      <span class="theme-btn active" id="btnDark">◑ Dark</span>
-      <span class="theme-btn" id="btnLight">☀ Light</span>
-    </div>
-    <div class="status-pill">
-      <span class="status-dot"></span>
-      <span id="statusText">READY</span>
-    </div>
+  <div class="hr">
+    <div class="sp"><span class="sdot"></span><span id="st">READY</span></div>
   </div>
 </header>
 
-<div class="app">
-  <aside class="sidebar">
+<div class="nav">
+  <button class="ntab active" data-p="analyze">⊞ Analyze</button>
+  <button class="ntab" data-p="compare">⊟ Compare</button>
+  <button class="ntab" data-p="stats">⊠ Statistics</button>
+</div>
 
-    <!-- Config -->
-    <div class="panel">
-      <div class="panel-header"><div class="ph-icon"></div> Configuration</div>
-      <div class="panel-body">
+<!-- ═══ PAGE: ANALYZE ═══ -->
+<div class="page active" id="page-analyze">
+<div style="display:flex;width:100%;height:100%;overflow:hidden;">
 
-        <div>
-          <label>MDF Config</label>
-          <div class="radio-group">
-            <label class="radio-option"><input type="radio" name="mdfConfig" value="0" checked><span>SPIM</span></label>
-            <label class="radio-option"><input type="radio" name="mdfConfig" value="1"><span>Single Phase</span></label>
-            <label class="radio-option"><input type="radio" name="mdfConfig" value="2"><span>Three Phase</span></label>
+<div class="sidebar">
+  <div class="sb-scroll">
+
+    <!-- CONFIG -->
+    <div class="panel" id="p-cfg">
+      <div class="ph" onclick="tp('cfg')"><div class="phi"></div>Configuration<span class="pha" id="a-cfg">▾</span></div>
+      <div class="pb" id="b-cfg">
+        <div><label class="fl">MDF Config</label>
+          <div class="rg">
+            <label class="ro"><input type="radio" name="mdf" value="0" checked><span>SPIM</span></label>
+            <label class="ro"><input type="radio" name="mdf" value="1"><span>1-Phase</span></label>
+            <label class="ro"><input type="radio" name="mdf" value="2"><span>3-Phase</span></label>
           </div>
         </div>
-
-        <div>
-          <label>Motor Model</label>
-          <input type="text" id="motorModel" value="Motor" />
-        </div>
-
-        <div>
-          <label>Rated Parameter</label>
-          <div class="radio-group">
-            <label class="radio-option"><input type="radio" name="ratedParam" value="0" checked><span>Load Curve</span></label>
-            <label class="radio-option"><input type="radio" name="ratedParam" value="1"><span>Single Speed</span></label>
-            <label class="radio-option"><input type="radio" name="ratedParam" value="2"><span>Pout</span></label>
+        <div><label class="fl">Motor Model</label><input type="text" id="mm" value="Motor"/></div>
+        <div><label class="fl">Rated Parameter</label>
+          <div class="rg">
+            <label class="ro"><input type="radio" name="rp" value="0" checked><span>Load Curve</span></label>
+            <label class="ro"><input type="radio" name="rp" value="1"><span>Speed</span></label>
+            <label class="ro"><input type="radio" name="rp" value="2"><span>Pout</span></label>
           </div>
-          <div class="lc-info" id="lcInfo">
-            T<sub>L</sub> = K·(2π/60·N)² &nbsp;·&nbsp; K auto-fitted to motor data
+          <div class="lci" id="lci">T<sub>L</sub>=K·(2π/60·N)² · K auto-fitted</div>
+        </div>
+        <div><label class="fl">Rated Value</label><input type="number" id="rpv" value="0" step="any"/></div>
+        <div><label class="fl">Speed Region Start (RPM)</label><input type="number" id="srs" value="0" step="1"/></div>
+        <div><label class="fl">Hide Axis (e.g. pf)</label><input type="text" id="da" placeholder="e.g. pf"/></div>
+      </div>
+    </div>
+
+    <!-- UPLOAD -->
+    <div class="panel" id="p-upl">
+      <div class="ph" onclick="tp('upl')"><div class="phi"></div>Data Upload<span class="pha" id="a-upl">▾</span></div>
+      <div class="pb" id="b-upl">
+        <p class="help">Columns: <strong>Speed, Torque, Pin, Pout, Efficiency, PF, It</strong>. SPIM: <strong>Im, Ia</strong>.</p>
+        <div class="dz" id="dz"><div class="dzi">⬆</div><p><strong>Drop CSV / Excel here</strong><br>or click to browse</p></div>
+        <input type="file" id="fi" multiple accept=".csv,.xlsx,.xls" style="display:none;">
+        <div class="flist" id="fl2"></div>
+      </div>
+    </div>
+
+    <!-- CUSTOM REGIONS -->
+    <div class="panel" id="p-cr">
+      <div class="ph" onclick="tp('cr')"><div class="phi"></div>Custom Regions<span class="pha" id="a-cr">▾</span></div>
+      <div class="pb" id="b-cr">
+        <p class="help">Define a named operating point.</p>
+        <div class="crf">
+          <div class="crfr">
+            <div class="crff"><label class="fl">Name</label><input type="text" id="crn" placeholder="e.g. Test Pt"/></div>
+            <div class="crff"><label class="fl">By</label>
+              <select id="crb">
+                <option value="speed">Speed (RPM)</option>
+                <option value="torque">Torque (N·m)</option>
+                <option value="pout">Pout (W)</option>
+                <option value="eff">Efficiency (%)</option>
+              </select>
+            </div>
           </div>
+          <div><label class="fl">Value</label><input type="number" id="crv" step="any" placeholder="e.g. 1400"/></div>
+          <button class="btn bg2 bfu" id="acr">+ Add Custom Region</button>
         </div>
-
-        <div>
-          <label>Rated Parameter Value</label>
-          <input type="number" id="ratedParamVal" value="0" step="any" />
-        </div>
-
-        <div>
-          <label>Speed Region Start (RPM)</label>
-          <input type="number" id="speedRegionStart" value="0" step="1" />
-        </div>
-
-        <div>
-          <label>Hide Axis (e.g. pf)</label>
-          <input type="text" id="deleteAxis" placeholder="e.g. pf" />
-        </div>
-
+        <div id="crl" style="display:flex;flex-direction:column;gap:2px;margin-top:3px;"></div>
       </div>
     </div>
 
-    <!-- Upload -->
-    <div class="panel">
-      <div class="panel-header"><div class="ph-icon"></div> Data Upload</div>
-      <div class="panel-body">
-        <p class="help-text">CSV/Excel columns needed: <strong>Speed, Torque, Pin, Pout, Efficiency, PF, It</strong>. SPIM also: <strong>Im, Ia</strong>.</p>
-        <div class="drop-zone" id="dropZone">
-          <div class="dz-icon">⬆</div>
-          <p><strong>Drop CSV / Excel files here</strong><br>or click to browse</p>
-        </div>
-        <input type="file" id="fileInput" multiple accept=".csv,.xlsx,.xls" />
-        <div class="file-list" id="fileList"></div>
-        <p class="help-text"><strong>No files?</strong> Click Demo to try sample motor data.</p>
-        <div class="btn-group">
-          <button class="btn btn-primary" id="processBtn" style="flex:1">▶ Process Files</button>
-          <button class="btn btn-secondary" id="demoBtn">Demo</button>
+    <!-- EXPORT OPTIONS -->
+    <div class="panel" id="p-exp">
+      <div class="ph" onclick="tp('exp')"><div class="phi"></div>Export Options<span class="pha" id="a-exp">▾</span></div>
+      <div class="pb" id="b-exp">
+        <div class="cg">
+          <label class="co"><input type="checkbox" id="ex1" checked><span class="cb"></span>XLSX (Interpolated)</label>
+          <label class="co"><input type="checkbox" id="ex2" checked><span class="cb"></span>Summary TXT</label>
+          <label class="co"><input type="checkbox" id="ex3"><span class="cb"></span>Regions CSV</label>
+          <label class="co"><input type="checkbox" id="ex4"><span class="cb"></span>All Files Combined XLSX</label>
         </div>
       </div>
     </div>
 
-    <!-- Export -->
-    <div class="panel">
-      <div class="panel-header"><div class="ph-icon"></div> Export Options</div>
-      <div class="panel-body">
-        <div class="check-group">
-          <label class="check-option"><input type="checkbox" id="exportXlsx" checked><span class="check-box"></span> Export XLSX (Interpolated Data)</label>
-          <label class="check-option"><input type="checkbox" id="exportSummary" checked><span class="check-box"></span> Export Summary (TXT Report)</label>
-          <label class="check-option"><input type="checkbox" id="exportCsv"><span class="check-box"></span> Export Regions CSV</label>
-        </div>
-        <div class="btn-group" style="margin-top:4px;">
-          <button class="btn btn-accent2" id="exportBtn" style="flex:1">⬇ Export Results</button>
-          <button class="btn btn-secondary" id="clearBtn">✕ Clear</button>
-        </div>
+  </div><!-- /sb-scroll -->
+
+  <!-- ── STICKY FOOTER ── always visible regardless of scroll -->
+  <div class="sb-footer">
+    <div class="sb-footer-label">⊞ Analyze Actions</div>
+    <div class="bg">
+      <button class="btn bp" id="proc" style="flex:1">▶ Process</button>
+      <button class="btn bs" id="demo">Demo</button>
+    </div>
+    <div class="bg">
+      <button class="btn bo" id="expAn" style="flex:1">⬇ Export Analyze ZIP</button>
+      <button class="btn bs" id="clr">✕ Clear</button>
+    </div>
+    <div class="bg">
+      <button class="btn bw" id="expAP" style="flex:1">🖼 Export All Plots ZIP</button>
+      <button class="btn bgh" id="shot">📷 Save Plot</button>
+    </div>
+  </div>
+</div><!-- /sidebar -->
+
+<div class="main-area">
+  <div class="czone">
+    <div class="ctb">
+      <span class="ctitle" id="cttl">— No Data Loaded —</span>
+      <div style="display:flex;align-items:center;gap:5px;">
+        <label class="fl" style="display:inline;margin:0;white-space:nowrap;">File:</label>
+        <select id="fs" style="width:auto;"><option value="">Select…</option></select>
+      </div>
+      <div class="ctabs">
+        <div class="ctab active" data-ct="all">All</div>
+        <div class="ctab" data-ct="eff">Eff</div>
+        <div class="ctab" data-ct="power">Power</div>
       </div>
     </div>
-
-  </aside>
-
-  <div class="main">
-    <div class="chart-area">
-      <div class="chart-toolbar">
-        <span class="chart-title" id="chartTitle">— No Data Loaded —</span>
-        <div class="file-selector">
-          <select id="fileSelector"><option value="">Select file…</option></select>
-        </div>
-        <div class="chart-tabs">
-          <div class="tab active" data-tab="all">All Curves</div>
-          <div class="tab" data-tab="eff">Efficiency</div>
-          <div class="tab" data-tab="power">Power</div>
-        </div>
-        <!-- ── SCREENSHOT BUTTON ── -->
-        <button class="btn btn-ghost" id="screenshotBtn" title="Save chart as PNG image">
-          📷 Save Plot
-        </button>
-      </div>
-
-      <div id="chartContainer">
-        <div class="empty-chart" id="emptyChart">
-          <div class="ec-icon">◈</div>
-          <p>Upload data files and click Process to visualize motor performance</p>
-        </div>
-        <canvas id="motorChart"></canvas>
-      </div>
+    <div id="cc">
+      <div class="ec" id="ec"><div class="eci">◈</div><p>Upload files and click Process to visualize</p></div>
+      <canvas id="mc"></canvas>
     </div>
+  </div>
 
-    <!-- Regions Table -->
-    <div class="regions-area">
-      <div class="regions-header">
-        <span>◈</span> OPERATING REGIONS ·
-        <span id="regionsSubtitle" style="color:var(--text-dim)">No data</span>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Region</th><th>Speed (RPM)</th><th>Torque (N·m)</th>
-              <th>Pin (W)</th><th>Pout (W)</th><th>Efficiency (%)</th>
-              <th>PF</th><th>It (A)</th><th>Im (A)</th><th>Ia (A)</th>
-            </tr>
-          </thead>
-          <tbody id="regionsBody">
-            <tr><td colspan="10" style="text-align:center;color:var(--text-dim);padding:16px;">No results yet</td></tr>
-          </tbody>
-        </table>
-      </div>
+  <div class="rarea" id="rae">
+    <div class="rh">
+      <span>◈</span> OPERATING REGIONS ·
+      <span id="rs2" style="color:var(--dim);">No data</span>
+      <button class="btn bgh" id="rtpng" style="margin-left:auto;padding:2px 7px;font-size:.59rem;">⬇ Table PNG</button>
+    </div>
+    <div class="tw">
+      <table>
+        <thead><tr>
+          <th>Region</th><th>Speed (RPM)</th><th>Torque (N·m)</th>
+          <th>Pin (W)</th><th>Pout (W)</th><th>Eff (%)</th>
+          <th>PF</th><th>It (A)</th><th>Im (A)</th><th>Ia (A)</th>
+        </tr></thead>
+        <tbody id="rb"></tbody>
+      </table>
     </div>
   </div>
 </div>
 
-<!-- Log Panel -->
-<div class="log-panel" id="logPanel">
-  <div class="log-toggle" id="logToggle">
-    <span class="lt-dot"></span>
-    <span>CONSOLE OUTPUT</span>
-    <span style="margin-left:auto" id="logArrow">▲</span>
+</div>
+</div><!-- /page-analyze -->
+
+<!-- ═══ PAGE: COMPARE ═══ -->
+<div class="page" id="page-compare">
+<div class="fta">
+  <div class="ts">
+    <span class="tsl">⊟ COMPARE FILES</span>
+    <div style="display:flex;align-items:center;gap:5px;">
+      <label class="fl" style="display:inline;margin:0;">Metric:</label>
+      <select id="cm" style="width:auto;">
+        <option value="Torque">Torque (N·m)</option>
+        <option value="eff" selected>Efficiency (%)</option>
+        <option value="Pin">Pin (W)</option>
+        <option value="Pout">Pout (W)</option>
+        <option value="PF">Power Factor</option>
+        <option value="It">It (A)</option>
+      </select>
+    </div>
+    <button class="btn bp" id="rcmp">↻ Update</button>
+    <button class="btn bgh" id="cmpPng">🖼 Chart PNG</button>
+    <button class="btn bo" id="expCmp">⬇ Export Compare ZIP</button>
   </div>
-  <div id="logOutput"></div>
+  <div class="cc2">
+    <div class="cc2h">
+      <span>CURVE OVERLAY</span>
+      <span id="cmpLbl" style="color:var(--dim);font-size:.62rem;"></span>
+    </div>
+    <div class="cc2b">
+      <canvas id="cmpChart"></canvas>
+      <div class="ec" id="cmpEc" style="background:var(--surface);"><div class="eci">⊟</div><p>Process 2+ files to compare</p></div>
+    </div>
+  </div>
+  <div class="cc2">
+    <div class="cc2h"><span>SIDE-BY-SIDE REGIONS</span></div>
+    <div class="tw" style="max-height:280px;">
+      <table><thead id="cmpTh"></thead><tbody id="cmpTb"><tr><td colspan="20" style="text-align:center;color:var(--dim);padding:12px;">No data</td></tr></tbody></table>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══ PAGE: STATS ═══ -->
+<div class="page" id="page-stats">
+<div class="fta">
+  <div class="ts">
+    <span class="tsl">⊠ PRODUCTION STATISTICS</span>
+    <div style="display:flex;align-items:center;gap:5px;">
+      <label class="fl" style="display:inline;margin:0;white-space:nowrap;">σ (k):</label>
+      <input type="number" id="sk" value="3" step="0.5" style="width:60px;"/>
+    </div>
+    <div class="dz" id="sdz" style="padding:4px 10px;display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;border-width:1px;">
+      <span>⬆</span><span style="font-size:.66rem;font-family:var(--mono);">Batch files for stats</span>
+    </div>
+    <input type="file" id="sfi" multiple accept=".csv,.xlsx,.xls" style="display:none;">
+    <button class="btn bp" id="rsts">↻ Compute</button>
+    <button class="btn bo" id="expSts">⬇ Export Stats ZIP</button>
+  </div>
+  <div id="sc2">
+    <div class="ec" style="position:relative;padding:60px 20px;"><div class="eci">⊠</div><p>Load files or use processed files, then click Compute</p></div>
+  </div>
+</div>
+</div>
+
+</div><!-- /shell -->
+
+<div class="lp" id="lp">
+  <div class="lt" id="ltg"><span class="ltd"></span><span>CONSOLE</span><span style="margin-left:auto;" id="la">▲</span></div>
+  <div id="lo"></div>
 </div>
 
 <script>
-// ═══════════════════════════════
-//  Utilities
-// ═══════════════════════════════
-const $ = id => document.getElementById(id);
+// ════════════════════════════
+//  UTILS
+// ════════════════════════════
+const $=id=>document.getElementById(id);
+function log(m,t='info'){const o=$('lo'),l=document.createElement('span');l.className='ll '+t;l.textContent=`[${new Date().toLocaleTimeString('en-GB',{hour12:false})}] ${m}`;o.appendChild(l);o.scrollTop=o.scrollHeight;if(t!=='info'){$('lp').classList.add('open');$('la').textContent='▼';}}
+function toast(m,t='info'){const e=document.createElement('div');e.className='ti '+t;e.textContent=m;$('toast').appendChild(e);setTimeout(()=>e.remove(),3400);}
+function setpb(p){$('pb').style.width=p+'%';$('pb').style.opacity=p<100?'1':'0';}
+function setst(t){$('st').textContent=t;}
+function li(xa,ya,x){if(x<=xa[0])return ya[0];if(x>=xa[xa.length-1])return ya[ya.length-1];for(let i=0;i<xa.length-1;i++)if(xa[i]<=x&&x<=xa[i+1]){const t=(x-xa[i])/(xa[i+1]-xa[i]);return ya[i]+t*(ya[i+1]-ya[i]);}return ya[ya.length-1];}
+const iA=(xs,ys,xn)=>xn.map(x=>li(xs,ys,x));
+const rng=(s,e,st=1)=>{const o=[];for(let v=s;v<e;v+=st)o.push(v);return o;};
+const avg=a=>a.reduce((x,y)=>x+y,0)/a.length;
+const sdv=a=>{const m=avg(a);return Math.sqrt(a.reduce((x,y)=>x+(y-m)**2,0)/a.length);};
+// Panel toggle
+function tp(id){const b=$('b-'+id),a=$('a-'+id);if(!b)return;b.classList.toggle('hidden');a.classList.toggle('col');}
+// Export overlay
+function showEO(m){$('eo').classList.add('show');$('em').textContent=m;$('ef').style.width='0%';}
+function hideEO(){$('eo').classList.remove('show');}
+function setEO(m,p){$('em').textContent=m;$('ef').style.width=p+'%';}
 
-function log(msg, type='info') {
-  const out=$('logOutput'), line=document.createElement('span');
-  line.className=`log-line ${type}`;
-  line.textContent=`[${new Date().toLocaleTimeString('en-GB',{hour12:false})}] ${msg}`;
-  out.appendChild(line); out.scrollTop=out.scrollHeight;
-  if(type!=='info'){$('logPanel').classList.add('open');$('logArrow').textContent='▼';}
-}
-function toast(msg, type='info') {
-  const el=document.createElement('div'); el.className=`toast-item ${type}`; el.textContent=msg;
-  $('toast').appendChild(el); setTimeout(()=>el.remove(),3500);
-}
-function progress(p) { $('progressBar').style.width=p+'%'; $('progressBar').style.opacity=p<100?'1':'0'; }
-function setStatus(t) { $('statusText').textContent=t; }
-
-function linInterp(xArr, yArr, x) {
-  if(x<=xArr[0]) return yArr[0];
-  if(x>=xArr[xArr.length-1]) return yArr[yArr.length-1];
-  for(let i=0;i<xArr.length-1;i++){
-    if(xArr[i]<=x && x<=xArr[i+1]){const t=(x-xArr[i])/(xArr[i+1]-xArr[i]);return yArr[i]+t*(yArr[i+1]-yArr[i]);}
-  }
-  return yArr[yArr.length-1];
-}
-function interpArr(xS,yS,xN){ return xN.map(x=>linInterp(xS,yS,x)); }
-function range(s,e,st=1){ const o=[]; for(let v=s;v<e;v+=st) o.push(v); return o; }
-
-// ═══════════════════════════════
-//  Theme
-// ═══════════════════════════════
-let currentTheme = 'dark';
-
-function setTheme(t) {
-  currentTheme=t;
-  document.documentElement.setAttribute('data-theme',t);
-  $('btnDark').classList.toggle('active', t==='dark');
-  $('btnLight').classList.toggle('active', t==='light');
-  const sel=$('fileSelector');
-  if(sel.value && processedFiles[sel.value]) renderChart(processedFiles[sel.value], currentTab);
-}
-
-$('themeToggle').addEventListener('click', e => {
-  const btn=e.target.closest('.theme-btn');
-  if(!btn) return;
-  setTheme(btn===$('btnLight')?'light':'dark');
-});
-
-// ═══════════════════════════════
-//  Rated param toggle – show/hide Load Curve badge
-// ═══════════════════════════════
-document.querySelectorAll('input[name="ratedParam"]').forEach(r => {
-  r.addEventListener('change', () => {
-    $('lcInfo').style.display = r.value==='0' && r.checked ? 'inline-flex' : 'none';
-    // Re-render chart to show/hide load curve
-    const sel=$('fileSelector');
-    if(sel.value && processedFiles[sel.value]){
-      processedFiles[sel.value].ratedParam = parseInt(r.value);
-      renderChart(processedFiles[sel.value], currentTab);
-    }
-  });
-});
-
-// ═══════════════════════════════
-//  State
-// ═══════════════════════════════
-let processedFiles={}, currentChart=null, currentTab='all', uploadedFiles=[];
-
-// ═══════════════════════════════
-//  File drop / upload
-// ═══════════════════════════════
-const dropZone=$('dropZone'), fileInput=$('fileInput');
-dropZone.addEventListener('click',()=>fileInput.click());
-dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.classList.add('dragover');});
-dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('dragover'));
-dropZone.addEventListener('drop',e=>{e.preventDefault();dropZone.classList.remove('dragover');handleFileList(e.dataTransfer.files);});
-fileInput.addEventListener('change',e=>handleFileList(e.target.files));
-
-function handleFileList(files){ for(const f of files) uploadedFiles.push(f); renderFileList(); }
-function renderFileList(){
-  const list=$('fileList'); list.innerHTML='';
-  uploadedFiles.forEach(f=>{
-    const c=document.createElement('div'); c.className='file-chip';
-    c.innerHTML=`<span class="fc-dot"></span>${f.name}<span style="margin-left:auto;color:var(--text-dim)">${(f.size/1024).toFixed(1)}KB</span>`;
-    list.appendChild(c);
-  });
-}
-
-// ═══════════════════════════════
-//  Parse
-// ═══════════════════════════════
-function parseFile(file){
-  return new Promise((res,rej)=>{
-    const nm=file.name.toLowerCase(), base=file.name.replace(/\.[^.]+$/,'');
-    if(nm.endsWith('.csv')){
-      const r=new FileReader();
-      r.onload=e=>{try{const p=Papa.parse(e.target.result,{header:true,dynamicTyping:true,skipEmptyLines:true});res({name:base,rows:p.data});}catch(err){rej(err);}};
-      r.readAsText(file);
-    } else {
-      const r=new FileReader();
-      r.onload=e=>{try{const wb=XLSX.read(e.target.result,{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];res({name:base,rows:XLSX.utils.sheet_to_json(ws,{defval:''})});}catch(err){rej(err);}};
-      r.readAsArrayBuffer(file);
-    }
-  });
-}
-function findCol(h,aliases){ for(const a of aliases){const f=h.find(x=>x&&x.toString().toLowerCase().includes(a.toLowerCase()));if(f)return f;}return null; }
-
-// ═══════════════════════════════
-//  Process data
-// ═══════════════════════════════
-function processData(parsed){
-  const {name,rows}=parsed;
-  const h=Object.keys(rows[0]||{});
-  const sc=findCol(h,['speed','rpm']), tc=findCol(h,['torque']);
-  if(!sc||!tc) throw new Error('Cannot find Speed or Torque columns.');
-  const pc=findCol(h,['watts in','pin','input power','wattsin','win']);
-  const poc=findCol(h,['watts out','pout','output power','wattsout','wout']);
-  const ec=findCol(h,['efficiency','eff']), pfc=findCol(h,['pf','power factor']);
-  const itc=findCol(h,['amps 1','amps','it','total current']);
-  const imc=findCol(h,['amps 2','im','mag','magnetizing']);
-  const iac=findCol(h,['amps 3','ia','active']);
-  const vc=findCol(h,['volts','volt','voltage']), dc=findCol(h,['direction','dir']);
-  const mdf=parseInt(document.querySelector('input[name="mdfConfig"]:checked').value);
-
-  const col=(c,def)=>c?rows.map(r=>parseFloat(r[c])).filter(v=>!isNaN(v)):rows.map(()=>def);
-  let S1=col(sc,0), T1=col(tc,0), P1=col(pc,0), Po1=col(poc,0), e1=col(ec,0), pf1=col(pfc,1), It1=col(itc,0);
-  let Im1=(mdf===0&&imc)?col(imc,0):null, Ia1=(mdf===0&&iac)?col(iac,0):null;
-  const Volt=vc?parseFloat(rows[1]?.[vc])||0:0;
-  const dir=dc?(rows[1]?.[dc]||'FWD'):'FWD';
-
-  const ml=Math.min(S1.length,T1.length,P1.length,Po1.length,e1.length,pf1.length,It1.length);
-  [S1,T1,P1,Po1,e1,pf1,It1]=[S1,T1,P1,Po1,e1,pf1,It1].map(a=>a.slice(0,ml));
-  if(Im1) Im1=Im1.slice(0,ml); if(Ia1) Ia1=Ia1.slice(0,ml);
-  if(S1[S1.length-1]<S1[0]){
-    [S1,T1,P1,Po1,e1,pf1,It1]=[S1,T1,P1,Po1,e1,pf1,It1].map(a=>[...a].reverse());
-    if(Im1)Im1=[...Im1].reverse(); if(Ia1)Ia1=[...Ia1].reverse();
-    log(`● ${name}: reversed data direction`,'warn');
-  }
-
-  const maxSpd=Math.max(...S1), freq=maxSpd>1500?60:50;
-  const startV=parseFloat($('speedRegionStart').value)||0;
-  const Spd=range(Math.max(startV,Math.min(...S1)),maxSpd,1);
-
-  const ip={
-    Torque:interpArr(S1,T1,Spd), Pin:interpArr(S1,P1,Spd), Pout:interpArr(S1,Po1,Spd),
-    eff:interpArr(S1,e1,Spd), PF:interpArr(S1,pf1,Spd), It:interpArr(S1,It1,Spd)
-  };
-  if(Im1) ip.Im=interpArr(S1,Im1,Spd);
-  if(Ia1) ip.Ia=interpArr(S1,Ia1,Spd);
-  if(ip.Pout.every(v=>v===0)) ip.Pout=Spd.map((s,i)=>Math.max(0,ip.Torque[i]*s*2*Math.PI/60));
-  if(ip.Pin.every(v=>v===0))  ip.Pin=ip.Pout.map(p=>p/0.85);
-  if(ip.eff.every(v=>v===0))  ip.eff=ip.Pin.map((p,i)=>p>0?Math.min(ip.Pout[i]/p*100,100):0);
-
-  // ── Load curve: T_L = K*(2π/60·N)²  fitted at peak torque
-  const maxT=Math.max(...ip.Torque), maxS=Math.max(...Spd);
-  const K=maxT/Math.pow(2*Math.PI*maxS/60,2);
-  const loadCurve=Spd.map(s=>K*Math.pow(2*Math.PI*s/60,2));
-
-  // ── Regions
-  const rp=parseInt(document.querySelector('input[name="ratedParam"]:checked').value);
-  const rpv=parseFloat($('ratedParamVal').value)||0;
-  let rIdx=Math.floor(Spd.length*0.75);
-
-  const regions=[];
-  regions.push(mkReg('No-Load', ip.Torque.indexOf(Math.min(...ip.Torque)), Spd, ip, mdf));
-  regions.push(mkReg('Max Eff.', ip.eff.indexOf(Math.max(...ip.eff)), Spd, ip, mdf));
-
-  if(rp===0){
-    // Load curve intersection
-    for(let i=Spd.length-1;i>=0;i--){ if(loadCurve[i]<ip.Torque[i]){rIdx=i;break;} }
-    log(`${name}: load curve intersect @ ${Spd[rIdx]?.toFixed(0)} RPM (K=${K.toFixed(5)})`,'ok');
-  } else if(rp===1){
-    rIdx=Spd.reduce((b,s,i)=>Math.abs(s-rpv)<Math.abs(Spd[b]-rpv)?i:b,0);
-  } else {
-    const PoR=[...ip.Pout].reverse();
-    const fi=PoR.findIndex(p=>p>rpv); if(fi>=0) rIdx=Spd.length-1-fi;
-    log(`${name}: Pout ${rpv}W @ ${Spd[rIdx]?.toFixed(0)} RPM`,'ok');
-  }
-  regions.push(mkReg('Rated', rIdx, Spd, ip, mdf));
-  regions.push(mkReg('Full-Load', ip.Pout.indexOf(Math.max(...ip.Pout)), Spd, ip, mdf));
-
-  const fname=`${name.toUpperCase()}_${dir.toString().toUpperCase()}`;
-  return { key:fname, name:fname, speed:Spd, interpolated:ip, regions,
-           loadCurve, loadCurveK:K, ratedSpeedVal:Spd[rIdx]||0,
-           volt:Volt, frequency:freq, direction:dir, mdfConfig:mdf, ratedParam:rp };
-}
-
-function mkReg(label,idx,Spd,ip,mdf){
-  return { Region:label, Speed:Spd[idx]||0, Torque:ip.Torque[idx]||0, Pin:ip.Pin[idx]||0,
-           Po:ip.Pout[idx]||0, Eff:ip.eff[idx]||0, pf:ip.PF[idx]||0, It:ip.It[idx]||0,
-           Im:(mdf===0&&ip.Im)?ip.Im[idx]||0:null, Ia:(mdf===0&&ip.Ia)?ip.Ia[idx]||0:null };
-}
-
-// ═══════════════════════════════
-//  Process button
-// ═══════════════════════════════
-$('processBtn').addEventListener('click', async()=>{
-  if(!uploadedFiles.length){toast('No files uploaded. Use Demo or upload CSV/Excel.','err');return;}
-  setStatus('PROCESSING…'); progress(10); processedFiles={};
-  log('=== Processing started ===','ok');
-  const step=80/uploadedFiles.length;
-  for(let i=0;i<uploadedFiles.length;i++){
-    const f=uploadedFiles[i]; log(`Reading: ${f.name}`);
-    try{ progress(10+step*i); const p=await parseFile(f); const r=processData(p); processedFiles[r.key]=r; log(`✓ ${r.key}`,'ok'); }
-    catch(err){ log(`✗ ${f.name}: ${err.message}`,'err'); toast(`Error: ${f.name}`,'err'); }
-  }
-  progress(100); setStatus('DONE');
-  log(`=== ${Object.keys(processedFiles).length} file(s) done ===`,'ok');
-  toast(`${Object.keys(processedFiles).length} file(s) processed`,'ok');
-  updateUI(); setTimeout(()=>progress(0),800);
-});
-
-// ═══════════════════════════════
-//  Demo data
-// ═══════════════════════════════
-$('demoBtn').addEventListener('click',()=>{
-  processedFiles={}; const d=buildDemo(); processedFiles[d.key]=d;
-  toast('Demo loaded!','ok'); log(`Demo: ${d.key}`,'ok'); updateUI();
-});
-
-function buildDemo(){
-  const Spd=range(50,1480,5), maxS=Math.max(...Spd);
-  const ip={
-    Torque:Spd.map(s=>Math.max(0.05,12*(1-s/maxS))),
-    Pin:Spd.map(s=>220+s*0.65),
-    Pout:Spd.map(()=>0),
-    eff:Spd.map(s=>{const x=s/maxS;return 100*Math.min(0.93,0.28+1.5*x-0.85*x*x);}),
-    PF:Spd.map(s=>0.48+0.44*(s/maxS)),
-    It:Spd.map(s=>4.0*(1-0.28*(s/maxS))),
-    Im:Spd.map(s=>2.1*(1-0.08*(s/maxS))),
-    Ia:Spd.map(s=>2.6*(s/maxS)),
-  };
-  ip.Pout=Spd.map((s,i)=>Math.max(0,ip.Torque[i]*s*2*Math.PI/60));
-  ip.eff=ip.Pin.map((p,i)=>p>0?Math.min(ip.Pout[i]/p*100,98):0);
-  const maxT=Math.max(...ip.Torque), K=maxT/Math.pow(2*Math.PI*maxS/60,2);
-  const loadCurve=Spd.map(s=>K*Math.pow(2*Math.PI*s/60,2));
-  let rIdx=Math.floor(Spd.length*0.75);
-  for(let i=Spd.length-1;i>=0;i--){if(loadCurve[i]<ip.Torque[i]){rIdx=i;break;}}
-  const regions=[
-    mkReg('No-Load',0,Spd,ip,0),
-    mkReg('Max Eff.',Math.floor(Spd.length*0.6),Spd,ip,0),
-    mkReg('Rated',rIdx,Spd,ip,0),
-    mkReg('Full-Load',Spd.length-5,Spd,ip,0),
-  ];
-  return{key:'DEMO_MOTOR_FWD',name:'DEMO_MOTOR_FWD',speed:Spd,interpolated:ip,regions,
-         loadCurve,loadCurveK:K,ratedSpeedVal:Spd[rIdx],
-         volt:220,frequency:50,direction:'FWD',mdfConfig:0,ratedParam:0};
-}
-
-// ═══════════════════════════════
-//  UI sync
-// ═══════════════════════════════
-function updateUI(){
-  const keys=Object.keys(processedFiles); if(!keys.length) return;
-  $('fileSelector').innerHTML=keys.map(k=>`<option value="${k}">${k}</option>`).join('');
-  renderChart(processedFiles[keys[0]],currentTab);
-  renderTable(processedFiles[keys[0]]);
-}
-$('fileSelector').addEventListener('change',e=>{const d=processedFiles[e.target.value];if(d){renderChart(d,currentTab);renderTable(d);}});
-document.querySelectorAll('.tab').forEach(t=>{
+// ════════════════════════════
+//  PAGE SWITCH
+// ════════════════════════════
+document.querySelectorAll('.ntab').forEach(t=>{
   t.addEventListener('click',()=>{
-    document.querySelectorAll('.tab').forEach(tt=>tt.classList.remove('active'));
-    t.classList.add('active'); currentTab=t.dataset.tab;
-    const d=processedFiles[$('fileSelector').value]; if(d) renderChart(d,currentTab);
+    document.querySelectorAll('.ntab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    const pg='page-'+t.dataset.p;$(pg).classList.add('active');
+    if(t.dataset.p==='compare')renderCmp();
+    if(t.dataset.p==='stats')renderSts();
   });
 });
 
-// ═══════════════════════════════
-//  Chart palette (theme-aware)
-// ═══════════════════════════════
-function pal(){
-  if(currentTheme==='light') return{
-    c:['#005faa','#c04000','#2e7000','#8a6000','#7700bb','#aa0033'],
-    dim:'#5a6890', grid:'rgba(100,120,180,.18)', grid2:'rgba(100,120,180,.10)',
-    bg:'#ffffff', border:'#c8d0e8', tip:'#ffffff',
-    opLine:'rgba(0,80,200,.5)', lcLine:'rgba(30,120,0,.8)'
-  };
-  return{
-    c:['#00e5ff','#ff6b35','#a8ff3e','#ffd60a','#bf5af2','#ff375f'],
-    dim:'#6070a0', grid:'rgba(42,48,80,.5)', grid2:'rgba(42,48,80,.3)',
-    bg:'#141720', border:'#2a3050', tip:'#141720',
-    opLine:'rgba(0,229,255,.5)', lcLine:'rgba(168,255,62,.85)'
-  };
+// ════════════════════════════
+//  STATE
+// ════════════════════════════
+let PF={},curChart=null,cmpChart=null,curCt='all',uplFiles=[],stsFiles=[],CRs=[],spd={};
+
+// ════════════════════════════
+//  RATED PARAM TOGGLE
+// ════════════════════════════
+document.querySelectorAll('input[name="rp"]').forEach(r=>{
+  r.addEventListener('change',()=>{
+    $('lci').style.display=r.value==='0'&&r.checked?'inline-flex':'none';
+    const s=$('fs');if(s.value&&PF[s.value]){PF[s.value].rp=parseInt(r.value);rc(PF[s.value],curCt);}
+  });
+});
+
+// ════════════════════════════
+//  FILE DROP
+// ════════════════════════════
+const dz=$('dz'),fi=$('fi');
+dz.addEventListener('click',()=>fi.click());
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over');af(e.dataTransfer.files,false);});
+fi.addEventListener('change',e=>af(e.target.files,false));
+$('sdz').addEventListener('click',()=>$('sfi').click());
+$('sdz').addEventListener('dragover',e=>{e.preventDefault();$('sdz').classList.add('over');});
+$('sdz').addEventListener('dragleave',()=>$('sdz').classList.remove('over'));
+$('sdz').addEventListener('drop',e=>{e.preventDefault();$('sdz').classList.remove('over');af(e.dataTransfer.files,true);});
+$('sfi').addEventListener('change',e=>af(e.target.files,true));
+
+function af(files,isSts){for(const f of files){if(isSts)stsFiles.push(f);else uplFiles.push(f);}if(!isSts)rfl();}
+function rfl(){const l=$('fl2');l.innerHTML='';uplFiles.forEach(f=>{const c=document.createElement('div');c.className='fc';c.innerHTML=`<span class="fcd"></span>${f.name}<span style="margin-left:auto;color:var(--dim)">${(f.size/1024).toFixed(1)}KB</span>`;l.appendChild(c);});}
+
+// ════════════════════════════
+//  PARSE
+// ════════════════════════════
+function parseF(file){
+  return new Promise((res,rej)=>{
+    const nm=file.name.toLowerCase(),base=file.name.replace(/\.[^.]+$/,'');
+    if(nm.endsWith('.csv')){const r=new FileReader();r.onload=e=>{try{const p=Papa.parse(e.target.result,{header:true,dynamicTyping:true,skipEmptyLines:true});res({name:base,rows:p.data});}catch(err){rej(err);}};r.readAsText(file);}
+    else{const r=new FileReader();r.onload=e=>{try{const wb=XLSX.read(e.target.result,{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];res({name:base,rows:XLSX.utils.sheet_to_json(ws,{defval:''})});}catch(err){rej(err);}};r.readAsArrayBuffer(file);}
+  });
+}
+function fc(h,aliases){for(const a of aliases){const f=h.find(x=>x&&x.toString().toLowerCase().includes(a.toLowerCase()));if(f)return f;}return null;}
+
+// ════════════════════════════
+//  PROCESS DATA
+// ════════════════════════════
+function procData(parsed){
+  const {name,rows}=parsed,h=Object.keys(rows[0]||{});
+  const sc=fc(h,['speed','rpm']),tc=fc(h,['torque']);
+  if(!sc||!tc)throw new Error('Cannot find Speed or Torque columns.');
+  const pc=fc(h,['watts in','pin','input power','wattsin','win']);
+  const poc=fc(h,['watts out','pout','output power','wattsout','wout']);
+  const ec=fc(h,['efficiency','eff']),pfc=fc(h,['pf','power factor']);
+  const itc=fc(h,['amps 1','amps','it','total current']);
+  const imc=fc(h,['amps 2','im','mag','magnetizing']);
+  const iac=fc(h,['amps 3','ia','active']);
+  const vc=fc(h,['volts','volt','voltage']),dc=fc(h,['direction','dir']);
+  const mdf=parseInt(document.querySelector('input[name="mdf"]:checked').value);
+  const col=(c,def)=>c?rows.map(r=>parseFloat(r[c])).filter(v=>!isNaN(v)):rows.map(()=>def);
+  let S=col(sc,0),T=col(tc,0),P=col(pc,0),Po=col(poc,0),ef=col(ec,0),pf=col(pfc,1),It=col(itc,0);
+  let Im=(mdf===0&&imc)?col(imc,0):null,Ia=(mdf===0&&iac)?col(iac,0):null;
+  const Volt=vc?parseFloat(rows[1]?.[vc])||0:0,dir=dc?(rows[1]?.[dc]||'FWD'):'FWD';
+  const ml=Math.min(S.length,T.length,P.length,Po.length,ef.length,pf.length,It.length);
+  [S,T,P,Po,ef,pf,It]=[S,T,P,Po,ef,pf,It].map(a=>a.slice(0,ml));
+  if(Im)Im=Im.slice(0,ml);if(Ia)Ia=Ia.slice(0,ml);
+  if(S[S.length-1]<S[0]){[S,T,P,Po,ef,pf,It]=[S,T,P,Po,ef,pf,It].map(a=>[...a].reverse());if(Im)Im=[...Im].reverse();if(Ia)Ia=[...Ia].reverse();}
+  const maxS=Math.max(...S),freq=maxS>1500?60:50;
+  const sv=parseFloat($('srs').value)||0;
+  const Sp=rng(Math.max(sv,Math.min(...S)),maxS,1);
+  const ip={Torque:iA(S,T,Sp),Pin:iA(S,P,Sp),Pout:iA(S,Po,Sp),eff:iA(S,ef,Sp),PF:iA(S,pf,Sp),It:iA(S,It,Sp)};
+  if(Im)ip.Im=iA(S,Im,Sp);if(Ia)ip.Ia=iA(S,Ia,Sp);
+  if(ip.Pout.every(v=>v===0))ip.Pout=Sp.map((s,i)=>Math.max(0,ip.Torque[i]*s*2*Math.PI/60));
+  if(ip.Pin.every(v=>v===0))ip.Pin=ip.Pout.map(p=>p/0.85);
+  if(ip.eff.every(v=>v===0))ip.eff=ip.Pin.map((p,i)=>p>0?Math.min(ip.Pout[i]/p*100,100):0);
+  const maxT=Math.max(...ip.Torque),K=maxT/Math.pow(2*Math.PI*maxS/60,2);
+  const lc=Sp.map(s=>K*Math.pow(2*Math.PI*s/60,2));
+  const rpv2=parseFloat($('rpv').value)||0;
+  const rpn=parseInt(document.querySelector('input[name="rp"]:checked').value);
+  let rI=Math.floor(Sp.length*0.75);
+  if(rpn===0){for(let i=Sp.length-1;i>=0;i--){if(lc[i]<ip.Torque[i]){rI=i;break;}}}
+  else if(rpn===1){rI=Sp.reduce((b,s,i)=>Math.abs(s-rpv2)<Math.abs(Sp[b]-rpv2)?i:b,0);}
+  else{const r2=[...ip.Pout].reverse();const fi2=r2.findIndex(p=>p>rpv2);if(fi2>=0)rI=Sp.length-1-fi2;}
+  const regs=[mkR('No-Load',ip.Torque.indexOf(Math.min(...ip.Torque)),Sp,ip,mdf),mkR('Max Eff.',ip.eff.indexOf(Math.max(...ip.eff)),Sp,ip,mdf),mkR('Rated',rI,Sp,ip,mdf),mkR('MaxPout',ip.Pout.indexOf(Math.max(...ip.Pout)),Sp,ip,mdf),mkR('Locked',0,Sp,ip,mdf)];
+  const fn=`${name.toUpperCase()}_${dir.toString().toUpperCase()}`;
+  return{key:fn,name:fn,speed:Sp,ip,regs,cRegs:[],lc,lcK:K,rSpdV:Sp[rI]||0,volt:Volt,freq,dir,mdf,rp:rpn};
+}
+function mkR(lbl,idx,Sp,ip,mdf){return{Region:lbl,Speed:Sp[idx]||0,Torque:ip.Torque[idx]||0,Pin:ip.Pin[idx]||0,Po:ip.Pout[idx]||0,Eff:ip.eff[idx]||0,pf:ip.PF[idx]||0,It:ip.It[idx]||0,Im:(mdf===0&&ip.Im)?ip.Im[idx]||0:null,Ia:(mdf===0&&ip.Ia)?ip.Ia[idx]||0:null};}
+
+// ════════════════════════════
+//  CUSTOM REGIONS
+// ════════════════════════════
+$('acr').addEventListener('click',()=>{
+  const n=$('crn').value.trim(),by=$('crb').value,val=parseFloat($('crv').value);
+  if(!n){toast('Enter a name','err');return;}if(isNaN(val)){toast('Enter a value','err');return;}
+  const cr={id:Date.now(),name:n,by,val};CRs.push(cr);rCRL();
+  Object.values(PF).forEach(d=>apCR(d,cr));
+  const s=$('fs');if(s.value&&PF[s.value]){rc(PF[s.value],curCt);rT(PF[s.value]);}
+  toast(`Region "${n}" added`,'ok');
+});
+function apCR(data,cr){
+  const ip=data.ip,Sp=data.speed,mdf=data.mdf;let idx=0;
+  if(cr.by==='speed')idx=Sp.reduce((b,s,i)=>Math.abs(s-cr.val)<Math.abs(Sp[b]-cr.val)?i:b,0);
+  else if(cr.by==='torque')idx=ip.Torque.reduce((b,v,i)=>Math.abs(v-cr.val)<Math.abs(ip.Torque[b]-cr.val)?i:b,0);
+  else if(cr.by==='pout')idx=ip.Pout.reduce((b,v,i)=>Math.abs(v-cr.val)<Math.abs(ip.Pout[b]-cr.val)?i:b,0);
+  else if(cr.by==='eff')idx=ip.eff.reduce((b,v,i)=>Math.abs(v-cr.val)<Math.abs(ip.eff[b]-cr.val)?i:b,0);
+  const reg=mkR(cr.name,idx,Sp,ip,mdf);reg.isC=true;reg._id=cr.id;
+  data.cRegs=data.cRegs.filter(r=>r._id!==cr.id);data.cRegs.push(reg);
+}
+function rCRL(){const l=$('crl');l.innerHTML='';CRs.forEach(cr=>{const c=document.createElement('div');c.className='fc';c.innerHTML=`<span class="fcd" style="background:#7700bb;"></span>${cr.name} (${cr.by}=${cr.val})<button onclick="delCR(${cr.id})" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--err);">✕</button>`;l.appendChild(c);});}
+function delCR(id){CRs=CRs.filter(c=>c.id!==id);Object.values(PF).forEach(d=>{d.cRegs=d.cRegs.filter(r=>r._id!==id);});rCRL();const s=$('fs');if(s.value&&PF[s.value]){rc(PF[s.value],curCt);rT(PF[s.value]);}toast('Custom region removed');}
+
+// ════════════════════════════
+//  PROCESS BUTTON
+// ════════════════════════════
+$('proc').addEventListener('click',async()=>{
+  if(!uplFiles.length){toast('No files uploaded.','err');return;}
+  setst('PROCESSING…');setpb(10);PF={};log('=== Processing ===','ok');
+  const step=80/uplFiles.length;
+  for(let i=0;i<uplFiles.length;i++){
+    const f=uplFiles[i];log(`Reading: ${f.name}`);
+    try{setpb(10+step*i);const p=await parseF(f);const r=procData(p);CRs.forEach(cr=>apCR(r,cr));PF[r.key]=r;log(`✓ ${r.key}`,'ok');}
+    catch(err){log(`✗ ${f.name}: ${err.message}`,'err');toast(`Error: ${f.name}`,'err');}
+  }
+  setpb(100);setst('DONE');log(`=== ${Object.keys(PF).length} file(s) done ===`,'ok');toast(`${Object.keys(PF).length} processed`,'ok');updUI();setTimeout(()=>setpb(0),800);
+});
+
+// ════════════════════════════
+//  DEMO
+// ════════════════════════════
+$('demo').addEventListener('click',()=>{
+  PF={};['DEMO_A','DEMO_B','DEMO_C'].forEach((k,i)=>{const d=bDemo(k,1-i*0.04);CRs.forEach(cr=>apCR(d,cr));PF[d.key]=d;});
+  toast('Demo (3 motors) loaded!','ok');log('Demo loaded','ok');updUI();
+});
+function bDemo(key,f=1){
+  const Sp=rng(50,1480,5),maxS=Math.max(...Sp);
+  const ip={Torque:Sp.map(s=>Math.max(0.05,12*f*(1-s/maxS))),Pin:Sp.map(s=>220*f+s*0.65*f),Pout:Sp.map(()=>0),eff:Sp.map(s=>{const x=s/maxS;return 100*Math.min(0.93,(0.28+1.5*x-0.85*x*x)*f);}),PF:Sp.map(s=>Math.min(0.99,(0.48+0.44*(s/maxS))*f)),It:Sp.map(s=>4*f*(1-0.28*(s/maxS))),Im:Sp.map(s=>2.1*f*(1-0.08*(s/maxS))),Ia:Sp.map(s=>2.6*f*(s/maxS))};
+  ip.Pout=Sp.map((s,i)=>Math.max(0,ip.Torque[i]*s*2*Math.PI/60));
+  ip.eff=ip.Pin.map((p,i)=>p>0?Math.min(ip.Pout[i]/p*100,98):0);
+  const maxT=Math.max(...ip.Torque),K=maxT/Math.pow(2*Math.PI*maxS/60,2);
+  const lc=Sp.map(s=>K*Math.pow(2*Math.PI*s/60,2));
+  let rI=Math.floor(Sp.length*0.75);for(let i=Sp.length-1;i>=0;i--){if(lc[i]<ip.Torque[i]){rI=i;break;}}
+  const regs=[mkR('No-Load',0,Sp,ip,0),mkR('Max Eff.',Math.floor(Sp.length*0.6),Sp,ip,0),mkR('Rated',rI,Sp,ip,0),mkR('MaxPout',Sp.length-5,Sp,ip,0),mkR('Locked',0,Sp,ip,0)];
+  return{key,name:key,speed:Sp,ip,regs,cRegs:[],lc,lcK:K,rSpdV:Sp[rI],volt:220,freq:50,dir:'FWD',mdf:0,rp:0};
 }
 
-// ═══════════════════════════════
-//  Render Chart
-// ═══════════════════════════════
-function renderChart(data,tab){
-  $('emptyChart').style.display='none';
-  $('motorChart').style.display='block';
-  $('chartTitle').textContent=data.name;
+// ════════════════════════════
+//  UI SYNC
+// ════════════════════════════
+function updUI(){
+  const keys=Object.keys(PF);if(!keys.length)return;
+  $('fs').innerHTML=keys.map(k=>`<option value="${k}">${k}</option>`).join('');
+  rc(PF[keys[0]],curCt);rT(PF[keys[0]]);
+}
+$('fs').addEventListener('change',e=>{const d=PF[e.target.value];if(d){rc(d,curCt);rT(d);}});
+document.querySelectorAll('.ctab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.ctab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');curCt=t.dataset.ct;
+    const d=PF[$('fs').value];if(d)rc(d,curCt);
+  });
+});
 
-  const S=data.speed, ip=data.interpolated, p=pal();
-  const hideAxis=$('deleteAxis').value.toLowerCase().trim();
-  const showLC=data.ratedParam===0;
+// ════════════════════════════
+//  PALETTE
+// ════════════════════════════
+const CP={c:['#005faa','#c04000','#2e7000','#8a6000','#7700bb','#aa0033'],dim:'#5a6890',grid:'rgba(100,120,180,.18)',grid2:'rgba(100,120,180,.10)',bg:'#fff',border:'#c8d0e8',tip:'#fff',op:'rgba(0,80,200,.5)',lc:'rgba(30,120,0,.8)'};
+const MONO="'Share Tech Mono',monospace";
 
+function bDS(data,tab){
+  const S=data.speed,ip=data.ip;
+  const ha=$('da').value.toLowerCase().trim();
+  const slc=data.rp===0;
   let ds=[];
   if(tab==='all'||tab==='power'){
-    // Motor torque curve
-    ds.push({label:'Torque (N·m)',yAxisID:'y0',borderColor:p.c[0],borderWidth:2.5,pointRadius:0,tension:.3,data:S.map((s,i)=>({x:s,y:ip.Torque[i]}))});
-
-    // ── Load curve T_L = K·(2π/60·N)² overlay ──
-    if(showLC && data.loadCurve){
-      ds.push({
-        label:`T_Load = K·(2π/60·N)²   [K = ${data.loadCurveK.toFixed(4)}]`,
-        yAxisID:'y0', borderColor:p.lcLine,
-        borderWidth:2.2, borderDash:[8,5], pointRadius:0, tension:.3,
-        data:S.map((s,i)=>({x:s,y:data.loadCurve[i]}))
-      });
-    }
-
-    ds.push({label:'Pin (W)',yAxisID:'y1',borderColor:p.c[1],borderWidth:2,pointRadius:0,tension:.3,data:S.map((s,i)=>({x:s,y:ip.Pin[i]}))});
-    ds.push({label:'Pout (W)',yAxisID:'y1',borderColor:p.c[2],borderWidth:2,pointRadius:0,tension:.3,data:S.map((s,i)=>({x:s,y:ip.Pout[i]}))});
+    ds.push({label:'Torque (N·m)',yAxisID:'y0',borderColor:CP.c[0],borderWidth:2.5,pointRadius:0,tension:.3,data:S.map((s,i)=>({x:s,y:ip.Torque[i]}))});
+    if(slc&&data.lc)ds.push({label:`T_Load [K=${data.lcK.toFixed(4)}]`,yAxisID:'y0',borderColor:CP.lc,borderWidth:2,borderDash:[8,5],pointRadius:0,tension:.3,data:S.map((s,i)=>({x:s,y:data.lc[i]}))});
+    ds.push({label:'Pin (W)',yAxisID:'y1',borderColor:CP.c[1],borderWidth:2,pointRadius:0,tension:.3,data:S.map((s,i)=>({x:s,y:ip.Pin[i]}))});
+    ds.push({label:'Pout (W)',yAxisID:'y1',borderColor:CP.c[2],borderWidth:2,pointRadius:0,tension:.3,data:S.map((s,i)=>({x:s,y:ip.Pout[i]}))});
   }
   if(tab==='all'||tab==='eff'){
-    ds.push({label:'Efficiency (%)',yAxisID:'y2',borderColor:p.c[3],borderWidth:2,pointRadius:0,tension:.3,data:S.map((s,i)=>({x:s,y:ip.eff[i]}))});
-    if(hideAxis!=='pf') ds.push({label:'Power Factor',yAxisID:'y2',borderColor:p.c[4],borderWidth:2,pointRadius:0,tension:.3,data:S.map((s,i)=>({x:s,y:ip.PF[i]}))});
-    ds.push({label:'It (A)',yAxisID:'y3',borderColor:p.c[5],borderWidth:2,pointRadius:0,tension:.3,data:S.map((s,i)=>({x:s,y:ip.It[i]}))});
+    ds.push({label:'Efficiency (%)',yAxisID:'y2',borderColor:CP.c[3],borderWidth:2,pointRadius:0,tension:.3,data:S.map((s,i)=>({x:s,y:ip.eff[i]}))});
+    if(ha!=='pf')ds.push({label:'Power Factor',yAxisID:'y2',borderColor:CP.c[4],borderWidth:2,pointRadius:0,tension:.3,data:S.map((s,i)=>({x:s,y:ip.PF[i]}))});
+    ds.push({label:'It (A)',yAxisID:'y3',borderColor:CP.c[5],borderWidth:2,pointRadius:0,tension:.3,data:S.map((s,i)=>({x:s,y:ip.It[i]}))});
   }
-
-  // Operating-point vertical line
-  const rs=data.ratedSpeedVal, yMax=Math.max(...ip.Torque)*1.15;
-  ds.push({
-    label:`Op. Point (${rs.toFixed(0)} RPM)`,
-    yAxisID:'y0', borderColor:p.opLine, borderWidth:1.5, borderDash:[5,4],
-    pointRadius:0, tension:0, data:[{x:rs,y:0},{x:rs,y:yMax}]
-  });
-
-  if(currentChart){currentChart.destroy();currentChart=null;}
-
-  const mono="'Share Tech Mono',monospace";
-  const axS=(lbl,col)=>({type:'linear',title:{display:true,text:lbl,color:col,font:{family:mono,size:10}},ticks:{color:col,font:{family:mono,size:9}},grid:{display:false}});
-
-  currentChart=new Chart($('motorChart').getContext('2d'),{
-    type:'line', data:{datasets:ds},
-    options:{
-      responsive:true, maintainAspectRatio:false, animation:{duration:380},
-      interaction:{mode:'index',intersect:false},
-      plugins:{
-        legend:{labels:{color:p.dim,font:{family:mono,size:11},boxWidth:20,padding:12}},
-        tooltip:{backgroundColor:p.tip,borderColor:p.border,borderWidth:1,
-                 titleColor:p.dim,bodyColor:p.dim,
-                 titleFont:{family:mono,size:11},bodyFont:{family:mono,size:11},
-                 callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y?.toFixed(3)}`}},
-      },
-      scales:{
-        x:{type:'linear',title:{display:true,text:'Speed (RPM)',color:p.dim,font:{family:mono,size:11}},ticks:{color:p.dim,font:{family:mono,size:10}},grid:{color:p.grid},min:Math.min(...S),max:Math.max(...S)},
-        y0:{type:'linear',position:'left',title:{display:true,text:'Torque (N·m)',color:p.c[0],font:{family:mono,size:10}},ticks:{color:p.c[0],font:{family:mono,size:9}},grid:{color:p.grid2}},
-        y1:{...axS('Power (W)',p.c[1]),position:'right'},
-        y2:{...axS('Eff / PF',p.c[3]),position:'right',offset:true},
-        y3:{...axS('Current (A)',p.c[5]),position:'right',offset:true},
-      }
-    }
-  });
+  const rs=data.rSpdV,ym=Math.max(...ip.Torque)*1.15;
+  ds.push({label:`Op.Pt (${rs.toFixed(0)} RPM)`,yAxisID:'y0',borderColor:CP.op,borderWidth:1.5,borderDash:[5,4],pointRadius:0,tension:0,data:[{x:rs,y:0},{x:rs,y:ym}]});
+  return ds;
+}
+function cOpts(S){
+  const ax=(l,c)=>({type:'linear',title:{display:true,text:l,color:c,font:{family:MONO,size:10}},ticks:{color:c,font:{family:MONO,size:9}},grid:{display:false}});
+  return{responsive:true,maintainAspectRatio:false,animation:{duration:300},interaction:{mode:'index',intersect:false},
+    plugins:{legend:{labels:{color:CP.dim,font:{family:MONO,size:10},boxWidth:15,padding:8}},tooltip:{backgroundColor:CP.tip,borderColor:CP.border,borderWidth:1,titleColor:CP.dim,bodyColor:CP.dim,titleFont:{family:MONO,size:10},bodyFont:{family:MONO,size:10},callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y?.toFixed(3)}`}}},
+    scales:{x:{type:'linear',title:{display:true,text:'Speed (RPM)',color:CP.dim,font:{family:MONO,size:10}},ticks:{color:CP.dim,font:{family:MONO,size:9}},grid:{color:CP.grid},min:Math.min(...S),max:Math.max(...S)},y0:{type:'linear',position:'left',title:{display:true,text:'Torque (N·m)',color:CP.c[0],font:{family:MONO,size:10}},ticks:{color:CP.c[0],font:{family:MONO,size:9}},grid:{color:CP.grid2}},y1:{...ax('Power (W)',CP.c[1]),position:'right'},y2:{...ax('Eff / PF',CP.c[3]),position:'right',offset:true},y3:{...ax('Current (A)',CP.c[5]),position:'right',offset:true}}
+  };
 }
 
-// ═══════════════════════════════
-//  Render Table
-// ═══════════════════════════════
-function renderTable(data){
-  $('regionsSubtitle').textContent=data.name;
-  const tb=$('regionsBody'); tb.innerHTML='';
-  data.regions.forEach(r=>{
-    const bc={'No-Load':'no-load','Max Eff.':'max-eff','Rated':'rated','Full-Load':'full-load'}[r.Region]||'rated';
+function rc(data,tab){
+  $('ec').style.display='none';$('mc').style.display='block';$('cttl').textContent=data.name;
+  if(curChart){curChart.destroy();curChart=null;}
+  curChart=new Chart($('mc').getContext('2d'),{type:'line',data:{datasets:bDS(data,tab)},options:cOpts(data.speed)});
+}
+function allR(data){return[...data.regs,...(data.cRegs||[])];}
+function rT(data){
+  $('rs2').textContent=data.name;const tb=$('rb');tb.innerHTML='';
+  allR(data).forEach(r=>{
+    const bc=r.isC?'cu':{'No-Load':'nl','Max Eff.':'me','Rated':'rt'}[r.Region]||'df';
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td><span class="region-badge ${bc}">${r.Region}</span></td>
-      <td>${r.Speed.toFixed(1)}</td><td>${r.Torque.toFixed(3)}</td>
-      <td>${r.Pin.toFixed(1)}</td><td>${r.Po.toFixed(1)}</td>
-      <td>${r.Eff.toFixed(2)}</td><td>${r.pf.toFixed(3)}</td><td>${r.It.toFixed(3)}</td>
-      <td>${r.Im!==null?r.Im.toFixed(3):'—'}</td><td>${r.Ia!==null?r.Ia.toFixed(3):'—'}</td>`;
+    tr.innerHTML=`<td><span class="rb ${bc}">${r.Region}</span></td><td>${r.Speed.toFixed(1)}</td><td>${r.Torque.toFixed(3)}</td><td>${r.Pin.toFixed(1)}</td><td>${r.Po.toFixed(1)}</td><td>${r.Eff.toFixed(2)}</td><td>${r.pf.toFixed(3)}</td><td>${r.It.toFixed(3)}</td><td>${r.Im!==null?r.Im.toFixed(3):'—'}</td><td>${r.Ia!==null?r.Ia.toFixed(3):'—'}</td>`;
     tb.appendChild(tr);
   });
 }
+function tblRows(data){return allR(data).map(r=>[r.Region,r.Speed.toFixed(1),r.Torque.toFixed(3),r.Pin.toFixed(1),r.Po.toFixed(1),r.Eff.toFixed(2),r.pf.toFixed(3),r.It.toFixed(3),r.Im!==null?r.Im.toFixed(3):'—',r.Ia!==null?r.Ia.toFixed(3):'—']);}
 
-// ═══════════════════════════════
-//  📷 Screenshot / Export Plot
-// ═══════════════════════════════
-$('screenshotBtn').addEventListener('click',()=>{
-  if(!currentChart){ toast('No chart to save. Process data first.','err'); return; }
+// ════════════════════════════
+//  DRAW COMBINED CANVAS
+// ════════════════════════════
+async function mkCombined(data,tab,W=1200,H=650){
+  // Render to offscreen
+  const off=document.createElement('canvas');off.width=W;off.height=H;
+  const tmpC=new Chart(off,{type:'line',data:{datasets:bDS(data,tab)},options:{...cOpts(data.speed),animation:{duration:0},responsive:false,maintainAspectRatio:false}});
+  await new Promise(r=>setTimeout(r,180));
+  const rows=tblRows(data);
+  const rH=20,cW=[110,80,80,74,74,80,64,68,68,68];
+  const tH=(rows.length+2)*rH+14;
+  const out=document.createElement('canvas');out.width=W;out.height=H+tH;
+  const ctx=out.getContext('2d');
+  ctx.fillStyle='#f0f2f8';ctx.fillRect(0,0,W,H+tH);
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);ctx.drawImage(off,0,0);
+  ctx.fillStyle='#edf0f8';ctx.fillRect(0,H,W,tH);
+  ctx.fillStyle='#0066cc';ctx.font=`bold 12px 'Share Tech Mono',monospace`;ctx.fillText(`OPERATING REGIONS — ${data.name}`,10,H+16);
+  const hds=['Region','Speed','Torque','Pin','Pout','Eff%','PF','It','Im','Ia'];
+  let hx=10;ctx.fillStyle='#5a6890';ctx.font=`bold 10px 'Share Tech Mono',monospace`;
+  hds.forEach((h,j)=>{ctx.fillText(h,hx,H+32);hx+=cW[j];});
+  rows.forEach((row,ri)=>{
+    hx=10;const ry=H+32+(ri+1)*rH;
+    if(ri%2===0){ctx.fillStyle='rgba(0,102,204,.04)';ctx.fillRect(0,ry-13,W,rH);}
+    row.forEach((v,ci)=>{ctx.fillStyle=ci===0?'#7700bb':'#5a6890';ctx.font=`9px 'Share Tech Mono',monospace`;ctx.fillText(String(v).slice(0,14),hx,ry);hx+=cW[ci];});
+  });
+  tmpC.destroy();
+  return out;
+}
 
-  const canvas=$('motorChart'), p=pal();
+// ════════════════════════════
+//  EXPORT ALL PLOTS ZIP
+// ════════════════════════════
+$('expAP').addEventListener('click',async()=>{
+  const keys=Object.keys(PF);if(!keys.length){toast('No data. Process first.','err');return;}
+  showEO('Exporting all plots…');
+  const zip=new JSZip();const folder=zip.folder('Analyze_Plots');
   const ts=new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
-  const fname=`${$('chartTitle').textContent.replace(/[^a-z0-9_-]/gi,'_')}_${ts}.png`;
+  for(let i=0;i<keys.length;i++){
+    const k=keys[i],data=PF[k];
+    setEO(`Rendering ${i+1}/${keys.length}: ${k}`,((i+1)/keys.length)*88);
+    const combined=await mkCombined(data,curCt);
+    const b64=combined.toDataURL('image/png').split(',')[1];
+    folder.file(`${k}_${ts}.png`,b64,{base64:true});
+  }
+  setEO('Building ZIP…',95);
+  const blob=await zip.generateAsync({type:'blob'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`Analyze_Plots_${ts}.zip`;a.click();
+  hideEO();toast(`${keys.length} plots exported!`,'ok');log(`🖼 All plots ZIP: Analyze_Plots_${ts}.zip`,'ok');
+});
 
-  // Off-screen canvas with solid background fill
-  const off=document.createElement('canvas');
-  off.width=canvas.width; off.height=canvas.height;
-  const octx=off.getContext('2d');
-  octx.fillStyle=p.bg;
-  octx.fillRect(0,0,off.width,off.height);
-  octx.drawImage(canvas,0,0);
-
-  const a=document.createElement('a');
-  a.href=off.toDataURL('image/png');
-  a.download=fname; a.click();
-
-  const flash=document.createElement('div');
-  flash.className='screenshot-flash';
-  document.body.appendChild(flash);
-  setTimeout(()=>flash.remove(),400);
-
+// ════════════════════════════
+//  SCREENSHOT (current)
+// ════════════════════════════
+$('shot').addEventListener('click',async()=>{
+  if(!curChart){toast('No chart. Process first.','err');return;}
+  const data=PF[$('fs').value];if(!data)return;
+  showEO('Saving plot…');
+  const combined=await mkCombined(data,curCt,$('mc').width,$('mc').height);
+  const ts=new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+  const fname=`${data.name.replace(/[^a-z0-9_-]/gi,'_')}_${ts}.png`;
+  const a=document.createElement('a');a.href=combined.toDataURL('image/png');a.download=fname;a.click();
+  hideEO();const fl=document.createElement('div');fl.className='sf';document.body.appendChild(fl);setTimeout(()=>fl.remove(),380);
   toast(`Saved: ${fname}`,'ok');
-  log(`📷 Exported chart: ${fname}`,'ok');
 });
 
-// ═══════════════════════════════
-//  Export Data
-// ═══════════════════════════════
-$('exportBtn').addEventListener('click',()=>{
-  const keys=Object.keys(processedFiles);
-  if(!keys.length){toast('No data to export.','err');return;}
-  const doX=$('exportXlsx').checked, doS=$('exportSummary').checked, doC=$('exportCsv').checked;
+// Regions table PNG
+$('rtpng').addEventListener('click',()=>{
+  const data=PF[$('fs').value];if(!data){toast('No data.','err');return;}
+  const rows=tblRows(data);const cW=[110,80,80,74,74,80,64,68,68,68];
+  const W=cW.reduce((a,b)=>a+b,0)+20,H=(rows.length+3)*22+16;
+  const off=document.createElement('canvas');off.width=W;off.height=H;
+  const ctx=off.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#0066cc';ctx.font=`bold 11px 'Share Tech Mono',monospace`;ctx.fillText(`Regions — ${data.name}`,10,17);
+  const hds=['Region','Speed','Torque','Pin','Pout','Eff%','PF','It','Im','Ia'];
+  let hx=10;ctx.fillStyle='#5a6890';ctx.font=`bold 10px 'Share Tech Mono',monospace`;
+  hds.forEach((h,j)=>{ctx.fillText(h,hx,36);hx+=cW[j];});
+  rows.forEach((row,ri)=>{hx=10;const ry=36+(ri+1)*22;if(ri%2===0){ctx.fillStyle='rgba(0,102,204,.04)';ctx.fillRect(0,ry-14,W,22);}row.forEach((v,ci)=>{ctx.fillStyle=ci===0?'#7700bb':'#5a6890';ctx.font=`9px 'Share Tech Mono',monospace`;ctx.fillText(v,hx,ry);hx+=cW[ci];});});
   const ts=new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
-  let n=0;
-  keys.forEach(k=>{const d=processedFiles[k]; if(doX){expXlsx(d,ts);n++;} if(doC){expCsv(d,ts);n++;}});
-  if(doS){expSum(ts);n++;}
-  toast(`${n} file(s) downloaded`,'ok');
-  log(`=== Exported ${n} file(s) ===`,'ok');
+  const a=document.createElement('a');a.href=off.toDataURL('image/png');a.download=`${data.name}_regions_${ts}.png`;a.click();
+  toast('Table PNG saved','ok');
 });
 
-function expXlsx(data,ts){
-  const wb=XLSX.utils.book_new();
-  const rr=[['Region','Speed (RPM)','Torque (N·m)','Pin (W)','Pout (W)','Efficiency (%)','PF','It (A)','Im (A)','Ia (A)']];
-  data.regions.forEach(r=>rr.push([r.Region,+r.Speed.toFixed(2),+r.Torque.toFixed(4),+r.Pin.toFixed(2),+r.Po.toFixed(2),+r.Eff.toFixed(3),+r.pf.toFixed(4),+r.It.toFixed(4),r.Im!==null?+r.Im.toFixed(4):'',r.Ia!==null?+r.Ia.toFixed(4):'']));
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rr),'Regions');
-  const hh=['Speed','Torque','Pin','Pout','Efficiency','PF','It'];
-  if(data.interpolated.Im)hh.push('Im'); if(data.interpolated.Ia)hh.push('Ia');
-  if(data.loadCurve)hh.push('T_Load=K*(2pi/60*N)^2');
-  const dr=[hh];
-  data.speed.forEach((s,i)=>{
-    const row=[s,+data.interpolated.Torque[i]?.toFixed(4),+data.interpolated.Pin[i]?.toFixed(2),+data.interpolated.Pout[i]?.toFixed(2),+data.interpolated.eff[i]?.toFixed(3),+data.interpolated.PF[i]?.toFixed(4),+data.interpolated.It[i]?.toFixed(4)];
-    if(data.interpolated.Im)row.push(+data.interpolated.Im[i]?.toFixed(4));
-    if(data.interpolated.Ia)row.push(+data.interpolated.Ia[i]?.toFixed(4));
-    if(data.loadCurve)row.push(+data.loadCurve[i]?.toFixed(5));
-    dr.push(row);
-  });
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(dr),'Interpolated_Data');
-  XLSX.writeFile(wb,`${data.name}_${ts}.xlsx`);
-}
+// ════════════════════════════
+//  EXPORT ANALYZE ZIP
+// ════════════════════════════
+$('expAn').addEventListener('click',async()=>{
+  const keys=Object.keys(PF);if(!keys.length){toast('No data.','err');return;}
+  const d1=$('ex1').checked,d2=$('ex2').checked,d3=$('ex3').checked,d4=$('ex4').checked;
+  if(!d1&&!d2&&!d3&&!d4){toast('Select an export option.','err');return;}
+  showEO('Building Analyze export…');
+  const zip=new JSZip();const folder=zip.folder('Analyze_Export');
+  const ts=new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+  let n=0,total=(d1?keys.length:0)+(d2?1:0)+(d3?keys.length:0)+(d4?1:0);
+  for(const k of keys){
+    const data=PF[k];
+    if(d1){setEO(`XLSX: ${data.name}`,n/total*85);n++;folder.file(`${data.name}_${ts}.xlsx`,xlB(data));}
+    if(d3){setEO(`CSV: ${data.name}`,n/total*85);n++;folder.file(`${data.name}_regions_${ts}.csv`,csvS(data));}
+    await new Promise(r=>setTimeout(r,25));
+  }
+  if(d2){setEO('Summary TXT…',88);n++;folder.file(`Summary_${ts}.txt`,sumS());}
+  if(d4){setEO('Combined XLSX…',92);n++;folder.file(`AllFiles_Combined_${ts}.xlsx`,allB());}
+  setEO('ZIP…',96);
+  const blob=await zip.generateAsync({type:'blob'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`Analyze_Export_${ts}.zip`;a.click();
+  hideEO();toast('Analyze export done!','ok');log('=== Analyze_Export ZIP downloaded ===','ok');
+});
 
-function expCsv(data,ts){
-  const lines=['Region,Speed (RPM),Torque (N.m),Pin (W),Pout (W),Efficiency (%),PF,It (A),Im (A),Ia (A)'];
-  data.regions.forEach(r=>lines.push([r.Region,r.Speed.toFixed(2),r.Torque.toFixed(4),r.Pin.toFixed(2),r.Po.toFixed(2),r.Eff.toFixed(3),r.pf.toFixed(4),r.It.toFixed(4),r.Im!==null?r.Im.toFixed(4):'',r.Ia!==null?r.Ia.toFixed(4):''].join(',')));
-  dlText(lines.join('\n'),`${data.name}_regions_${ts}.csv`,'text/csv');
-}
-
-function expSum(ts){
-  const L=['DYNAMOMETER ANALYSIS SUMMARY REPORT','='.repeat(50),`Generated: ${new Date().toLocaleString()}`,`Motor Model: ${$('motorModel').value}`,``];
-  Object.values(processedFiles).forEach(d=>{
-    L.push(`FILE: ${d.name}`,'-'.repeat(30),`Voltage: ${d.volt} V`,`Frequency: ${d.frequency} Hz`,`Direction: ${d.direction}`,'','REGIONS:');
-    d.regions.forEach(r=>{
-      L.push(`  ${r.Region}:`,`    Speed:  ${r.Speed.toFixed(2)} RPM`,`    Torque: ${r.Torque.toFixed(3)} N.m`,`    Pin:    ${r.Pin.toFixed(2)} W`,`    Pout:   ${r.Po.toFixed(2)} W`,`    Eff:    ${r.Eff.toFixed(2)} %`,`    PF:     ${r.pf.toFixed(3)}`,`    It:     ${r.It.toFixed(3)} A`);
-      if(r.Im!==null)L.push(`    Im: ${r.Im.toFixed(3)} A`);
-      if(r.Ia!==null)L.push(`    Ia: ${r.Ia.toFixed(3)} A`);
-      L.push('');
+// ════════════════════════════
+//  COMPARE
+// ════════════════════════════
+function renderCmp(){
+  const keys=Object.keys(PF),emp=keys.length<1;
+  $('cmpEc').style.display=emp?'flex':'none';
+  if(emp)return;
+  const metric=$('cm').value;$('cmpLbl').textContent=metric;
+  const ds=keys.map((k,i)=>{const d=PF[k],ip=d.ip,y=ip[metric]||ip.eff;return{label:d.name,borderColor:CP.c[i%CP.c.length],borderWidth:2,pointRadius:0,tension:.3,data:d.speed.map((s,j)=>({x:s,y:y[j]}))};});
+  if(cmpChart){cmpChart.destroy();cmpChart=null;}
+  cmpChart=new Chart($('cmpChart').getContext('2d'),{type:'line',data:{datasets:ds},options:{responsive:true,maintainAspectRatio:false,animation:{duration:260},interaction:{mode:'index',intersect:false},plugins:{legend:{labels:{color:CP.dim,font:{family:MONO,size:10},boxWidth:14,padding:8}},tooltip:{backgroundColor:CP.tip,borderColor:CP.border,borderWidth:1,titleColor:CP.dim,bodyColor:CP.dim,titleFont:{family:MONO,size:10},bodyFont:{family:MONO,size:10}}},scales:{x:{type:'linear',title:{display:true,text:'Speed (RPM)',color:CP.dim,font:{family:MONO,size:10}},ticks:{color:CP.dim,font:{family:MONO,size:9}},grid:{color:CP.grid}},y:{title:{display:true,text:metric,color:CP.dim,font:{family:MONO,size:10}},ticks:{color:CP.dim,font:{family:MONO,size:9}},grid:{color:CP.grid2}}}}});
+  // Table
+  const rN=[];keys.forEach(k=>{allR(PF[k]).forEach(r=>{if(!rN.includes(r.Region))rN.push(r.Region);});});
+  const flds=['Speed','Torque','Pin','Po','Eff','pf','It'],fLbl=['Speed (RPM)','Torque (N·m)','Pin (W)','Pout (W)','Eff (%)','PF','It (A)'];
+  const th=$('cmpTh');th.innerHTML='';
+  const hr=document.createElement('tr');hr.innerHTML='<th rowspan="2" style="background:var(--surface2)">Region</th><th rowspan="2" style="background:var(--surface2)">Parameter</th>';
+  keys.forEach(k=>{const t=document.createElement('th');t.style.background='var(--surface2)';t.textContent=PF[k].name;hr.appendChild(t);});th.appendChild(hr);
+  const tb=$('cmpTb');tb.innerHTML='';
+  rN.forEach(rNm=>{
+    flds.forEach((f,fi)=>{
+      const tr=document.createElement('tr');
+      if(fi===0)tr.innerHTML=`<td rowspan="${flds.length}" style="font-weight:600;color:var(--accent)">${rNm}</td>`;
+      tr.innerHTML+=`<td style="color:var(--dim);font-size:.66rem">${fLbl[fi]}</td>`;
+      keys.forEach(k=>{const r=allR(PF[k]).find(x=>x.Region===rNm);const v=r?r[f]:null;const td=document.createElement('td');td.textContent=v!==null&&v!==undefined?v.toFixed(3):'—';tr.appendChild(td);});
+      tb.appendChild(tr);
     });
-    if(d.ratedParam===0)L.push(`  Load Curve K: ${d.loadCurveK?.toFixed(5)}  (T_L = K*(2pi/60*N)^2)`,'');
-    L.push('');
   });
-  dlText(L.join('\n'),`Summary_${ts}.txt`,'text/plain');
 }
+$('rcmp').addEventListener('click',renderCmp);
 
-function dlText(text,fname,mime){
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([text],{type:mime}));
-  a.download=fname; a.click(); URL.revokeObjectURL(a.href);
-}
-
-// ═══════════════════════════════
-//  Clear
-// ═══════════════════════════════
-$('clearBtn').addEventListener('click',()=>{
-  processedFiles={}; uploadedFiles=[]; renderFileList();
-  if(currentChart){currentChart.destroy();currentChart=null;}
-  $('emptyChart').style.display='';
-  $('motorChart').style.display='none';
-  $('chartTitle').textContent='— No Data Loaded —';
-  $('regionsSubtitle').textContent='No data';
-  $('regionsBody').innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--text-dim);padding:16px;">No results yet</td></tr>';
-  $('fileSelector').innerHTML='<option value="">Select file…</option>';
-  log('Cleared','warn'); toast('Cleared'); setStatus('READY');
+$('cmpPng').addEventListener('click',()=>{
+  if(!cmpChart){toast('No compare chart.','err');return;}
+  const src=$('cmpChart');const off=document.createElement('canvas');off.width=src.width;off.height=src.height;
+  const ctx=off.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,off.width,off.height);ctx.drawImage(src,0,0);
+  const ts=new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+  const a=document.createElement('a');a.href=off.toDataURL('image/png');a.download=`Compare_${$('cm').value}_${ts}.png`;a.click();
+  toast('Compare chart PNG saved','ok');
 });
 
-// ═══════════════════════════════
-//  Log toggle
-// ═══════════════════════════════
-$('logToggle').addEventListener('click',()=>{
-  const open=$('logPanel').classList.toggle('open');
-  $('logArrow').textContent=open?'▼':'▲';
+$('expCmp').addEventListener('click',async()=>{
+  const keys=Object.keys(PF);if(!keys.length){toast('No data.','err');return;}
+  showEO('Building Compare export…');
+  const zip=new JSZip();const folder=zip.folder('Compare_Export');
+  const ts=new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+  // XLSX
+  setEO('Compare XLSX…',30);
+  const rN=[];keys.forEach(k=>{allR(PF[k]).forEach(r=>{if(!rN.includes(r.Region))rN.push(r.Region);});});
+  const flds=['Speed','Torque','Pin','Po','Eff','pf','It','Im','Ia'],fLbl=['Speed (RPM)','Torque (N·m)','Pin (W)','Pout (W)','Eff (%)','PF','It (A)','Im (A)','Ia (A)'];
+  const rows=[['Region','Parameter',...keys.map(k=>PF[k].name)]];
+  rN.forEach(rNm=>{flds.forEach((f,fi)=>{const row=[fi===0?rNm:'',fLbl[fi]];keys.forEach(k=>{const r=allR(PF[k]).find(x=>x.Region===rNm);const v=r?r[f]:null;row.push(v!==null&&v!==undefined?+v.toFixed(4):'');});rows.push(row);});});
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'Comparison');
+  folder.file(`Comparison_${ts}.xlsx`,XLSX.write(wb,{type:'array',bookType:'xlsx'}));
+  // Chart PNG
+  if(cmpChart){setEO('Chart PNG…',60);const src=$('cmpChart');const off=document.createElement('canvas');off.width=src.width;off.height=src.height;const ctx=off.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,off.width,off.height);ctx.drawImage(src,0,0);folder.file(`Compare_${$('cm').value}_${ts}.png`,off.toDataURL('image/png').split(',')[1],{base64:true});}
+  setEO('ZIP…',92);
+  const blob=await zip.generateAsync({type:'blob'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`Compare_Export_${ts}.zip`;a.click();
+  hideEO();toast('Compare export done!','ok');log('=== Compare_Export ZIP downloaded ===','ok');
 });
 
-log('Dynamometer Analysis Tool v2.0 ready','ok');
-log('Upload CSV/Excel or click Demo to explore');
+// ════════════════════════════
+//  STATS
+// ════════════════════════════
+async function renderSts(){
+  let allD={...PF};
+  if(stsFiles.length){
+    setst('LOADING…');setpb(10);
+    for(let i=0;i<stsFiles.length;i++){const f=stsFiles[i];try{setpb(10+70*(i/stsFiles.length));const p=await parseF(f);const r=procData(p);allD[r.key]=r;log(`Stats: ${r.key}`,'ok');}catch(err){log(`Err: ${f.name}: ${err.message}`,'err');}}
+    setpb(100);setst('READY');setTimeout(()=>setpb(0),700);
+  }
+  const keys=Object.keys(allD);
+  if(!keys.length){$('sc2').innerHTML='<div class="ec" style="position:relative;padding:50px 20px;"><div class="eci">⊠</div><p>No data.</p></div>';return;}
+  const k=parseFloat($('sk').value)||3;
+  const rN=[];keys.forEach(kk=>{allR(allD[kk]).forEach(r=>{if(!rN.includes(r.Region))rN.push(r.Region);});});
+  const flds=['Speed','Torque','Pin','Po','Eff','pf','It','Im','Ia'],fLbl=['Speed (RPM)','Torque (N·m)','Pin (W)','Pout (W)','Eff (%)','PF','It (A)','Im (A)','Ia (A)'];
+  const sd={};
+  rN.forEach(rNm=>{
+    sd[rNm]={};
+    flds.forEach((f,fi)=>{
+      const vals=keys.map(kk=>{const r=allR(allD[kk]).find(x=>x.Region===rNm);const v=r?r[f]:null;return(v!==null&&!isNaN(v))?v:null;}).filter(v=>v!==null);
+      if(!vals.length){sd[rNm][f]={n:0};return;}
+      const m=avg(vals),s=sdv(vals);
+      sd[rNm][f]={n:vals.length,mean:m,std:s,min:Math.min(...vals),max:Math.max(...vals),lo:m-k*s,hi:m+k*s,label:fLbl[fi]};
+    });
+  });
+  spd=sd;
+  const container=$('sc2');
+  container.innerHTML=`<div style="font-family:var(--mono);font-size:.67rem;color:var(--dim);padding:4px 0 8px;">n = ${keys.length} motors &nbsp;·&nbsp; Production limit = ±${k}σ</div><div class="sg" id="sg"></div>`;
+  const grid=$('sg');
+  rN.forEach(rNm=>{
+    const card=document.createElement('div');card.className='sc';
+    let body='';
+    flds.forEach(f=>{
+      const s=sd[rNm][f];if(!s||!s.n)return;
+      body+=`<div class="sr"><span class="sl">${s.label}</span><span class="sv">${s.mean.toFixed(3)} ±${s.std.toFixed(3)}</span></div><div class="sr"><span class="sl">Limits [±${k}σ]</span><span class="slm">[${s.lo.toFixed(3)} … ${s.hi.toFixed(3)}]</span></div><div class="sr" style="margin-bottom:4px;"><span class="sl">Range</span><span style="color:var(--dim);font-size:.62rem">${s.min.toFixed(3)} … ${s.max.toFixed(3)}</span></div>`;
+    });
+    card.innerHTML=`<div class="sch">${rNm} <span style="font-size:.58rem;color:var(--dim)">(n=${sd[rNm][flds[0]]?.n||0})</span></div><div class="scb">${body||'<span style="color:var(--dim)">No data</span>'}</div>`;
+    grid.appendChild(card);
+  });
+}
+$('rsts').addEventListener('click',renderSts);
+
+$('expSts').addEventListener('click',async()=>{
+  if(!Object.keys(spd).length){toast('Compute first.','err');return;}
+  showEO('Building Statistics export…');
+  const zip=new JSZip();const folder=zip.folder('Statistics_Export');
+  const ts=new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+  const k=parseFloat($('sk').value)||3;
+  setEO('Stats XLSX…',35);
+  const rows=[['Region','Parameter','N','Mean','Std Dev','Min','Max',`Lower (-${k}σ)`,`Upper (+${k}σ)`]];
+  Object.entries(spd).forEach(([rNm,rD])=>{Object.entries(rD).forEach(([f,s])=>{if(!s||!s.n)return;rows.push([rNm,s.label,s.n,+s.mean.toFixed(4),+s.std.toFixed(4),+s.min.toFixed(4),+s.max.toFixed(4),+s.lo.toFixed(4),+s.hi.toFixed(4)]);});});
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'Statistics');
+  folder.file(`Statistics_${ts}.xlsx`,XLSX.write(wb,{type:'array',bookType:'xlsx'}));
+  setEO('Summary TXT…',65);folder.file(`Stats_Summary_${ts}.txt`,stsSum(k));
+  setEO('ZIP…',92);
+  const blob=await zip.generateAsync({type:'blob'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`Statistics_Export_${ts}.zip`;a.click();
+  hideEO();toast('Statistics export done!','ok');log('=== Statistics_Export ZIP downloaded ===','ok');
+});
+function stsSum(k){const L=['PRODUCTION STATISTICS','='.repeat(55),`Generated: ${new Date().toLocaleString()}`,`k = ${k}`,``];Object.entries(spd).forEach(([rNm,rD])=>{L.push(`REGION: ${rNm}`,'-'.repeat(40));Object.entries(rD).forEach(([f,s])=>{if(!s||!s.n)return;L.push(`  ${s.label}:`,`    n: ${s.n}`,`    Mean: ${s.mean.toFixed(4)}  Std: ${s.std.toFixed(4)}`,`    Min: ${s.min.toFixed(4)}  Max: ${s.max.toFixed(4)}`,`    Lower(-${k}σ): ${s.lo.toFixed(4)}  Upper(+${k}σ): ${s.hi.toFixed(4)}`,'');});L.push('');});return L.join('\n');}
+
+// ════════════════════════════
+//  HELPERS
+// ════════════════════════════
+function xlB(data){
+  const wb=XLSX.utils.book_new();
+  const rr=[['Region','Speed','Torque','Pin','Pout','Eff','PF','It','Im','Ia']];
+  allR(data).forEach(r=>rr.push([r.Region,+r.Speed.toFixed(2),+r.Torque.toFixed(4),+r.Pin.toFixed(2),+r.Po.toFixed(2),+r.Eff.toFixed(3),+r.pf.toFixed(4),+r.It.toFixed(4),r.Im!==null?+r.Im.toFixed(4):'',r.Ia!==null?+r.Ia.toFixed(4):'']));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rr),'Regions');
+  const hh=['Speed','Torque','Pin','Pout','Eff','PF','It'];
+  if(data.ip.Im)hh.push('Im');if(data.ip.Ia)hh.push('Ia');if(data.lc)hh.push('T_Load');
+  const dr=[hh];
+  data.speed.forEach((s,i)=>{const row=[s,+data.ip.Torque[i]?.toFixed(4),+data.ip.Pin[i]?.toFixed(2),+data.ip.Pout[i]?.toFixed(2),+data.ip.eff[i]?.toFixed(3),+data.ip.PF[i]?.toFixed(4),+data.ip.It[i]?.toFixed(4)];if(data.ip.Im)row.push(+data.ip.Im[i]?.toFixed(4));if(data.ip.Ia)row.push(+data.ip.Ia[i]?.toFixed(4));if(data.lc)row.push(+data.lc[i]?.toFixed(5));dr.push(row);});
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(dr),'Interpolated');
+  return XLSX.write(wb,{type:'array',bookType:'xlsx'});
+}
+function csvS(data){const l=['Region,Speed,Torque,Pin,Pout,Eff,PF,It,Im,Ia'];allR(data).forEach(r=>l.push([r.Region,r.Speed.toFixed(2),r.Torque.toFixed(4),r.Pin.toFixed(2),r.Po.toFixed(2),r.Eff.toFixed(3),r.pf.toFixed(4),r.It.toFixed(4),r.Im!==null?r.Im.toFixed(4):'',r.Ia!==null?r.Ia.toFixed(4):''].join(',')));return l.join('\n');}
+function sumS(){const L=['DYNAMOMETER SUMMARY','='.repeat(50),`Generated: ${new Date().toLocaleString()}`,`Motor: ${$('mm').value}`,``];Object.values(PF).forEach(d=>{L.push(`FILE: ${d.name}`,'-'.repeat(30),`Voltage: ${d.volt}V  Freq: ${d.freq}Hz  Dir: ${d.dir}`,'','REGIONS:');allR(d).forEach(r=>{L.push(`  ${r.Region}:`,`    Speed: ${r.Speed.toFixed(2)} RPM`,`    Torque: ${r.Torque.toFixed(3)} N.m`,`    Pin: ${r.Pin.toFixed(2)} W`,`    Pout: ${r.Po.toFixed(2)} W`,`    Eff: ${r.Eff.toFixed(2)}%`,`    PF: ${r.pf.toFixed(3)}`,`    It: ${r.It.toFixed(3)} A`);if(r.Im!==null)L.push(`    Im: ${r.Im.toFixed(3)} A`);if(r.Ia!==null)L.push(`    Ia: ${r.Ia.toFixed(3)} A`);L.push('');});if(d.rp===0)L.push(`  Load Curve K: ${d.lcK?.toFixed(5)}`,'');L.push('');});return L.join('\n');}
+function allB(){const wb=XLSX.utils.book_new();Object.values(PF).forEach(data=>{const rr=[['Region','Speed','Torque','Pin','Pout','Eff','PF','It','Im','Ia']];allR(data).forEach(r=>rr.push([r.Region,+r.Speed.toFixed(2),+r.Torque.toFixed(4),+r.Pin.toFixed(2),+r.Po.toFixed(2),+r.Eff.toFixed(3),+r.pf.toFixed(4),+r.It.toFixed(4),r.Im!==null?+r.Im.toFixed(4):'',r.Ia!==null?+r.Ia.toFixed(4):'']));XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rr),data.name.slice(0,31));});const sm=[['File','Region','Speed','Torque','Pin','Pout','Eff','PF','It']];Object.values(PF).forEach(d=>{allR(d).forEach(r=>{sm.push([d.name,r.Region,+r.Speed.toFixed(2),+r.Torque.toFixed(4),+r.Pin.toFixed(2),+r.Po.toFixed(2),+r.Eff.toFixed(3),+r.pf.toFixed(4),+r.It.toFixed(4)]);});});XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(sm),'All_Summary');return XLSX.write(wb,{type:'array',bookType:'xlsx'});}
+
+// ════════════════════════════
+//  CLEAR
+// ════════════════════════════
+$('clr').addEventListener('click',()=>{
+  PF={};uplFiles=[];stsFiles=[];CRs=[];spd={};rfl();rCRL();
+  if(curChart){curChart.destroy();curChart=null;}
+  if(cmpChart){cmpChart.destroy();cmpChart=null;}
+  $('ec').style.display='';$('mc').style.display='none';
+  $('cttl').textContent='— No Data Loaded —';$('rs2').textContent='No data';
+  $('rb').innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--dim);padding:12px;">No results yet</td></tr>';
+  $('fs').innerHTML='<option value="">Select…</option>';
+  $('cmpEc').style.display='flex';$('sc2').innerHTML='<div class="ec" style="position:relative;padding:50px 20px;"><div class="eci">⊠</div><p>No data.</p></div>';
+  log('Cleared','warn');toast('Cleared');setst('READY');
+});
+
+// ════════════════════════════
+//  LOG
+// ════════════════════════════
+$('ltg').addEventListener('click',()=>{const o=$('lp').classList.toggle('open');$('la').textContent=o?'▼':'▲';});
+
+log('Dynamometer Analysis Tool v3.1 ready','ok');
+log('Sidebar: scrollable panels, buttons always visible at bottom');
+log('🖼 Export All Plots: all charts + tables → ZIP');
+log('Each tab exports to its own folder inside a ZIP');
 </script>
 </body>
 </html>
