@@ -171,6 +171,31 @@ tbody td{padding:4px 8px;color:var(--text);white-space:nowrap;}
 .sr{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid rgba(100,120,180,.08);}
 .sl{color:var(--dim);}.sv{color:var(--text);font-weight:600;}.slm{color:var(--err);font-size:.62rem;}
 
+/* STATS SUB-TABS */
+.stabs{display:flex;gap:4px;margin-bottom:10px;}
+.stab{padding:4px 13px;font-family:var(--mono);font-size:.65rem;border:1px solid var(--border);border-radius:20px;color:var(--dim);cursor:pointer;transition:all .13s;letter-spacing:.05em;}
+.stab.active{background:var(--abg);border-color:var(--accent);color:var(--accent);font-weight:700;}
+.stab-panel{display:none;}.stab-panel.active{display:block;}
+
+/* DISTRIBUTION */
+.dist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px;}
+.dist-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:var(--glow);}
+.dist-hdr{padding:6px 12px;background:var(--hg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.dist-hdr span{font-family:var(--mono);font-size:.64rem;color:var(--accent);letter-spacing:.07em;}
+.dist-hdr em{font-family:var(--mono);font-size:.59rem;color:var(--dim);font-style:normal;}
+.dist-body{padding:10px;position:relative;height:210px;}
+.dist-tabs{display:flex;gap:3px;padding:6px 10px 0;border-top:1px solid var(--border);}
+.dtab{padding:2px 8px;font-family:var(--mono);font-size:.59rem;border:1px solid var(--border);border-radius:10px;color:var(--dim);cursor:pointer;transition:all .12s;}
+.dtab.active{background:var(--abg);border-color:var(--accent);color:var(--accent);}
+.dist-stats-row{display:flex;gap:10px;flex-wrap:wrap;padding:6px 10px 8px;font-family:var(--mono);font-size:.6rem;color:var(--dim);}
+.dist-stats-row b{color:var(--text);}
+.dist-region-sel{display:flex;gap:4px;flex-wrap:wrap;padding:0 0 8px;}
+.dreg-btn{padding:3px 9px;font-family:var(--mono);font-size:.61rem;border:1px solid var(--border);border-radius:10px;color:var(--dim);cursor:pointer;transition:all .13s;background:var(--surface);}
+.dreg-btn.active{background:var(--abg);border-color:var(--accent);color:var(--accent);}
+.ov-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:var(--glow);margin-bottom:12px;}
+.ov-hdr{padding:6px 12px;background:var(--hg);border-bottom:1px solid var(--border);font-family:var(--mono);font-size:.64rem;color:var(--accent);letter-spacing:.07em;}
+.ov-body{padding:10px;position:relative;height:260px;}
+
 /* CUSTOM REGION FORM */
 .crf{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px;display:flex;flex-direction:column;gap:6px;}
 .crfr{display:flex;gap:6px;}
@@ -222,7 +247,7 @@ tbody td{padding:4px 8px;color:var(--text);white-space:nowrap;}
       onerror="this.style.display='none';this.parentElement.innerHTML='<div style=\'background:var(--accent);color:#fff;padding:4px 9px;border-radius:5px;font-family:var(--mono);font-size:.7rem;font-weight:bold\'>EA</div>';">
   </a>
   <div class="ht">
-    <h1>Dynamometer Analysis Tool - V 8.0</h1>
+    <h1>Dynamometer Analysis Tool - V 8.1</h1>
     <span>Motor Performance Analyzer · El Araby Group</span>
   </div>
   <div class="hr">
@@ -439,11 +464,46 @@ tbody td{padding:4px 8px;color:var(--text);white-space:nowrap;}
       <span>⬆</span><span style="font-size:.66rem;font-family:var(--mono);">Batch files for stats</span>
     </div>
     <input type="file" id="sfi" multiple accept=".csv,.xlsx,.xls" style="display:none;">
-    <button class="btn bp" id="rsts">↻ Compute</button>
-    <button class="btn bo" id="expSts">⬇ Export Stats</button>
+    <button class="btn bp" id="rsts">&#8635; Compute</button>
+    <button class="btn bo" id="expSts">&#11015; Export Stats</button>
   </div>
-  <div id="sc2">
-    <div class="ec" style="position:relative;padding:60px 20px;"><div class="eci">⊠</div><p>Load files or use processed files, then click Compute</p></div>
+
+  <!-- Sub-tabs -->
+  <div class="stabs">
+    <div class="stab active" id="stab-summary" onclick="switchStab('summary')">&#8862; Summary</div>
+    <div class="stab" id="stab-dist" onclick="switchStab('dist')">&#8865; Distribution</div>
+    <div class="stab" id="stab-box" onclick="switchStab('box')">&#8863; Box Plot</div>
+  </div>
+
+  <!-- Summary panel -->
+  <div class="stab-panel active" id="spanel-summary">
+    <div id="sc2">
+      <div class="ec" style="position:relative;padding:60px 20px;"><div class="eci">&#8864;</div><p>Load files or use processed files, then click Compute</p></div>
+    </div>
+  </div>
+
+  <!-- Distribution panel -->
+  <div class="stab-panel" id="spanel-dist">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+      <span style="font-family:var(--mono);font-size:.64rem;color:var(--accent);letter-spacing:.07em;">FIELD:</span>
+      <div id="dist-field-sel" class="dist-region-sel"></div>
+      <span style="font-family:var(--mono);font-size:.64rem;color:var(--accent);letter-spacing:.07em;margin-left:8px;">BINS:</span>
+      <input type="number" id="dist-bins" value="10" min="3" max="40" style="width:56px;"/>
+    </div>
+    <div id="dist-container">
+      <div class="ec" style="position:relative;padding:60px 20px;"><div class="eci">&#8865;</div><p>Compute statistics first</p></div>
+    </div>
+  </div>
+
+  <!-- Box Plot panel -->
+  <div class="stab-panel" id="spanel-box">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+      <span style="font-family:var(--mono);font-size:.64rem;color:var(--accent);letter-spacing:.07em;">FIELD:</span>
+      <div id="box-field-sel" class="dist-region-sel"></div>
+    </div>
+    <div id="box-container">
+      <div class="ec" style="position:relative;padding:60px 20px;"><div class="eci">&#8863;</div><p>Compute statistics first</p></div>
+    </div>
   </div>
 </div>
 </div>
@@ -486,7 +546,7 @@ document.querySelectorAll('.ntab').forEach(t=>{
     t.classList.add('active');
     const pg='page-'+t.dataset.p;$(pg).classList.add('active');
     if(t.dataset.p==='compare')renderCmp();
-    if(t.dataset.p==='stats')renderSts();
+    if(t.dataset.p==='stats'){renderSts();setTimeout(()=>{renderDistribution();renderBoxPlot();},80);}
   });
 });
 
@@ -1071,7 +1131,238 @@ async function renderSts(){
     grid.appendChild(card);
   });
 }
-$('rsts').addEventListener('click',renderSts);
+$('rsts').addEventListener('click',()=>{renderSts();setTimeout(()=>{renderDistribution();renderBoxPlot();},80);});
+
+// ════════════════════════════
+//  STATS SUB-TAB SWITCH
+// ════════════════════════════
+let distCharts=[];let boxChart=null;
+let distField='Eff';let boxField='Eff';
+const flds2=['Speed','Torque','Pin','Po','Eff','pf','It','Im','Ia'];
+const fLbl2=['Speed (RPM)','Torque (N·m)','Pin (W)','Pout (W)','Eff (%)','PF','It (A)','Im (A)','Ia (A)'];
+
+function switchStab(tab){
+  document.querySelectorAll('.stab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.stab-panel').forEach(x=>x.classList.remove('active'));
+  $('stab-'+tab).classList.add('active');
+  $('spanel-'+tab).classList.add('active');
+  if(tab==='dist')renderDistribution();
+  if(tab==='box')renderBoxPlot();
+}
+
+function makeFieldSel(containerId,currentField,onChange){
+  const c=$(containerId);c.innerHTML='';
+  flds2.forEach((f,i)=>{
+    const b=document.createElement('div');
+    b.className='dreg-btn'+(f===currentField?' active':'');
+    b.textContent=fLbl2[i];
+    b.onclick=()=>{currentField=f;onChange(f);makeFieldSel(containerId,f,onChange);};
+    c.appendChild(b);
+  });
+}
+
+function getValsPerRegion(field){
+  // spdRaw holds actual per-motor values, reconstruct from allD
+  // We need raw motor values – use the allD captured during renderSts
+  // Since we rebuild from PF+stsFiles each renderSts, we re-collect here
+  const out={};
+  // collect from PF
+  const allD2={...PF};
+  const keys=Object.keys(allD2);
+  const regions=[];
+  keys.forEach(kk=>{allR(allD2[kk]).forEach(r=>{if(!regions.includes(r.Region))regions.push(r.Region);});});
+  regions.forEach(rNm=>{
+    out[rNm]=keys.map(kk=>{
+      const r=allR(allD2[kk]).find(x=>x.Region===rNm);
+      const v=r?r[field]:null;
+      return(v!==null&&v!==undefined&&!isNaN(v))?v:null;
+    }).filter(v=>v!==null);
+  });
+  return out;
+}
+
+function makeHistogram(vals,bins){
+  if(!vals.length)return{labels:[],counts:[]};
+  const mn=Math.min(...vals),mx=Math.max(...vals);
+  const bw=(mx-mn)/bins||1;
+  const labels=[],counts=[];
+  for(let i=0;i<bins;i++){
+    const lo=mn+i*bw,hi=lo+bw;
+    labels.push(lo.toFixed(2));
+    counts.push(vals.filter(v=>v>=lo&&(i===bins-1?v<=hi:v<hi)).length);
+  }
+  return{labels,counts,bw,min:mn,max:mx};
+}
+
+function normalCurve(mean,std,x){
+  return(1/(std*Math.sqrt(2*Math.PI)))*Math.exp(-0.5*((x-mean)/std)**2);
+}
+
+// Palette for regions
+const RPAL=['#0066cc','#d94c00','#2e7000','#8a6000','#7700bb','#aa0033','#006680','#aa8800'];
+
+function renderDistribution(){
+  const vpr=getValsPerRegion(distField);
+  const regions=Object.keys(vpr).filter(r=>vpr[r].length>0);
+  if(!regions.length){$('dist-container').innerHTML='<div class="ec" style="position:relative;padding:60px 20px;"><div class="eci">&#8865;</div><p>No data available</p></div>';return;}
+
+  makeFieldSel('dist-field-sel',distField,(f)=>{distField=f;renderDistribution();});
+  const bins=parseInt($('dist-bins').value)||10;
+
+  // Destroy old charts
+  distCharts.forEach(c=>c.destroy());distCharts=[];
+
+  const fLbl=fLbl2[flds2.indexOf(distField)]||distField;
+  let html='<div class="dist-grid" id="dist-grid-inner"></div>';
+  $('dist-container').innerHTML=html;
+  const grid=$('dist-grid-inner');
+
+  regions.forEach((rNm,ri)=>{
+    const vals=vpr[rNm];
+    const m=avg(vals),s=sdv(vals);
+    const {labels,counts,bw,min,max}=makeHistogram(vals,bins);
+    const color=RPAL[ri%RPAL.length];
+    const colorA=color+'33';
+
+    const card=document.createElement('div');card.className='dist-card';
+    const cid='distc-'+ri;
+    card.innerHTML=`
+      <div class="dist-hdr"><span>${rNm}</span><em>n=${vals.length} · mean=${m.toFixed(3)} · σ=${s.toFixed(3)}</em></div>
+      <div class="dist-body"><canvas id="${cid}"></canvas></div>
+      <div class="dist-stats-row">
+        <span>Min: <b>${Math.min(...vals).toFixed(3)}</b></span>
+        <span>Max: <b>${Math.max(...vals).toFixed(3)}</b></span>
+        <span>Mean: <b>${m.toFixed(3)}</b></span>
+        <span>Std: <b>${s.toFixed(3)}</b></span>
+        <span>-3σ: <b>${(m-3*s).toFixed(3)}</b></span>
+        <span>+3σ: <b>${(m+3*s).toFixed(3)}</b></span>
+      </div>`;
+    grid.appendChild(card);
+
+    // Normal curve overlay
+    const nPts=60;const step=(max-min)/(nPts-1)||0.001;
+    const normX=Array.from({length:nPts},(_,i)=>min+i*step);
+    const normY=normX.map(x=>normalCurve(m,s||0.001,x)*(bw||1)*vals.length);
+
+    const ctx=$(cid).getContext('2d');
+    const ch=new Chart(ctx,{
+      type:'bar',
+      data:{
+        labels,
+        datasets:[
+          {label:'Count',data:counts,backgroundColor:colorA,borderColor:color,borderWidth:1.5,barPercentage:1,categoryPercentage:1,order:2},
+          {label:'Normal',data:normX.map(x=>({x,y:normalCurve(m,s||0.001,x)*(bw||1)*vals.length})),type:'line',borderColor:color,borderWidth:2,pointRadius:0,fill:false,tension:0.4,order:1,xAxisID:'x2'}
+        ]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{title:l=>`Bin: ${parseFloat(l[0].label).toFixed(3)}`}}},
+        scales:{
+          x:{ticks:{font:{family:'Share Tech Mono',size:9},maxRotation:45,color:'#5a6890'},grid:{color:'rgba(100,120,180,.1)'},title:{display:true,text:fLbl,font:{family:'Share Tech Mono',size:10},color:'#5a6890'}},
+          x2:{type:'linear',display:false,min,max},
+          y:{ticks:{font:{family:'Share Tech Mono',size:9},color:'#5a6890'},grid:{color:'rgba(100,120,180,.1)'},title:{display:true,text:'Count',font:{family:'Share Tech Mono',size:10},color:'#5a6890'}}
+        }
+      }
+    });
+    distCharts.push(ch);
+  });
+
+  $('dist-bins').oninput=()=>renderDistribution();
+}
+
+// ── BOX PLOT (custom via Chart.js bar trickery) ──────────────────────────
+function renderBoxPlot(){
+  const vpr=getValsPerRegion(boxField);
+  const regions=Object.keys(vpr).filter(r=>vpr[r].length>0);
+
+  makeFieldSel('box-field-sel',boxField,(f)=>{boxField=f;renderBoxPlot();});
+
+  if(!regions.length){$('box-container').innerHTML='<div class="ec" style="position:relative;padding:60px 20px;"><div class="eci">&#8863;</div><p>No data available</p></div>';return;}
+
+  const fLbl=fLbl2[flds2.indexOf(boxField)]||boxField;
+
+  // Compute box stats per region
+  function quartile(sorted,q){const pos=(sorted.length-1)*q;const lo=Math.floor(pos),hi=Math.ceil(pos);return sorted[lo]+(sorted[hi]-sorted[lo])*(pos-lo);}
+  const stats=regions.map((rNm,ri)=>{
+    const vals=[...vpr[rNm]].sort((a,b)=>a-b);
+    const q1=quartile(vals,.25),med=quartile(vals,.5),q3=quartile(vals,.75);
+    const iqr=q3-q1;
+    const lo=Math.max(Math.min(...vals),q1-1.5*iqr),hi=Math.min(Math.max(...vals),q3+1.5*iqr);
+    const outliers=vals.filter(v=>v<lo||v>hi);
+    return{rNm,q1,med,q3,lo,hi,mn:Math.min(...vals),mx:Math.max(...vals),outliers,mean:avg(vals),std:sdv(vals),color:RPAL[ri%RPAL.length]};
+  });
+
+  const allVals=regions.flatMap(r=>vpr[r]);
+  const globalMin=Math.min(...allVals),globalMax=Math.max(...allVals);
+  const pad=(globalMax-globalMin)*0.1||1;
+
+  if(boxChart){boxChart.destroy();boxChart=null;}
+
+  $('box-container').innerHTML=`
+    <div class="ov-card">
+      <div class="ov-hdr">BOX PLOT — ${fLbl} — All Regions</div>
+      <div class="ov-body"><canvas id="boxCanvas"></canvas></div>
+    </div>
+    <div class="dist-grid" id="box-region-cards"></div>`;
+
+  // Custom box-plot via floating bars
+  // Each region: min-whisker, IQR box (q1→q3), median line shown as scatter
+  const labels=stats.map(s=>s.rNm);
+  const datasets=[
+    // lower whisker (lo → q1)
+    {label:'Whisker Low',data:stats.map(s=>[s.lo,s.q1]),backgroundColor:'rgba(0,0,0,0)',borderColor:stats.map(s=>s.color),borderWidth:2,barPercentage:.15,categoryPercentage:.5,borderSkipped:false},
+    // IQR box (q1 → q3)
+    {label:'IQR',data:stats.map(s=>[s.q1,s.q3]),backgroundColor:stats.map(s=>s.color+'44'),borderColor:stats.map(s=>s.color),borderWidth:2,barPercentage:.5,categoryPercentage:.5,borderSkipped:false},
+    // upper whisker (q3 → hi)
+    {label:'Whisker High',data:stats.map(s=>[s.q3,s.hi]),backgroundColor:'rgba(0,0,0,0)',borderColor:stats.map(s=>s.color),borderWidth:2,barPercentage:.15,categoryPercentage:.5,borderSkipped:false},
+    // median
+    {type:'scatter',label:'Median',data:stats.map((s,i)=>({x:i,y:s.med})),backgroundColor:stats.map(s=>s.color),borderColor:'#fff',borderWidth:1.5,pointRadius:6,pointStyle:'rectRot'},
+    // mean
+    {type:'scatter',label:'Mean',data:stats.map((s,i)=>({x:i,y:s.mean})),backgroundColor:'rgba(0,0,0,0)',borderColor:stats.map(s=>s.color),borderWidth:2,pointRadius:5,pointStyle:'crossRot'},
+  ];
+
+  const ctx=$('boxCanvas').getContext('2d');
+  boxChart=new Chart(ctx,{
+    type:'bar',
+    data:{labels,datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:true,labels:{font:{family:'Share Tech Mono',size:10},color:'#5a6890',boxWidth:12}},
+        tooltip:{callbacks:{
+          label(ctx2){
+            if(ctx2.dataset.type==='scatter'){const s=stats[ctx2.dataIndex];return ctx2.dataset.label===('Median')?`Median: ${s.med.toFixed(3)}`:`Mean: ${s.mean.toFixed(3)}`;}
+            const s=stats[ctx2.dataIndex];return `Q1:${s.q1.toFixed(3)} Med:${s.med.toFixed(3)} Q3:${s.q3.toFixed(3)} IQR:${(s.q3-s.q1).toFixed(3)}`;
+          }
+        }}
+      },
+      scales:{
+        x:{ticks:{font:{family:'Share Tech Mono',size:10},color:'#5a6890'},grid:{color:'rgba(100,120,180,.1)'}},
+        y:{min:globalMin-pad,max:globalMax+pad,ticks:{font:{family:'Share Tech Mono',size:9},color:'#5a6890'},grid:{color:'rgba(100,120,180,.1)'},title:{display:true,text:fLbl,font:{family:'Share Tech Mono',size:11},color:'#5a6890'}}
+      }
+    }
+  });
+
+  // Per-region summary cards
+  const bc=$('box-region-cards');
+  stats.forEach(s=>{
+    const card=document.createElement('div');card.className='dist-card';
+    const outStr=s.outliers.length?s.outliers.map(v=>v.toFixed(3)).join(', '):'None';
+    card.innerHTML=`
+      <div class="dist-hdr"><span style="color:${s.color}">${s.rNm}</span><em>n=${vpr[s.rNm].length}</em></div>
+      <div class="dist-stats-row" style="flex-direction:column;gap:2px;padding:8px 12px;">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <span>Min: <b>${s.mn.toFixed(3)}</b></span><span>Whisker Lo: <b>${s.lo.toFixed(3)}</b></span>
+          <span>Q1: <b>${s.q1.toFixed(3)}</b></span><span>Median: <b>${s.med.toFixed(3)}</b></span>
+          <span>Mean: <b>${s.mean.toFixed(3)}</b></span><span>Q3: <b>${s.q3.toFixed(3)}</b></span>
+          <span>Whisker Hi: <b>${s.hi.toFixed(3)}</b></span><span>Max: <b>${s.mx.toFixed(3)}</b></span>
+          <span>IQR: <b>${(s.q3-s.q1).toFixed(3)}</b></span><span>Std: <b>${s.std.toFixed(3)}</b></span>
+        </div>
+        <div style="margin-top:4px;color:#bb2233;font-size:.6rem;">Outliers (${s.outliers.length}): ${outStr.length>80?outStr.slice(0,80)+'…':outStr}</div>
+      </div>`;
+    bc.appendChild(card);
+  });
+}
 
 $('expSts').addEventListener('click',async()=>{
   if(!Object.keys(spd).length){toast('Compute first.','err');return;}
@@ -1121,6 +1412,8 @@ $('clr').addEventListener('click',()=>{
   PF={};uplFiles=[];stsFiles=[];CRs=[];spd={};rfl();rCRL();
   if(curChart){curChart.destroy();curChart=null;}
   if(cmpChart){cmpChart.destroy();cmpChart=null;}
+  distCharts.forEach(c=>c.destroy());distCharts=[];
+  if(boxChart){boxChart.destroy();boxChart=null;}
   $('ec').style.display='';$('mc').style.display='none';
   $('cttl').textContent='— No Data Loaded —';$('rs2').textContent='No data';
   $('rb').innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--dim);padding:12px;">No results yet</td></tr>';
