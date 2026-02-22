@@ -171,31 +171,6 @@ tbody td{padding:4px 8px;color:var(--text);white-space:nowrap;}
 .sr{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid rgba(100,120,180,.08);}
 .sl{color:var(--dim);}.sv{color:var(--text);font-weight:600;}.slm{color:var(--err);font-size:.62rem;}
 
-/* STATS SUB-TABS */
-.stabs{display:flex;gap:4px;margin-bottom:10px;}
-.stab{padding:4px 13px;font-family:var(--mono);font-size:.65rem;border:1px solid var(--border);border-radius:20px;color:var(--dim);cursor:pointer;transition:all .13s;letter-spacing:.05em;}
-.stab.active{background:var(--abg);border-color:var(--accent);color:var(--accent);font-weight:700;}
-.stab-panel{display:none;}.stab-panel.active{display:block;}
-
-/* DISTRIBUTION */
-.dist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px;}
-.dist-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:var(--glow);}
-.dist-hdr{padding:6px 12px;background:var(--hg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
-.dist-hdr span{font-family:var(--mono);font-size:.64rem;color:var(--accent);letter-spacing:.07em;}
-.dist-hdr em{font-family:var(--mono);font-size:.59rem;color:var(--dim);font-style:normal;}
-.dist-body{padding:10px;position:relative;height:210px;}
-.dist-tabs{display:flex;gap:3px;padding:6px 10px 0;border-top:1px solid var(--border);}
-.dtab{padding:2px 8px;font-family:var(--mono);font-size:.59rem;border:1px solid var(--border);border-radius:10px;color:var(--dim);cursor:pointer;transition:all .12s;}
-.dtab.active{background:var(--abg);border-color:var(--accent);color:var(--accent);}
-.dist-stats-row{display:flex;gap:10px;flex-wrap:wrap;padding:6px 10px 8px;font-family:var(--mono);font-size:.6rem;color:var(--dim);}
-.dist-stats-row b{color:var(--text);}
-.dist-region-sel{display:flex;gap:4px;flex-wrap:wrap;padding:0 0 8px;}
-.dreg-btn{padding:3px 9px;font-family:var(--mono);font-size:.61rem;border:1px solid var(--border);border-radius:10px;color:var(--dim);cursor:pointer;transition:all .13s;background:var(--surface);}
-.dreg-btn.active{background:var(--abg);border-color:var(--accent);color:var(--accent);}
-.ov-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:var(--glow);margin-bottom:12px;}
-.ov-hdr{padding:6px 12px;background:var(--hg);border-bottom:1px solid var(--border);font-family:var(--mono);font-size:.64rem;color:var(--accent);letter-spacing:.07em;}
-.ov-body{padding:10px;position:relative;height:260px;}
-
 /* CUSTOM REGION FORM */
 .crf{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px;display:flex;flex-direction:column;gap:6px;}
 .crfr{display:flex;gap:6px;}
@@ -247,7 +222,7 @@ tbody td{padding:4px 8px;color:var(--text);white-space:nowrap;}
       onerror="this.style.display='none';this.parentElement.innerHTML='<div style=\'background:var(--accent);color:#fff;padding:4px 9px;border-radius:5px;font-family:var(--mono);font-size:.7rem;font-weight:bold\'>EA</div>';">
   </a>
   <div class="ht">
-    <h1>Dynamometer Analysis Tool - V 8.1 - By claude AI & Ahmed Elsayed </h1>
+    <h1>Dynamometer Analysis Tool - V 8.0</h1>
     <span>Motor Performance Analyzer · El Araby Group</span>
   </div>
   <div class="hr">
@@ -286,13 +261,24 @@ tbody td{padding:4px 8px;color:var(--text);white-space:nowrap;}
             <label class="ro"><input type="radio" name="rp" value="1"><span>Speed</span></label>
             <label class="ro"><input type="radio" name="rp" value="2"><span>Pout</span></label>
           </div>
-          <div class="lci" id="lci">T<sub>L</sub>=K·(2π/60·N)² · K auto-fitted</div>
+          <div class="lci" id="lci">T<sub>L</sub>=K·(2π/60·N)²</div>
         </div>
-        <div><label class="fl">Rated Value</label><input type="number" id="rpv" value="0" step="any"/></div>
+        <div id="rpvrow"><label class="fl">Rated Value</label><input type="number" id="rpv" value="0" step="any"/></div>
         <div id="krow" style="display:flex;flex-direction:column;gap:5px;">
+          <!-- K₁ row: K and Speed linked -->
           <div style="display:flex;flex-direction:column;gap:2px;">
-            <label class="fl">Load Curve K₁ <span style="color:var(--ok);font-size:.58rem;">(auto-fit if 0)</span></label>
-            <input type="number" id="lcK" value="0" step="any" min="0" placeholder="0 = auto-fit"/>
+            <label class="fl">Load Curve K₁</label>
+            <div style="display:flex;gap:4px;align-items:center;">
+              <div style="flex:1;min-width:0;">
+                <label class="fl" style="font-size:.58rem;">K value</label>
+                <input type="number" id="lcK" value="" step="any" min="0" placeholder="e.g. 0.0045"/>
+              </div>
+              <div style="color:var(--dim);font-family:var(--mono);font-size:.7rem;padding-top:14px;">⇄</div>
+              <div style="flex:1;min-width:0;">
+                <label class="fl" style="font-size:.58rem;">Speed (RPM)</label>
+                <input type="number" id="lcSpd" value="" step="any" min="0" placeholder="e.g. 1400"/>
+              </div>
+            </div>
           </div>
           <div style="display:flex;flex-direction:column;gap:3px;" id="extraKList"></div>
           <button class="btn bg2" id="addKBtn" style="padding:3px 8px;font-size:.62rem;">+ Add Another K Curve</button>
@@ -464,46 +450,11 @@ tbody td{padding:4px 8px;color:var(--text);white-space:nowrap;}
       <span>⬆</span><span style="font-size:.66rem;font-family:var(--mono);">Batch files for stats</span>
     </div>
     <input type="file" id="sfi" multiple accept=".csv,.xlsx,.xls" style="display:none;">
-    <button class="btn bp" id="rsts">&#8635; Compute</button>
-    <button class="btn bo" id="expSts">&#11015; Export Stats</button>
+    <button class="btn bp" id="rsts">↻ Compute</button>
+    <button class="btn bo" id="expSts">⬇ Export Stats</button>
   </div>
-
-  <!-- Sub-tabs -->
-  <div class="stabs">
-    <div class="stab active" id="stab-summary" onclick="switchStab('summary')">&#8862; Summary</div>
-    <div class="stab" id="stab-dist" onclick="switchStab('dist')">&#8865; Distribution</div>
-    <div class="stab" id="stab-box" onclick="switchStab('box')">&#8863; Box Plot</div>
-  </div>
-
-  <!-- Summary panel -->
-  <div class="stab-panel active" id="spanel-summary">
-    <div id="sc2">
-      <div class="ec" style="position:relative;padding:60px 20px;"><div class="eci">&#8864;</div><p>Load files or use processed files, then click Compute</p></div>
-    </div>
-  </div>
-
-  <!-- Distribution panel -->
-  <div class="stab-panel" id="spanel-dist">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
-      <span style="font-family:var(--mono);font-size:.64rem;color:var(--accent);letter-spacing:.07em;">FIELD:</span>
-      <div id="dist-field-sel" class="dist-region-sel"></div>
-      <span style="font-family:var(--mono);font-size:.64rem;color:var(--accent);letter-spacing:.07em;margin-left:8px;">BINS:</span>
-      <input type="number" id="dist-bins" value="10" min="3" max="40" style="width:56px;"/>
-    </div>
-    <div id="dist-container">
-      <div class="ec" style="position:relative;padding:60px 20px;"><div class="eci">&#8865;</div><p>Compute statistics first</p></div>
-    </div>
-  </div>
-
-  <!-- Box Plot panel -->
-  <div class="stab-panel" id="spanel-box">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
-      <span style="font-family:var(--mono);font-size:.64rem;color:var(--accent);letter-spacing:.07em;">FIELD:</span>
-      <div id="box-field-sel" class="dist-region-sel"></div>
-    </div>
-    <div id="box-container">
-      <div class="ec" style="position:relative;padding:60px 20px;"><div class="eci">&#8863;</div><p>Compute statistics first</p></div>
-    </div>
+  <div id="sc2">
+    <div class="ec" style="position:relative;padding:60px 20px;"><div class="eci">⊠</div><p>Load files or use processed files, then click Compute</p></div>
   </div>
 </div>
 </div>
@@ -546,7 +497,7 @@ document.querySelectorAll('.ntab').forEach(t=>{
     t.classList.add('active');
     const pg='page-'+t.dataset.p;$(pg).classList.add('active');
     if(t.dataset.p==='compare')renderCmp();
-    if(t.dataset.p==='stats'){renderSts();setTimeout(()=>{renderDistribution();renderBoxPlot();},80);}
+    if(t.dataset.p==='stats')renderSts();
   });
 });
 
@@ -565,16 +516,55 @@ function renderExtraKList(){
   const el=$('extraKList');el.innerHTML='';
   extraKs.forEach(ek=>{
     const row=document.createElement('div');
-    row.style.cssText='display:flex;align-items:center;gap:4px;';
+    row.style.cssText='display:flex;flex-direction:column;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:5px 6px;';
     row.innerHTML=`
-      <input type="number" value="${ek.value||''}" step="any" min="0" placeholder="K value"
-        style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:.71rem;padding:4px 7px;border-radius:4px;outline:none;"
-        data-ekid="${ek.id}"/>
-      <button onclick="removeExtraK(${ek.id})" style="background:none;border:1px solid rgba(187,34,51,.35);color:var(--err);border-radius:4px;padding:2px 6px;cursor:pointer;font-size:.65rem;font-family:var(--mono);">✕</button>`;
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-family:var(--mono);font-size:.6rem;color:var(--accent);">K${extraKs.indexOf(ek)+2} Curve</span>
+        <button onclick="removeExtraK(${ek.id})" style="background:none;border:1px solid rgba(187,34,51,.35);color:var(--err);border-radius:4px;padding:1px 6px;cursor:pointer;font-size:.63rem;font-family:var(--mono);">✕</button>
+      </div>
+      <div style="display:flex;gap:4px;align-items:center;">
+        <div style="flex:1;min-width:0;">
+          <label style="font-family:var(--mono);font-size:.56rem;color:var(--dim);display:block;margin-bottom:1px;">K value</label>
+          <input type="number" value="${ek.K||''}" step="any" min="0" placeholder="e.g. 0.006"
+            style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:.71rem;padding:4px 6px;border-radius:4px;outline:none;"
+            data-ekid="${ek.id}" data-role="k"/>
+        </div>
+        <div style="color:var(--dim);font-family:var(--mono);font-size:.7rem;padding-top:12px;">⇄</div>
+        <div style="flex:1;min-width:0;">
+          <label style="font-family:var(--mono);font-size:.56rem;color:var(--dim);display:block;margin-bottom:1px;">Speed (RPM)</label>
+          <input type="number" value="${ek.spd||''}" step="any" min="0" placeholder="e.g. 1350"
+            style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:.71rem;padding:4px 6px;border-radius:4px;outline:none;"
+            data-ekid="${ek.id}" data-role="spd"/>
+        </div>
+      </div>`;
     el.appendChild(row);
-    row.querySelector('input').addEventListener('input',e=>{
-      const ek2=extraKs.find(x=>x.id===ek.id);
-      if(ek2){ek2.value=parseFloat(e.target.value)||0;}
+    // K input → compute Speed
+    row.querySelector('[data-role="k"]').addEventListener('input',e=>{
+      const ek2=extraKs.find(x=>x.id===ek.id);if(!ek2)return;
+      const kv=parseFloat(e.target.value)||0;
+      ek2.K=kv;
+      // find max speed from any loaded file to compute rated speed
+      const maxS=_globalMaxSpeed();
+      if(kv>0&&maxS>0){
+        // rated speed = max speed where T_load = T_motor... approximate using max speed
+        // For display only: show speed at which T_L(N) = max torque at that speed
+        // Simple: speed corresponding to rated torque intersection – use max speed as reference
+        const ratedSpd=_kToSpeed(kv,maxS);
+        ek2.spd=ratedSpd;
+        row.querySelector('[data-role="spd"]').value=ratedSpd>0?ratedSpd.toFixed(1):'';
+      } else { ek2.spd=0; row.querySelector('[data-role="spd"]').value=''; }
+      refreshLC();
+    });
+    // Speed input → compute K
+    row.querySelector('[data-role="spd"]').addEventListener('input',e=>{
+      const ek2=extraKs.find(x=>x.id===ek.id);if(!ek2)return;
+      const sv=parseFloat(e.target.value)||0;
+      ek2.spd=sv;
+      if(sv>0){
+        const kv=_speedToK(sv);
+        ek2.K=kv;
+        row.querySelector('[data-role="k"]').value=kv>0?kv.toFixed(6):'';
+      } else { ek2.K=0; row.querySelector('[data-role="k"]').value=''; }
       refreshLC();
     });
   });
@@ -587,64 +577,145 @@ function removeExtraK(id){
 }
 
 $('addKBtn').addEventListener('click',()=>{
-  extraKs.push({id:++ekIdSeq,value:0});
+  extraKs.push({id:++ekIdSeq,K:0,spd:0});
   renderExtraKList();
 });
 
 // ════════════════════════════
-//  LOAD CURVE — recompute & refresh
+//  K ↔ SPEED HELPERS
 // ════════════════════════════
-function getAutoK(data){
-  const ip=data.ip,Sp=data.speed;
-  const maxS=Math.max(...Sp);
-  return Math.max(...ip.Torque)/Math.pow(2*Math.PI*maxS/60,2);
+// T_L(N) = K*(2π/60*N)²
+// Given K and a reference max speed, find rated speed = intersection of T_L with motor torque curve
+// For sidebar display we just use the max speed of the first loaded file as reference
+function _globalMaxSpeed(){
+  const keys=Object.keys(PF);
+  if(!keys.length)return 0;
+  return Math.max(...Object.values(PF).map(d=>Math.max(...d.speed)));
+}
+// K → speed: for a given K, find the speed where T_L(N) equals the motor torque at that speed
+// We use the first loaded file as reference for the motor torque curve
+function _kToSpeed(K,maxS){
+  const keys=Object.keys(PF);
+  if(!keys.length||K<=0)return 0;
+  const data=PF[keys[0]];
+  const Sp=data.speed,Tq=data.ip.Torque;
+  // Find last index where T_L < T_motor
+  let rI=-1;
+  for(let i=Sp.length-1;i>=0;i--){
+    const tl=K*Math.pow(2*Math.PI*Sp[i]/60,2);
+    if(tl<Tq[i]){rI=i;break;}
+  }
+  return rI>=0?+(Sp[rI].toFixed(1)):+(maxS.toFixed(1));
+}
+// Speed → K: K = T_motor(N) / (2π/60*N)²  at given speed
+function _speedToK(spd){
+  const keys=Object.keys(PF);
+  if(!keys.length||spd<=0)return 0;
+  const data=PF[keys[0]];
+  const Sp=data.speed,Tq=data.ip.Torque;
+  // Interpolate torque at that speed
+  const T=li(Sp,Tq,spd);
+  const w=2*Math.PI*spd/60;
+  if(w===0)return 0;
+  return T/(w*w);
 }
 
+// ════════════════════════════
+//  LOAD CURVE — recompute & refresh
+// ════════════════════════════
 function recomputeLC(data){
-  const userK=parseFloat($('lcK').value)||0;
   const Sp=data.speed,ip=data.ip;
-  // K1: 0 = auto-fit, >0 = manual
-  const K1=userK>0?userK:getAutoK(data);
-  data.lc =Sp.map(s=>K1*Math.pow(2*Math.PI*s/60,2));
-  data.lcK =K1;
-  data.lcK1Manual=(userK>0);
-  // Extra K curves + their rated intersection regions
+  const K1=parseFloat($('lcK').value)||0;
+
+  // K₁: only draw if >0
+  if(K1>0){
+    data.lc=Sp.map(s=>K1*Math.pow(2*Math.PI*s/60,2));
+    data.lcK=K1;
+  } else {
+    data.lc=null;
+    data.lcK=0;
+  }
+
+  // Extra K curves — apply to THIS data file; only if K>0
   data.extraLcs=[];
   data.ekRegs=[];
-  extraKs.filter(ek=>ek.value>0).forEach((ek,ei)=>{
-    const lc=Sp.map(s=>ek.value*Math.pow(2*Math.PI*s/60,2));
-    data.extraLcs.push({K:ek.value,lc,idx:ei});
-    // Find intersection: last index where lc < motor torque
+  extraKs.filter(ek=>ek.K>0).forEach((ek,ei)=>{
+    const lc=Sp.map(s=>ek.K*Math.pow(2*Math.PI*s/60,2));
+    data.extraLcs.push({K:ek.K,lc,idx:ei});
+    // Intersection: last index where T_L < T_motor
     let rI=Math.floor(Sp.length*0.75);
     for(let i=Sp.length-1;i>=0;i--){if(lc[i]<ip.Torque[i]){rI=i;break;}}
-    const reg=mkR(`Rated K${ei+2}=${ek.value.toFixed(4)}`,rI,Sp,ip,data.mdf);
+    const reg=mkR(`Rated K${ei+2}=${ek.K.toFixed(4)}`,rI,Sp,ip,data.mdf);
     reg.isEK=true;reg.ekIdx=ei;
     data.ekRegs.push(reg);
   });
-  // Recompute K1 rated point
+
+  // Recompute K1 rated point only if K1>0
   if(data.rp===0){
-    let rI=Math.floor(Sp.length*0.75);
-    for(let i=Sp.length-1;i>=0;i--){if(data.lc[i]<ip.Torque[i]){rI=i;break;}}
-    data.rSpdV=Sp[rI]||0;
-    const mdf=data.mdf;
-    data.regs=[
-      mkR('No-Load',ip.Torque.indexOf(Math.min(...ip.Torque)),Sp,ip,mdf),
-      mkR('Max Eff.',ip.eff.indexOf(Math.max(...ip.eff)),Sp,ip,mdf),
-      mkR('Rated',rI,Sp,ip,mdf),
-      mkR('MaxPout',ip.Pout.indexOf(Math.max(...ip.Pout)),Sp,ip,mdf),
-      mkR('Locked',0,Sp,ip,mdf)
-    ];
+    if(K1>0&&data.lc){
+      let rI=Math.floor(Sp.length*0.75);
+      for(let i=Sp.length-1;i>=0;i--){if(data.lc[i]<ip.Torque[i]){rI=i;break;}}
+      data.rSpdV=Sp[rI]||0;
+      const mdf=data.mdf;
+      data.regs=[
+        mkR('No-Load',ip.Torque.indexOf(Math.min(...ip.Torque)),Sp,ip,mdf),
+        mkR('Max Eff.',ip.eff.indexOf(Math.max(...ip.eff)),Sp,ip,mdf),
+        mkR('Rated',rI,Sp,ip,mdf),
+        mkR('MaxPout',ip.Pout.indexOf(Math.max(...ip.Pout)),Sp,ip,mdf),
+        mkR('Locked',0,Sp,ip,mdf)
+      ];
+    } else {
+      // No K1: no Rated region, just standard regions without load curve intersection
+      data.rSpdV=0;
+      const mdf=data.mdf;
+      data.regs=[
+        mkR('No-Load',ip.Torque.indexOf(Math.min(...ip.Torque)),Sp,ip,mdf),
+        mkR('Max Eff.',ip.eff.indexOf(Math.max(...ip.eff)),Sp,ip,mdf),
+        mkR('MaxPout',ip.Pout.indexOf(Math.max(...ip.Pout)),Sp,ip,mdf),
+        mkR('Locked',0,Sp,ip,mdf)
+      ];
+    }
   }
 }
 
 function refreshLC(){
-  const s=$('fs');if(!s.value||!PF[s.value])return;
-  const data=PF[s.value];
-  recomputeLC(data);
-  rc(data,curCt);rT(data);
+  // Apply to ALL loaded files so curves are consistent across files
+  Object.values(PF).forEach(data=>recomputeLC(data));
+  // Update K↔Speed for K₁ display
+  _syncK1Fields();
+  // Refresh current view
+  const s=$('fs');if(s.value&&PF[s.value]){rc(PF[s.value],curCt);rT(PF[s.value]);}
 }
 
-$('lcK').addEventListener('input',refreshLC);
+// Sync the K₁ speed field when K is typed, and vice versa
+function _syncK1Fields(){
+  // Called after recomputeLC; update sidebar K1 speed display
+  // (only if not currently being edited — we just keep values in sync passively)
+}
+
+$('lcK').addEventListener('input',()=>{
+  const K1=parseFloat($('lcK').value)||0;
+  if(K1>0){
+    const spd=_kToSpeed(K1,_globalMaxSpeed());
+    if(spd>0)$('lcSpd').value=spd.toFixed(1);
+    else $('lcSpd').value='';
+  } else {
+    $('lcSpd').value='';
+  }
+  refreshLC();
+});
+
+$('lcSpd').addEventListener('input',()=>{
+  const spd=parseFloat($('lcSpd').value)||0;
+  if(spd>0){
+    const K=_speedToK(spd);
+    if(K>0){$('lcK').value=K.toFixed(6);}
+    else $('lcK').value='';
+  } else {
+    $('lcK').value='';
+  }
+  refreshLC();
+});
 
 // ════════════════════════════
 //  RATED PARAM TOGGLE
@@ -654,6 +725,7 @@ document.querySelectorAll('input[name="rp"]').forEach(r=>{
     const isLC=r.value==='0'&&r.checked;
     $('lci').style.display=isLC?'inline-flex':'none';
     $('krow').style.display=isLC?'flex':'none';
+    $('rpvrow').style.display=isLC?'none':'block';
     const s=$('fs');if(s.value&&PF[s.value]){PF[s.value].rp=parseInt(r.value);recomputeLC(PF[s.value]);rc(PF[s.value],curCt);rT(PF[s.value]);}
   });
 });
@@ -719,17 +791,15 @@ function procData(parsed){
   if(ip.Pout.every(v=>v===0))ip.Pout=Sp.map((s,i)=>Math.max(0,ip.Torque[i]*s*2*Math.PI/60));
   if(ip.Pin.every(v=>v===0))ip.Pin=ip.Pout.map(p=>p/0.85);
   if(ip.eff.every(v=>v===0))ip.eff=ip.Pin.map((p,i)=>p>0?Math.min(ip.Pout[i]/p*100,100):0);
-  const maxT=Math.max(...ip.Torque),K=maxT/Math.pow(2*Math.PI*maxS/60,2);
-  const lc=Sp.map(s=>K*Math.pow(2*Math.PI*s/60,2));
   const rpv2=parseFloat($('rpv').value)||0;
   const rpn=parseInt(document.querySelector('input[name="rp"]:checked').value);
   let rI=Math.floor(Sp.length*0.75);
-  if(rpn===0){for(let i=Sp.length-1;i>=0;i--){if(lc[i]<ip.Torque[i]){rI=i;break;}}}
-  else if(rpn===1){rI=Sp.reduce((b,s,i)=>Math.abs(s-rpv2)<Math.abs(Sp[b]-rpv2)?i:b,0);}
-  else{const r2=[...ip.Pout].reverse();const fi2=r2.findIndex(p=>p>rpv2);if(fi2>=0)rI=Sp.length-1-fi2;}
-  const regs=[mkR('No-Load',ip.Torque.indexOf(Math.min(...ip.Torque)),Sp,ip,mdf),mkR('Max Eff.',ip.eff.indexOf(Math.max(...ip.eff)),Sp,ip,mdf),mkR('Rated',rI,Sp,ip,mdf),mkR('MaxPout',ip.Pout.indexOf(Math.max(...ip.Pout)),Sp,ip,mdf),mkR('Locked',0,Sp,ip,mdf)];
+  if(rpn===1){rI=Sp.reduce((b,s,i)=>Math.abs(s-rpv2)<Math.abs(Sp[b]-rpv2)?i:b,0);}
+  else if(rpn===2){const r2=[...ip.Pout].reverse();const fi2=r2.findIndex(p=>p>rpv2);if(fi2>=0)rI=Sp.length-1-fi2;}
+  // For LC mode (rpn===0), recomputeLC will set regions properly after
+  const regs=rpn!==0?[mkR('No-Load',ip.Torque.indexOf(Math.min(...ip.Torque)),Sp,ip,mdf),mkR('Max Eff.',ip.eff.indexOf(Math.max(...ip.eff)),Sp,ip,mdf),mkR('Rated',rI,Sp,ip,mdf),mkR('MaxPout',ip.Pout.indexOf(Math.max(...ip.Pout)),Sp,ip,mdf),mkR('Locked',0,Sp,ip,mdf)]:[mkR('No-Load',ip.Torque.indexOf(Math.min(...ip.Torque)),Sp,ip,mdf),mkR('Max Eff.',ip.eff.indexOf(Math.max(...ip.eff)),Sp,ip,mdf),mkR('MaxPout',ip.Pout.indexOf(Math.max(...ip.Pout)),Sp,ip,mdf),mkR('Locked',0,Sp,ip,mdf)];
   const fn=`${name.toUpperCase()}_${dir.toString().toUpperCase()}`;
-  return{key:fn,name:fn,speed:Sp,ip,regs,cRegs:[],ekRegs:[],lc,lcK:K,rSpdV:Sp[rI]||0,volt:Volt,freq,dir,mdf,rp:rpn};
+  return{key:fn,name:fn,speed:Sp,ip,regs,cRegs:[],ekRegs:[],lc:null,lcK:0,rSpdV:0,volt:Volt,freq,dir,mdf,rp:rpn};
 }
 function mkR(lbl,idx,Sp,ip,mdf){return{Region:lbl,Speed:Sp[idx]||0,Torque:ip.Torque[idx]||0,Pin:ip.Pin[idx]||0,Po:ip.Pout[idx]||0,Eff:ip.eff[idx]||0,pf:ip.PF[idx]||0,It:ip.It[idx]||0,Im:(mdf===0&&ip.Im)?ip.Im[idx]||0:null,Ia:(mdf===0&&ip.Ia)?ip.Ia[idx]||0:null};}
 
@@ -783,11 +853,8 @@ function bDemo(key,f=1){
   const ip={Torque:Sp.map(s=>Math.max(0.05,12*f*(1-s/maxS))),Pin:Sp.map(s=>220*f+s*0.65*f),Pout:Sp.map(()=>0),eff:Sp.map(s=>{const x=s/maxS;return 100*Math.min(0.93,(0.28+1.5*x-0.85*x*x)*f);}),PF:Sp.map(s=>Math.min(0.99,(0.48+0.44*(s/maxS))*f)),It:Sp.map(s=>4*f*(1-0.28*(s/maxS))),Im:Sp.map(s=>2.1*f*(1-0.08*(s/maxS))),Ia:Sp.map(s=>2.6*f*(s/maxS))};
   ip.Pout=Sp.map((s,i)=>Math.max(0,ip.Torque[i]*s*2*Math.PI/60));
   ip.eff=ip.Pin.map((p,i)=>p>0?Math.min(ip.Pout[i]/p*100,98):0);
-  const maxT=Math.max(...ip.Torque),K=maxT/Math.pow(2*Math.PI*maxS/60,2);
-  const lc=Sp.map(s=>K*Math.pow(2*Math.PI*s/60,2));
-  let rI=Math.floor(Sp.length*0.75);for(let i=Sp.length-1;i>=0;i--){if(lc[i]<ip.Torque[i]){rI=i;break;}}
-  const regs=[mkR('No-Load',0,Sp,ip,0),mkR('Max Eff.',Math.floor(Sp.length*0.6),Sp,ip,0),mkR('Rated',rI,Sp,ip,0),mkR('MaxPout',Sp.length-5,Sp,ip,0),mkR('Locked',0,Sp,ip,0)];
-  return{key,name:key,speed:Sp,ip,regs,cRegs:[],ekRegs:[],lc,lcK:K,rSpdV:Sp[rI],volt:220,freq:50,dir:'FWD',mdf:0,rp:0};
+  const regs=[mkR('No-Load',0,Sp,ip,0),mkR('Max Eff.',Math.floor(Sp.length*0.6),Sp,ip,0),mkR('MaxPout',Sp.length-5,Sp,ip,0),mkR('Locked',0,Sp,ip,0)];
+  return{key,name:key,speed:Sp,ip,regs,cRegs:[],ekRegs:[],lc:null,lcK:0,rSpdV:0,volt:220,freq:50,dir:'FWD',mdf:0,rp:0};
 }
 
 // ════════════════════════════
@@ -798,18 +865,16 @@ function updUI(){
   $('fs').innerHTML=keys.map(k=>`<option value="${k}">${k}</option>`).join('');
   const isLC=document.querySelector('input[name="rp"]:checked').value==='0';
   $('krow').style.display=isLC?'flex':'none';
+  $('rpvrow').style.display=isLC?'none':'block';
   $('lci').style.display=isLC?'inline-flex':'none';
+  // Apply all load curves to all files on initial load
+  Object.values(PF).forEach(data=>recomputeLC(data));
   const d=PF[keys[0]];
-  const autoK=getAutoK(d);
-  if(!(parseFloat($('lcK').value)>0))$('lcK').placeholder=autoK.toFixed(5)+' (auto)';
   rc(d,curCt);rT(d);
 }
 $('fs').addEventListener('change',e=>{
   const d=PF[e.target.value];
-  if(d){
-    if(!(parseFloat($('lcK').value)>0))$('lcK').placeholder=getAutoK(d).toFixed(5)+' (auto)';
-    rc(d,curCt);rT(d);
-  }
+  if(d){rc(d,curCt);rT(d);}
 });
 document.querySelectorAll('.ctab').forEach(t=>{
   t.addEventListener('click',()=>{
@@ -839,9 +904,9 @@ function bDS(data,tab){
   // (so T_Load is always fully visible, motor torque fits inside it naturally)
   // When not load curve mode: driven by motor torque only
   let y0Max;
-  if(slc && data.lc){
+  if(slc && data.lc && data.lcK>0){
     const k1Max=Math.max(...data.lc);
-    const extraMax=(data.extraLcs&&data.extraLcs.length)?Math.max(...data.extraLcs.map(e=>Math.max(...e.lc))):0;
+    const extraMax=(data.extraLcs&&data.extraLcs.length)?Math.max(...data.extraLcs.filter(e=>e.K>0).map(e=>Math.max(...e.lc)),0):0;
     y0Max=Math.max(k1Max,extraMax,Math.max(...ip.Torque))*1.15;
   } else {
     y0Max=Math.max(...ip.Torque)*1.15;
@@ -849,14 +914,14 @@ function bDS(data,tab){
 
   if(tab==='all'||tab==='power'){
     ds.push({label:'Torque (N·m)',yAxisID:'y0',borderColor:CP.c[0],borderWidth:2.5,pointRadius:0,tension:.3,data:S.map((s,i)=>({x:s,y:ip.Torque[i]}))});
-    // K1 load curve
-    if(slc&&data.lc){
-      const lbl=data.lcK1Manual?`T_Load K₁=${data.lcK.toFixed(4)}`:`T_Load K₁=${data.lcK.toFixed(4)} (auto)`;
-      ds.push({label:lbl,yAxisID:'y0',borderColor:LCC[0],borderWidth:2,borderDash:[8,5],pointRadius:0,tension:.3,data:S.map((s,i)=>({x:s,y:data.lc[i]}))});
+    // K1 load curve — only if K>0
+    if(slc&&data.lc&&data.lcK>0){
+      ds.push({label:`T_Load K₁=${data.lcK.toFixed(4)}`,yAxisID:'y0',borderColor:LCC[0],borderWidth:2,borderDash:[8,5],pointRadius:0,tension:.3,data:S.map((s,i)=>({x:s,y:data.lc[i]}))});
     }
-    // Extra K curves
+    // Extra K curves — only those with K>0
     if(slc&&data.extraLcs){
       data.extraLcs.forEach((e,ei)=>{
+        if(e.K<=0)return;
         ds.push({label:`T_Load K${ei+2}=${e.K.toFixed(4)}`,yAxisID:'y0',borderColor:LCC[(ei+1)%LCC.length],borderWidth:1.8,borderDash:[5,3],pointRadius:0,tension:.3,data:S.map((s,i)=>({x:s,y:e.lc[i]}))});
       });
     }
@@ -869,10 +934,13 @@ function bDS(data,tab){
     ds.push({label:'It (A)',yAxisID:'y3',borderColor:CP.c[5],borderWidth:2,pointRadius:0,tension:.3,data:S.map((s,i)=>({x:s,y:ip.It[i]}))});
   }
   const rs=data.rSpdV;
-  ds.push({label:`Op.Pt K₁ (${rs.toFixed(0)} RPM)`,yAxisID:'y0',borderColor:CP.op,borderWidth:1.5,borderDash:[5,4],pointRadius:0,tension:0,data:[{x:rs,y:0},{x:rs,y:y0Max}]});
+  if(slc&&data.lcK>0&&rs>0){
+    ds.push({label:`Op.Pt K₁ (${rs.toFixed(0)} RPM)`,yAxisID:'y0',borderColor:CP.op,borderWidth:1.5,borderDash:[5,4],pointRadius:0,tension:0,data:[{x:rs,y:0},{x:rs,y:y0Max}]});
+  }
   // Extra K rated Op.Pt lines
   if(slc&&data.ekRegs){
     data.ekRegs.forEach((reg,ei)=>{
+      if(!reg||reg.Speed<=0)return;
       const col=LCC[(ei+1)%LCC.length];
       ds.push({label:`Op.Pt K${ei+2} (${reg.Speed.toFixed(0)} RPM)`,yAxisID:'y0',borderColor:col,borderWidth:1.2,borderDash:[3,4],pointRadius:0,tension:0,data:[{x:reg.Speed,y:0},{x:reg.Speed,y:y0Max}]});
     });
@@ -1131,238 +1199,7 @@ async function renderSts(){
     grid.appendChild(card);
   });
 }
-$('rsts').addEventListener('click',()=>{renderSts();setTimeout(()=>{renderDistribution();renderBoxPlot();},80);});
-
-// ════════════════════════════
-//  STATS SUB-TAB SWITCH
-// ════════════════════════════
-let distCharts=[];let boxChart=null;
-let distField='Eff';let boxField='Eff';
-const flds2=['Speed','Torque','Pin','Po','Eff','pf','It','Im','Ia'];
-const fLbl2=['Speed (RPM)','Torque (N·m)','Pin (W)','Pout (W)','Eff (%)','PF','It (A)','Im (A)','Ia (A)'];
-
-function switchStab(tab){
-  document.querySelectorAll('.stab').forEach(x=>x.classList.remove('active'));
-  document.querySelectorAll('.stab-panel').forEach(x=>x.classList.remove('active'));
-  $('stab-'+tab).classList.add('active');
-  $('spanel-'+tab).classList.add('active');
-  if(tab==='dist')renderDistribution();
-  if(tab==='box')renderBoxPlot();
-}
-
-function makeFieldSel(containerId,currentField,onChange){
-  const c=$(containerId);c.innerHTML='';
-  flds2.forEach((f,i)=>{
-    const b=document.createElement('div');
-    b.className='dreg-btn'+(f===currentField?' active':'');
-    b.textContent=fLbl2[i];
-    b.onclick=()=>{currentField=f;onChange(f);makeFieldSel(containerId,f,onChange);};
-    c.appendChild(b);
-  });
-}
-
-function getValsPerRegion(field){
-  // spdRaw holds actual per-motor values, reconstruct from allD
-  // We need raw motor values – use the allD captured during renderSts
-  // Since we rebuild from PF+stsFiles each renderSts, we re-collect here
-  const out={};
-  // collect from PF
-  const allD2={...PF};
-  const keys=Object.keys(allD2);
-  const regions=[];
-  keys.forEach(kk=>{allR(allD2[kk]).forEach(r=>{if(!regions.includes(r.Region))regions.push(r.Region);});});
-  regions.forEach(rNm=>{
-    out[rNm]=keys.map(kk=>{
-      const r=allR(allD2[kk]).find(x=>x.Region===rNm);
-      const v=r?r[field]:null;
-      return(v!==null&&v!==undefined&&!isNaN(v))?v:null;
-    }).filter(v=>v!==null);
-  });
-  return out;
-}
-
-function makeHistogram(vals,bins){
-  if(!vals.length)return{labels:[],counts:[]};
-  const mn=Math.min(...vals),mx=Math.max(...vals);
-  const bw=(mx-mn)/bins||1;
-  const labels=[],counts=[];
-  for(let i=0;i<bins;i++){
-    const lo=mn+i*bw,hi=lo+bw;
-    labels.push(lo.toFixed(2));
-    counts.push(vals.filter(v=>v>=lo&&(i===bins-1?v<=hi:v<hi)).length);
-  }
-  return{labels,counts,bw,min:mn,max:mx};
-}
-
-function normalCurve(mean,std,x){
-  return(1/(std*Math.sqrt(2*Math.PI)))*Math.exp(-0.5*((x-mean)/std)**2);
-}
-
-// Palette for regions
-const RPAL=['#0066cc','#d94c00','#2e7000','#8a6000','#7700bb','#aa0033','#006680','#aa8800'];
-
-function renderDistribution(){
-  const vpr=getValsPerRegion(distField);
-  const regions=Object.keys(vpr).filter(r=>vpr[r].length>0);
-  if(!regions.length){$('dist-container').innerHTML='<div class="ec" style="position:relative;padding:60px 20px;"><div class="eci">&#8865;</div><p>No data available</p></div>';return;}
-
-  makeFieldSel('dist-field-sel',distField,(f)=>{distField=f;renderDistribution();});
-  const bins=parseInt($('dist-bins').value)||10;
-
-  // Destroy old charts
-  distCharts.forEach(c=>c.destroy());distCharts=[];
-
-  const fLbl=fLbl2[flds2.indexOf(distField)]||distField;
-  let html='<div class="dist-grid" id="dist-grid-inner"></div>';
-  $('dist-container').innerHTML=html;
-  const grid=$('dist-grid-inner');
-
-  regions.forEach((rNm,ri)=>{
-    const vals=vpr[rNm];
-    const m=avg(vals),s=sdv(vals);
-    const {labels,counts,bw,min,max}=makeHistogram(vals,bins);
-    const color=RPAL[ri%RPAL.length];
-    const colorA=color+'33';
-
-    const card=document.createElement('div');card.className='dist-card';
-    const cid='distc-'+ri;
-    card.innerHTML=`
-      <div class="dist-hdr"><span>${rNm}</span><em>n=${vals.length} · mean=${m.toFixed(3)} · σ=${s.toFixed(3)}</em></div>
-      <div class="dist-body"><canvas id="${cid}"></canvas></div>
-      <div class="dist-stats-row">
-        <span>Min: <b>${Math.min(...vals).toFixed(3)}</b></span>
-        <span>Max: <b>${Math.max(...vals).toFixed(3)}</b></span>
-        <span>Mean: <b>${m.toFixed(3)}</b></span>
-        <span>Std: <b>${s.toFixed(3)}</b></span>
-        <span>-3σ: <b>${(m-3*s).toFixed(3)}</b></span>
-        <span>+3σ: <b>${(m+3*s).toFixed(3)}</b></span>
-      </div>`;
-    grid.appendChild(card);
-
-    // Normal curve overlay
-    const nPts=60;const step=(max-min)/(nPts-1)||0.001;
-    const normX=Array.from({length:nPts},(_,i)=>min+i*step);
-    const normY=normX.map(x=>normalCurve(m,s||0.001,x)*(bw||1)*vals.length);
-
-    const ctx=$(cid).getContext('2d');
-    const ch=new Chart(ctx,{
-      type:'bar',
-      data:{
-        labels,
-        datasets:[
-          {label:'Count',data:counts,backgroundColor:colorA,borderColor:color,borderWidth:1.5,barPercentage:1,categoryPercentage:1,order:2},
-          {label:'Normal',data:normX.map(x=>({x,y:normalCurve(m,s||0.001,x)*(bw||1)*vals.length})),type:'line',borderColor:color,borderWidth:2,pointRadius:0,fill:false,tension:0.4,order:1,xAxisID:'x2'}
-        ]
-      },
-      options:{
-        responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false},tooltip:{callbacks:{title:l=>`Bin: ${parseFloat(l[0].label).toFixed(3)}`}}},
-        scales:{
-          x:{ticks:{font:{family:'Share Tech Mono',size:9},maxRotation:45,color:'#5a6890'},grid:{color:'rgba(100,120,180,.1)'},title:{display:true,text:fLbl,font:{family:'Share Tech Mono',size:10},color:'#5a6890'}},
-          x2:{type:'linear',display:false,min,max},
-          y:{ticks:{font:{family:'Share Tech Mono',size:9},color:'#5a6890'},grid:{color:'rgba(100,120,180,.1)'},title:{display:true,text:'Count',font:{family:'Share Tech Mono',size:10},color:'#5a6890'}}
-        }
-      }
-    });
-    distCharts.push(ch);
-  });
-
-  $('dist-bins').oninput=()=>renderDistribution();
-}
-
-// ── BOX PLOT (custom via Chart.js bar trickery) ──────────────────────────
-function renderBoxPlot(){
-  const vpr=getValsPerRegion(boxField);
-  const regions=Object.keys(vpr).filter(r=>vpr[r].length>0);
-
-  makeFieldSel('box-field-sel',boxField,(f)=>{boxField=f;renderBoxPlot();});
-
-  if(!regions.length){$('box-container').innerHTML='<div class="ec" style="position:relative;padding:60px 20px;"><div class="eci">&#8863;</div><p>No data available</p></div>';return;}
-
-  const fLbl=fLbl2[flds2.indexOf(boxField)]||boxField;
-
-  // Compute box stats per region
-  function quartile(sorted,q){const pos=(sorted.length-1)*q;const lo=Math.floor(pos),hi=Math.ceil(pos);return sorted[lo]+(sorted[hi]-sorted[lo])*(pos-lo);}
-  const stats=regions.map((rNm,ri)=>{
-    const vals=[...vpr[rNm]].sort((a,b)=>a-b);
-    const q1=quartile(vals,.25),med=quartile(vals,.5),q3=quartile(vals,.75);
-    const iqr=q3-q1;
-    const lo=Math.max(Math.min(...vals),q1-1.5*iqr),hi=Math.min(Math.max(...vals),q3+1.5*iqr);
-    const outliers=vals.filter(v=>v<lo||v>hi);
-    return{rNm,q1,med,q3,lo,hi,mn:Math.min(...vals),mx:Math.max(...vals),outliers,mean:avg(vals),std:sdv(vals),color:RPAL[ri%RPAL.length]};
-  });
-
-  const allVals=regions.flatMap(r=>vpr[r]);
-  const globalMin=Math.min(...allVals),globalMax=Math.max(...allVals);
-  const pad=(globalMax-globalMin)*0.1||1;
-
-  if(boxChart){boxChart.destroy();boxChart=null;}
-
-  $('box-container').innerHTML=`
-    <div class="ov-card">
-      <div class="ov-hdr">BOX PLOT — ${fLbl} — All Regions</div>
-      <div class="ov-body"><canvas id="boxCanvas"></canvas></div>
-    </div>
-    <div class="dist-grid" id="box-region-cards"></div>`;
-
-  // Custom box-plot via floating bars
-  // Each region: min-whisker, IQR box (q1→q3), median line shown as scatter
-  const labels=stats.map(s=>s.rNm);
-  const datasets=[
-    // lower whisker (lo → q1)
-    {label:'Whisker Low',data:stats.map(s=>[s.lo,s.q1]),backgroundColor:'rgba(0,0,0,0)',borderColor:stats.map(s=>s.color),borderWidth:2,barPercentage:.15,categoryPercentage:.5,borderSkipped:false},
-    // IQR box (q1 → q3)
-    {label:'IQR',data:stats.map(s=>[s.q1,s.q3]),backgroundColor:stats.map(s=>s.color+'44'),borderColor:stats.map(s=>s.color),borderWidth:2,barPercentage:.5,categoryPercentage:.5,borderSkipped:false},
-    // upper whisker (q3 → hi)
-    {label:'Whisker High',data:stats.map(s=>[s.q3,s.hi]),backgroundColor:'rgba(0,0,0,0)',borderColor:stats.map(s=>s.color),borderWidth:2,barPercentage:.15,categoryPercentage:.5,borderSkipped:false},
-    // median
-    {type:'scatter',label:'Median',data:stats.map((s,i)=>({x:i,y:s.med})),backgroundColor:stats.map(s=>s.color),borderColor:'#fff',borderWidth:1.5,pointRadius:6,pointStyle:'rectRot'},
-    // mean
-    {type:'scatter',label:'Mean',data:stats.map((s,i)=>({x:i,y:s.mean})),backgroundColor:'rgba(0,0,0,0)',borderColor:stats.map(s=>s.color),borderWidth:2,pointRadius:5,pointStyle:'crossRot'},
-  ];
-
-  const ctx=$('boxCanvas').getContext('2d');
-  boxChart=new Chart(ctx,{
-    type:'bar',
-    data:{labels,datasets},
-    options:{
-      responsive:true,maintainAspectRatio:false,
-      plugins:{
-        legend:{display:true,labels:{font:{family:'Share Tech Mono',size:10},color:'#5a6890',boxWidth:12}},
-        tooltip:{callbacks:{
-          label(ctx2){
-            if(ctx2.dataset.type==='scatter'){const s=stats[ctx2.dataIndex];return ctx2.dataset.label===('Median')?`Median: ${s.med.toFixed(3)}`:`Mean: ${s.mean.toFixed(3)}`;}
-            const s=stats[ctx2.dataIndex];return `Q1:${s.q1.toFixed(3)} Med:${s.med.toFixed(3)} Q3:${s.q3.toFixed(3)} IQR:${(s.q3-s.q1).toFixed(3)}`;
-          }
-        }}
-      },
-      scales:{
-        x:{ticks:{font:{family:'Share Tech Mono',size:10},color:'#5a6890'},grid:{color:'rgba(100,120,180,.1)'}},
-        y:{min:globalMin-pad,max:globalMax+pad,ticks:{font:{family:'Share Tech Mono',size:9},color:'#5a6890'},grid:{color:'rgba(100,120,180,.1)'},title:{display:true,text:fLbl,font:{family:'Share Tech Mono',size:11},color:'#5a6890'}}
-      }
-    }
-  });
-
-  // Per-region summary cards
-  const bc=$('box-region-cards');
-  stats.forEach(s=>{
-    const card=document.createElement('div');card.className='dist-card';
-    const outStr=s.outliers.length?s.outliers.map(v=>v.toFixed(3)).join(', '):'None';
-    card.innerHTML=`
-      <div class="dist-hdr"><span style="color:${s.color}">${s.rNm}</span><em>n=${vpr[s.rNm].length}</em></div>
-      <div class="dist-stats-row" style="flex-direction:column;gap:2px;padding:8px 12px;">
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <span>Min: <b>${s.mn.toFixed(3)}</b></span><span>Whisker Lo: <b>${s.lo.toFixed(3)}</b></span>
-          <span>Q1: <b>${s.q1.toFixed(3)}</b></span><span>Median: <b>${s.med.toFixed(3)}</b></span>
-          <span>Mean: <b>${s.mean.toFixed(3)}</b></span><span>Q3: <b>${s.q3.toFixed(3)}</b></span>
-          <span>Whisker Hi: <b>${s.hi.toFixed(3)}</b></span><span>Max: <b>${s.mx.toFixed(3)}</b></span>
-          <span>IQR: <b>${(s.q3-s.q1).toFixed(3)}</b></span><span>Std: <b>${s.std.toFixed(3)}</b></span>
-        </div>
-        <div style="margin-top:4px;color:#bb2233;font-size:.6rem;">Outliers (${s.outliers.length}): ${outStr.length>80?outStr.slice(0,80)+'…':outStr}</div>
-      </div>`;
-    bc.appendChild(card);
-  });
-}
+$('rsts').addEventListener('click',renderSts);
 
 $('expSts').addEventListener('click',async()=>{
   if(!Object.keys(spd).length){toast('Compute first.','err');return;}
@@ -1412,13 +1249,11 @@ $('clr').addEventListener('click',()=>{
   PF={};uplFiles=[];stsFiles=[];CRs=[];spd={};rfl();rCRL();
   if(curChart){curChart.destroy();curChart=null;}
   if(cmpChart){cmpChart.destroy();cmpChart=null;}
-  distCharts.forEach(c=>c.destroy());distCharts=[];
-  if(boxChart){boxChart.destroy();boxChart=null;}
   $('ec').style.display='';$('mc').style.display='none';
   $('cttl').textContent='— No Data Loaded —';$('rs2').textContent='No data';
   $('rb').innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--dim);padding:12px;">No results yet</td></tr>';
   $('fs').innerHTML='<option value="">Select…</option>';
-  $('lcK').value='';$('lcK').placeholder='0 = auto';
+  $('lcK').value='';$('lcSpd').value='';
   extraKs=[];ekIdSeq=0;renderExtraKList();
   $('cmpEc').style.display='flex';$('sc2').innerHTML='<div class="ec" style="position:relative;padding:50px 20px;"><div class="eci">⊠</div><p>No data.</p></div>';
   log('Cleared','warn');toast('Cleared');setst('READY');
@@ -1429,8 +1264,10 @@ $('clr').addEventListener('click',()=>{
 // ════════════════════════════
 $('ltg').addEventListener('click',()=>{const o=$('lp').classList.toggle('open');$('la').textContent=o?'▼':'▲';});
 
-log('Dynamometer Analysis Tool v3.5 ready','ok');
-log('Each extra K curve adds a Rated K=… region row with its own Op.Pt line');
+log('Dynamometer Analysis Tool v8.1 ready','ok');
+log('Load Curve: enter K or Speed — zero = no curve drawn. Curves apply to all loaded files.');
+// Hide rated value row on load (LC mode is default)
+document.getElementById('rpvrow').style.display='none';
 </script>
 </body>
 </html>
