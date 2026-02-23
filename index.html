@@ -233,6 +233,7 @@ tbody td{padding:4px 8px;color:var(--text);white-space:nowrap;}
 <div class="nav">
   <button class="ntab active" data-p="analyze">⊞ Analyze</button>
   <button class="ntab" data-p="compare">⊟ Compare</button>
+  <button class="ntab" data-p="motors">⊡ Compare Motors</button>
   <button class="ntab" data-p="stats">⊠ Statistics</button>
 </div>
 
@@ -437,25 +438,230 @@ tbody td{padding:4px 8px;color:var(--text);white-space:nowrap;}
 </div>
 </div>
 
+<!-- ═══ PAGE: COMPARE MOTORS ═══ -->
+<div class="page" id="page-motors">
+<div style="display:flex;width:100%;height:100%;overflow:hidden;">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sb-scroll">
+
+    <!-- FILE A -->
+    <div class="panel">
+      <div class="ph"><div class="phi"></div>Motor A — Upload</div>
+      <div class="pb">
+        <div><label class="fl">Custom Name</label><input type="text" id="mtrLblA" value="Motor A" placeholder="e.g. Midea 18&quot;"/></div>
+        <div class="dz" id="mtrDzA"><div class="dzi">⬆</div><p><strong>Drop CSV / XLSX here</strong><br>or click to browse</p></div>
+        <input type="file" id="mtrFiA" accept=".csv,.xlsx,.xls" style="display:none;">
+        <div id="mtrFlA" style="font-family:var(--mono);font-size:.63rem;color:var(--ok);margin-top:3px;"></div>
+      </div>
+    </div>
+
+    <!-- FILE B -->
+    <div class="panel">
+      <div class="ph"><div class="phi"></div>Motor B — Upload</div>
+      <div class="pb">
+        <div><label class="fl">Custom Name</label><input type="text" id="mtrLblB" value="Motor B" placeholder="e.g. ELARABY 18&quot;"/></div>
+        <div class="dz" id="mtrDzB"><div class="dzi">⬆</div><p><strong>Drop CSV / XLSX here</strong><br>or click to browse</p></div>
+        <input type="file" id="mtrFiB" accept=".csv,.xlsx,.xls" style="display:none;">
+        <div id="mtrFlB" style="font-family:var(--mono);font-size:.63rem;color:var(--accent2);margin-top:3px;"></div>
+      </div>
+    </div>
+
+    <!-- CONFIG -->
+    <div class="panel" id="p-mcfg">
+      <div class="ph" onclick="tp('mcfg')"><div class="phi"></div>Configuration<span class="pha" id="a-mcfg">▾</span></div>
+      <div class="pb" id="b-mcfg">
+        <div><label class="fl">MDF Config</label>
+          <div class="rg">
+            <label class="ro"><input type="radio" name="mmdf" value="0" checked><span>SPIM</span></label>
+            <label class="ro"><input type="radio" name="mmdf" value="1"><span>1-Phase</span></label>
+            <label class="ro"><input type="radio" name="mmdf" value="2"><span>3-Phase</span></label>
+          </div>
+        </div>
+        <div><label class="fl">Speed Region Start (RPM)</label><input type="number" id="msrs" value="0" step="1"/></div>
+        <div><label class="fl">Overlay Metric</label>
+          <select id="mtrMetric">
+            <option value="Torque">Torque (N·m)</option>
+            <option value="eff" selected>Efficiency (%)</option>
+            <option value="Pin">Pin (W)</option>
+            <option value="Pout">Pout (W)</option>
+            <option value="PF">Power Factor</option>
+            <option value="It">It (A)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOAD CURVES K -->
+    <div class="panel" id="p-mk">
+      <div class="ph" onclick="tp('mk')"><div class="phi"></div>Load Curves (K)<span class="pha" id="a-mk">▾</span></div>
+      <div class="pb" id="b-mk">
+        <p class="help">T<sub>L</sub>=K·(2π/60·N)² — applies to both motors.</p>
+        <div style="display:flex;flex-direction:column;gap:2px;">
+          <label class="fl">Load Curve K₁</label>
+          <div style="display:flex;gap:4px;align-items:center;">
+            <div style="flex:1;min-width:0;">
+              <label class="fl" style="font-size:.58rem;">K value</label>
+              <input type="number" id="mK1" step="any" min="0" placeholder="e.g. 0.0045"/>
+            </div>
+            <div style="color:var(--dim);font-family:var(--mono);font-size:.7rem;padding-top:14px;">⇄</div>
+            <div style="flex:1;min-width:0;">
+              <label class="fl" style="font-size:.58rem;">Speed (RPM)</label>
+              <input type="number" id="mK1spd" step="any" min="0" placeholder="e.g. 1400"/>
+            </div>
+          </div>
+        </div>
+        <div id="mExtraKList" style="display:flex;flex-direction:column;gap:3px;"></div>
+        <button class="btn bg2" id="mAddKBtn" style="padding:3px 8px;font-size:.62rem;">+ Add K Curve</button>
+      </div>
+    </div>
+
+    <!-- CUSTOM REGIONS -->
+    <div class="panel" id="p-mcr">
+      <div class="ph" onclick="tp('mcr')"><div class="phi"></div>Custom Regions<span class="pha" id="a-mcr">▾</span></div>
+      <div class="pb" id="b-mcr">
+        <p class="help">Define operating points applied to both motors.</p>
+        <div class="crf">
+          <div class="crfr">
+            <div class="crff"><label class="fl">Name</label><input type="text" id="mcrn" placeholder="e.g. Rated Pt"/></div>
+            <div class="crff"><label class="fl">By</label>
+              <select id="mcrb">
+                <option value="speed">Speed (RPM)</option>
+                <option value="torque">Torque (N·m)</option>
+                <option value="pout">Pout (W)</option>
+                <option value="eff">Efficiency (%)</option>
+              </select>
+            </div>
+          </div>
+          <div><label class="fl">Value</label><input type="number" id="mcrv" step="any" placeholder="e.g. 1400"/></div>
+          <button class="btn bg2 bfu" id="mAcr">+ Add Region</button>
+        </div>
+        <div id="mCrl" style="display:flex;flex-direction:column;gap:2px;margin-top:3px;"></div>
+      </div>
+    </div>
+
+    <!-- DEMO -->
+    <div class="panel">
+      <div class="ph"><div class="phi"></div>Quick Demo</div>
+      <div class="pb">
+        <button class="btn bg2 bfu" id="mtrDemo">▶ Load Demo A vs B</button>
+      </div>
+    </div>
+
+  </div><!-- /sb-scroll -->
+
+  <div class="sb-footer">
+    <div class="sb-footer-label">⊡ Compare Motors Actions</div>
+    <button class="btn bp bfu" id="mtrRun">▶ Run Comparison</button>
+    <div class="bg">
+      <button class="btn bo" id="mtrExpXlsx" style="flex:1">⬇ XLSX</button>
+      <button class="btn bgh" id="mtrExpPng">🖼 PNG</button>
+    </div>
+    <button class="btn bw bfu" id="mtrExpLatex">⬇ Export LaTeX</button>
+  </div>
+</div><!-- /sidebar -->
+
+<!-- MAIN AREA -->
+<div class="main-area" style="overflow:hidden;">
+  <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+
+    <!-- Overlay chart -->
+    <div style="flex:1;position:relative;padding:10px 10px 5px;min-height:0;">
+      <div style="height:100%;background:var(--surface);border:1px solid var(--border);border-radius:7px;overflow:hidden;display:flex;flex-direction:column;">
+        <div class="cc2h" style="flex-shrink:0;">
+          <span id="mtrChartTitle">PERFORMANCE CURVE OVERLAY — A vs B</span>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <div class="ctabs" id="mtrCurveTabs">
+              <div class="ctab active" data-mct="all">All</div>
+              <div class="ctab" data-mct="eff">Eff/PF</div>
+              <div class="ctab" data-mct="power">Power</div>
+              <div class="ctab" data-mct="torque">Torque</div>
+              <div class="ctab" data-mct="current">Current</div>
+            </div>
+            <button class="btn bgh" id="mtrShotChart" style="padding:3px 8px;font-size:.6rem;">📷 PNG</button>
+          </div>
+        </div>
+        <div style="flex:1;position:relative;padding:9px;">
+          <canvas id="mtrMainChart"></canvas>
+          <div class="ec" id="mtrEc" style="background:var(--surface);"><div class="eci">⊡</div><p style="font-family:var(--mono);font-size:.7rem;">Upload two files and click Run Comparison</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Winner banner -->
+    <div id="mtrBanner" style="display:none;flex-shrink:0;margin:0 10px;padding:7px 14px;background:linear-gradient(90deg,rgba(0,102,204,.08),transparent);border:1px solid var(--border);border-left:4px solid var(--ok);border-radius:6px;font-family:var(--mono);font-size:.68rem;"></div>
+
+    <!-- Comparison table -->
+    <div style="flex-shrink:0;height:248px;border-top:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;">
+      <div class="rh" style="flex-shrink:0;">
+        <span>⊡</span> SIDE-BY-SIDE · WINNER PER PARAMETER · ALL REGIONS
+        <button class="btn bgh" id="mtrTblPng" style="margin-left:auto;padding:2px 7px;font-size:.59rem;">⬇ Table PNG</button>
+      </div>
+      <div class="tw">
+        <table style="min-width:820px;">
+          <thead id="mtrTh"></thead>
+          <tbody id="mtrTb"><tr><td colspan="20" style="text-align:center;color:var(--dim);padding:16px;">Upload two motor files and click Run Comparison</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</div>
+</div><!-- /page-motors -->
+
 <!-- ═══ PAGE: STATS ═══ -->
 <div class="page" id="page-stats">
-<div class="fta">
-  <div class="ts">
+<div style="display:flex;flex-direction:column;height:100%;overflow:hidden;">
+
+  <!-- TOP TOOLBAR -->
+  <div class="ts" style="flex-shrink:0;border-bottom:1px solid var(--border);border-radius:0;margin:0;">
     <span class="tsl">⊠ PRODUCTION STATISTICS</span>
     <div style="display:flex;align-items:center;gap:5px;">
       <label class="fl" style="display:inline;margin:0;white-space:nowrap;">σ (k):</label>
       <input type="number" id="sk" value="3" step="0.5" style="width:60px;"/>
     </div>
+    <div style="display:flex;align-items:center;gap:5px;">
+      <label class="fl" style="display:inline;margin:0;white-space:nowrap;">Bins:</label>
+      <input type="number" id="stsBins" value="8" min="3" max="30" step="1" style="width:52px;"/>
+    </div>
+    <div style="display:flex;align-items:center;gap:5px;">
+      <label class="fl" style="display:inline;margin:0;white-space:nowrap;">Field:</label>
+      <select id="stsField" style="width:auto;">
+        <option value="Speed">Speed (RPM)</option>
+        <option value="Torque">Torque (N·m)</option>
+        <option value="Pin">Pin (W)</option>
+        <option value="Po" selected>Pout (W)</option>
+        <option value="Eff">Eff (%)</option>
+        <option value="pf">PF</option>
+        <option value="It">It (A)</option>
+        <option value="Im">Im (A)</option>
+        <option value="Ia">Ia (A)</option>
+      </select>
+    </div>
     <div class="dz" id="sdz" style="padding:4px 10px;display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;border-width:1px;">
-      <span>⬆</span><span style="font-size:.66rem;font-family:var(--mono);">Batch files for stats</span>
+      <span>⬆</span><span style="font-size:.66rem;font-family:var(--mono);">Batch files</span>
     </div>
     <input type="file" id="sfi" multiple accept=".csv,.xlsx,.xls" style="display:none;">
     <button class="btn bp" id="rsts">↻ Compute</button>
     <button class="btn bo" id="expSts">⬇ Export Stats</button>
+    <button class="btn bg2" id="expAvgCurve">⬇ Avg Motor Curve</button>
   </div>
-  <div id="sc2">
+
+  <!-- SUB-TABS -->
+  <div style="display:flex;gap:0;flex-shrink:0;background:var(--surface);border-bottom:2px solid var(--border);padding:0 12px;">
+    <button class="ntab active" id="stab-summary" onclick="switchStab('summary')">⊠ Summary</button>
+    <button class="ntab" id="stab-dist" onclick="switchStab('dist')">⊡ Distribution</button>
+    <button class="ntab" id="stab-box" onclick="switchStab('box')">⊟ Box Plot</button>
+  </div>
+
+  <!-- CONTENT AREA -->
+  <div style="flex:1;overflow-y:auto;overflow-x:hidden;padding:10px;" id="stsContent">
     <div class="ec" style="position:relative;padding:60px 20px;"><div class="eci">⊠</div><p>Load files or use processed files, then click Compute</p></div>
   </div>
+
 </div>
 </div>
 
@@ -1162,66 +1368,512 @@ $('expCmp').addEventListener('click',async()=>{
 // ════════════════════════════
 //  STATS
 // ════════════════════════════
-async function renderSts(){
-  let allD={...PF};
-  if(stsFiles.length){
-    setst('LOADING…');setpb(10);
-    for(let i=0;i<stsFiles.length;i++){const f=stsFiles[i];try{setpb(10+70*(i/stsFiles.length));const p=await parseF(f);const r=procData(p);allD[r.key]=r;log(`Stats: ${r.key}`,'ok');}catch(err){log(`Err: ${f.name}: ${err.message}`,'err');}}
-    setpb(100);setst('READY');setTimeout(()=>setpb(0),700);
-  }
-  const keys=Object.keys(allD);
-  if(!keys.length){$('sc2').innerHTML='<div class="ec" style="position:relative;padding:50px 20px;"><div class="eci">⊠</div><p>No data.</p></div>';return;}
-  const k=parseFloat($('sk').value)||3;
-  const rN=[];keys.forEach(kk=>{allR(allD[kk]).forEach(r=>{if(!rN.includes(r.Region))rN.push(r.Region);});});
-  const flds=['Speed','Torque','Pin','Po','Eff','pf','It','Im','Ia'],fLbl=['Speed (RPM)','Torque (N·m)','Pin (W)','Pout (W)','Eff (%)','PF','It (A)','Im (A)','Ia (A)'];
+// ══════════════════════════════════════════════
+//  STATS — Summary + Distribution + Box Plot
+// ══════════════════════════════════════════════
+let stsAllD={}, stsCurTab='summary';
+let stsDistCharts=[], stsBoxChart=null;
+
+const STS_FLDS=['Speed','Torque','Pin','Po','Eff','pf','It','Im','Ia'];
+const STS_FLBL={Speed:'Speed (RPM)',Torque:'Torque (N·m)',Pin:'Pin (W)',Po:'Pout (W)',Eff:'Eff (%)',pf:'PF',It:'It (A)',Im:'Im (A)',Ia:'Ia (A)'};
+const STS_PAL=['#005faa','#c04000','#2e7000','#8a6000','#7700bb','#aa0033'];
+const STS_MONO="'Share Tech Mono',monospace";
+
+// ── quartile helpers ──
+function qile(sorted,q){const p=(sorted.length-1)*q,lo=Math.floor(p),hi=Math.ceil(p);return sorted[lo]+(sorted[hi]-sorted[lo])*(p-lo);}
+function bxStats(vals){
+  if(!vals||!vals.length)return null;
+  const s=[...vals].sort((a,b)=>a-b);
+  const q1=qile(s,.25),med=qile(s,.5),q3=qile(s,.75),iqr=q3-q1;
+  const wlo=Math.max(s[0],q1-1.5*iqr),whi=Math.min(s[s.length-1],q3+1.5*iqr);
+  const out=s.filter(v=>v<wlo||v>whi);
+  return{q1,med,q3,iqr,wlo,whi,out,mean:avg(vals),std:sdv(vals),min:s[0],max:s[s.length-1],n:s.length};
+}
+
+// ── sub-tab switcher ──
+function switchStab(tab){
+  stsCurTab=tab;
+  ['summary','dist','box'].forEach(t=>{
+    const b=document.getElementById('stab-'+t);
+    if(b)b.classList.toggle('active',t===tab);
+  });
+  renderStsView();
+}
+
+// ── collect values for one field across motors at one region ──
+function stsVals(keys,rNm,f){
+  return keys.map(kk=>{
+    const r=allR(stsAllD[kk]).find(x=>x.Region===rNm);
+    const v=r?r[f]:null;
+    return(v!==null&&v!==undefined&&!isNaN(v))?v:null;
+  }).filter(v=>v!==null);
+}
+
+// ── build spd (stats per field per region) ──
+function buildSpd(keys,k){
+  const rN=[];
+  keys.forEach(kk=>{allR(stsAllD[kk]).forEach(r=>{if(!rN.includes(r.Region))rN.push(r.Region);});});
   const sd={};
   rN.forEach(rNm=>{
     sd[rNm]={};
-    flds.forEach((f,fi)=>{
-      const vals=keys.map(kk=>{const r=allR(allD[kk]).find(x=>x.Region===rNm);const v=r?r[f]:null;return(v!==null&&!isNaN(v))?v:null;}).filter(v=>v!==null);
+    STS_FLDS.forEach(f=>{
+      const vals=stsVals(keys,rNm,f);
       if(!vals.length){sd[rNm][f]={n:0};return;}
-      const m=avg(vals),s=sdv(vals);
-      sd[rNm][f]={n:vals.length,mean:m,std:s,min:Math.min(...vals),max:Math.max(...vals),lo:m-k*s,hi:m+k*s,label:fLbl[fi]};
+      const mn=avg(vals),st=sdv(vals);
+      sd[rNm][f]={n:vals.length,mean:mn,std:st,
+        min:Math.min(...vals),max:Math.max(...vals),
+        lo:mn-k*st,hi:mn+k*st,label:STS_FLBL[f],vals};
     });
   });
+  return{sd,rN};
+}
+
+// ═══════════════
+//  SUMMARY TAB
+// ═══════════════
+function renderStsSummary(keys,k){
+  const{sd,rN}=buildSpd(keys,k);
   spd=sd;
-  const container=$('sc2');
-  container.innerHTML=`<div style="font-family:var(--mono);font-size:.67rem;color:var(--dim);padding:4px 0 8px;">n = ${keys.length} motors &nbsp;·&nbsp; Production limit = ±${k}σ</div><div class="sg" id="sg"></div>`;
-  const grid=$('sg');
+  const cont=document.getElementById('stsContent');
+  cont.innerHTML=`<div style="font-family:${STS_MONO};font-size:.67rem;color:var(--dim);padding:4px 0 10px;">
+    n = <strong>${keys.length}</strong> motors &nbsp;·&nbsp; Production limit = ±${k}σ
+  </div><div class="sg" id="sg"></div>`;
+  const grid=document.getElementById('sg');
   rN.forEach(rNm=>{
     const card=document.createElement('div');card.className='sc';
     let body='';
-    flds.forEach(f=>{
+    STS_FLDS.forEach(f=>{
       const s=sd[rNm][f];if(!s||!s.n)return;
-      body+=`<div class="sr"><span class="sl">${s.label}</span><span class="sv">${s.mean.toFixed(3)} ±${s.std.toFixed(3)}</span></div><div class="sr"><span class="sl">Limits [±${k}σ]</span><span class="slm">[${s.lo.toFixed(3)} … ${s.hi.toFixed(3)}]</span></div><div class="sr" style="margin-bottom:4px;"><span class="sl">Range</span><span style="color:var(--dim);font-size:.62rem">${s.min.toFixed(3)} … ${s.max.toFixed(3)}</span></div>`;
+      const bs=bxStats(s.vals||[]);
+      const cpk=s.std>0?Math.min((s.hi-s.mean)/(3*s.std),(s.mean-s.lo)/(3*s.std)):null;
+      const cc=cpk===null?'var(--dim)':cpk>=1.33?'var(--ok)':cpk>=1?'var(--warn)':'var(--err)';
+      body+=`<div style="border-bottom:1px solid rgba(100,120,180,.07);padding:3px 0 4px;margin-bottom:2px;">
+        <div class="sr"><span class="sl" style="font-weight:600;">${s.label}</span><span class="sv">${s.mean.toFixed(3)} \u00b1 ${s.std.toFixed(3)}</span></div>
+        <div class="sr"><span class="sl">\u00b1${k}\u03c3 Limits</span><span class="slm">[${s.lo.toFixed(3)} \u2026 ${s.hi.toFixed(3)}]</span></div>
+        <div class="sr"><span class="sl">Min / Max</span><span style="color:var(--dim);font-size:.61rem">${s.min.toFixed(3)} / ${s.max.toFixed(3)}</span></div>
+        ${bs?`<div class="sr"><span class="sl">Median / IQR</span><span style="color:var(--dim);font-size:.61rem">${bs.med.toFixed(3)} / ${bs.iqr.toFixed(3)}</span></div>`:''}
+        ${cpk!==null?`<div class="sr"><span class="sl">Cpk</span><span style="color:${cc};font-weight:700;">${cpk.toFixed(3)}</span></div>`:''}
+        ${bs&&bs.out.length?`<div class="sr"><span class="sl" style="color:var(--err);">Outliers</span><span style="color:var(--err);font-size:.60rem">${bs.out.length} detected</span></div>`:''}
+      </div>`;
     });
-    card.innerHTML=`<div class="sch">${rNm} <span style="font-size:.58rem;color:var(--dim)">(n=${sd[rNm][flds[0]]?.n||0})</span></div><div class="scb">${body||'<span style="color:var(--dim)">No data</span>'}</div>`;
+    card.innerHTML=`<div class="sch">${rNm} <span style="font-size:.58rem;color:var(--dim)">(n=${keys.length})</span></div>
+      <div class="scb">${body||'<span style="color:var(--dim)">No data</span>'}</div>`;
     grid.appendChild(card);
   });
 }
-$('rsts').addEventListener('click',renderSts);
 
+// ══════════════════
+//  DISTRIBUTION TAB
+// ══════════════════
+function renderStsDist(keys,k){
+  stsDistCharts.forEach(c=>{try{c.destroy();}catch(e){}});
+  stsDistCharts=[];
+  const cont=document.getElementById('stsContent');
+  const field=document.getElementById('stsField').value;
+  const bins=Math.max(3,Math.min(30,parseInt(document.getElementById('stsBins').value)||8));
+  const fLbl=STS_FLBL[field]||field;
+  const{rN}=buildSpd(keys,k);
+  cont.innerHTML=`<div style="font-family:${STS_MONO};font-size:.67rem;color:var(--dim);padding:4px 0 10px;">
+    <strong>\u2bc1 Distribution</strong> \u2014 field: <strong>${fLbl}</strong> &nbsp;\u00b7&nbsp;
+    ${bins} bins &nbsp;\u00b7&nbsp; n=${keys.length} motors &nbsp;\u00b7&nbsp; \u00b1${k}\u03c3 limits shown
+  </div>`;
+
+  rN.forEach((rNm,ri)=>{
+    const vals=stsVals(keys,rNm,field);
+    if(!vals.length)return;
+    const mn=avg(vals),st=sdv(vals),lo=mn-k*st,hi=mn+k*st;
+    const bs=bxStats(vals);
+    const col=STS_PAL[ri%STS_PAL.length];
+    const vmin=bs.min,vmax=bs.max,span=vmax-vmin||1e-9;
+    const bw=span/bins;
+
+    const counts=new Array(bins).fill(0);
+    vals.forEach(v=>{let b=Math.floor((v-vmin)/bw);if(b>=bins)b=bins-1;counts[b]++;});
+    const centres=Array.from({length:bins},(_,i)=>vmin+(i+0.5)*bw);
+
+    const pdfScale=vals.length*bw;
+    const pdfX=Array.from({length:120},(_,i)=>vmin-bw+span*(i/118)+bw);
+    const pdfY=pdfX.map(x=>st>0?(1/(st*Math.sqrt(2*Math.PI)))*Math.exp(-.5*((x-mn)/st)**2)*pdfScale:0);
+    const yMax=Math.max(...counts,...pdfY)*1.18;
+
+    const wrap=document.createElement('div');
+    wrap.style.cssText='background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:14px;';
+    wrap.innerHTML=`
+      <div style="padding:6px 13px;background:var(--hg);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+        <span style="font-family:${STS_MONO};font-size:.69rem;color:${col};font-weight:700;">${rNm}</span>
+        <span style="font-family:${STS_MONO};font-size:.62rem;color:var(--dim);">n=${vals.length}</span>
+        <span style="font-family:${STS_MONO};font-size:.62rem;color:var(--dim);">\u03bc = ${mn.toFixed(4)}</span>
+        <span style="font-family:${STS_MONO};font-size:.62rem;color:var(--dim);">\u03c3 = ${st.toFixed(4)}</span>
+        <span style="font-family:${STS_MONO};font-size:.62rem;color:var(--dim);">min=${bs.min.toFixed(3)} &nbsp; max=${bs.max.toFixed(3)}</span>
+        <span style="font-family:${STS_MONO};font-size:.62rem;color:var(--err);">\u2212${k}\u03c3: ${lo.toFixed(3)} &nbsp;|&nbsp; +${k}\u03c3: ${hi.toFixed(3)}</span>
+      </div>
+      <div style="height:240px;position:relative;padding:8px 10px;"><canvas id="distC${ri}"></canvas></div>`;
+    cont.appendChild(wrap);
+
+    const c=new Chart(document.getElementById('distC'+ri).getContext('2d'),{
+      data:{datasets:[
+        {type:'bar',label:'Count',data:centres.map((x,i)=>({x,y:counts[i]})),
+          backgroundColor:col+'4a',borderColor:col,borderWidth:1.5,barThickness:'flex',order:2},
+        {type:'line',label:'Normal PDF',data:pdfX.map((x,i)=>({x,y:pdfY[i]})),
+          borderColor:col,borderWidth:2.5,pointRadius:0,tension:.4,fill:false,order:1},
+        {type:'line',label:'Mean',data:[{x:mn,y:0},{x:mn,y:yMax}],
+          borderColor:'#1a7a40',borderWidth:2,borderDash:[4,3],pointRadius:0,fill:false,order:1},
+        {type:'line',label:`\u2212${k}\u03c3`,data:[{x:lo,y:0},{x:lo,y:yMax}],
+          borderColor:'#bb2233',borderWidth:1.5,borderDash:[5,3],pointRadius:0,fill:false,order:1},
+        {type:'line',label:`+${k}\u03c3`,data:[{x:hi,y:0},{x:hi,y:yMax}],
+          borderColor:'#bb2233',borderWidth:1.5,borderDash:[5,3],pointRadius:0,fill:false,order:1},
+      ]},
+      options:{
+        responsive:true,maintainAspectRatio:false,animation:{duration:200},
+        plugins:{
+          legend:{labels:{color:CP.dim,font:{family:STS_MONO,size:9},boxWidth:11,padding:5}},
+          tooltip:{callbacks:{
+            title:c2=>`${fLbl}: ${Number(c2[0]?.raw?.x||0).toFixed(3)}`,
+            label:c2=>`${c2.dataset.label}: ${Number(c2.parsed?.y||0).toFixed(3)}`
+          }}
+        },
+        scales:{
+          x:{type:'linear',title:{display:true,text:fLbl,color:CP.dim,font:{family:STS_MONO,size:9}},
+            ticks:{color:CP.dim,font:{family:STS_MONO,size:8}},grid:{color:CP.grid2},
+            min:vmin-bw*.6,max:vmax+bw*.6},
+          y:{title:{display:true,text:'Count / Density',color:CP.dim,font:{family:STS_MONO,size:9}},
+            ticks:{color:CP.dim,font:{family:STS_MONO,size:8}},grid:{color:CP.grid2},min:0,max:yMax}
+        }
+      }
+    });
+    stsDistCharts.push(c);
+  });
+}
+
+// ══════════════
+//  BOX PLOT TAB
+// ══════════════
+function renderStsBox(keys,k){
+  if(stsBoxChart){try{stsBoxChart.destroy();}catch(e){}stsBoxChart=null;}
+  const cont=document.getElementById('stsContent');
+  const field=document.getElementById('stsField').value;
+  const fLbl=STS_FLBL[field]||field;
+  const{rN}=buildSpd(keys,k);
+  cont.innerHTML=`<div style="font-family:${STS_MONO};font-size:.67rem;color:var(--dim);padding:4px 0 10px;">
+    <strong>\u2b1f Box Plot</strong> \u2014 field: <strong>${fLbl}</strong> &nbsp;\u00b7&nbsp; n=${keys.length} motors per region
+  </div>`;
+
+  const labels=[],bsList=[];
+  rN.forEach(rNm=>{
+    const vals=stsVals(keys,rNm,field);
+    if(!vals.length)return;
+    labels.push(rNm);bsList.push(bxStats(vals));
+  });
+  if(!labels.length){cont.innerHTML+='<p style="color:var(--dim);padding:20px;font-family:'+STS_MONO+';">No data for this field.</p>';return;}
+
+  const chartWrap=document.createElement('div');
+  chartWrap.style.cssText='background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:14px;';
+  chartWrap.innerHTML=`
+    <div style="padding:6px 13px;background:var(--hg);border-bottom:1px solid var(--border);font-family:${STS_MONO};font-size:.69rem;color:var(--accent);font-weight:700;">
+      \u2b1f Box-and-Whisker \u2014 ${fLbl} \u2014 All Regions
+    </div>
+    <div style="height:340px;position:relative;padding:10px 14px;"><canvas id="boxMainC"></canvas></div>
+    <div style="padding:4px 12px 8px;font-family:${STS_MONO};font-size:.60rem;color:var(--dim);">
+      \u25c6 = Median &nbsp;\u00b7&nbsp; \u2715 = Mean &nbsp;\u00b7&nbsp; \u25cf = Outlier (beyond 1.5\u00d7IQR) &nbsp;\u00b7&nbsp; Box = Q1\u2013Q3 &nbsp;\u00b7&nbsp; Whiskers = min/max within 1.5\u00d7IQR fence
+    </div>`;
+  cont.appendChild(chartWrap);
+
+  const ds=[
+    // IQR box
+    {type:'bar',label:'IQR (Q1\u2013Q3)',
+      data:labels.map((r,i)=>({x:i,y:[bsList[i].q1,bsList[i].q3]})),
+      backgroundColor:labels.map((_,i)=>STS_PAL[i%STS_PAL.length]+'55'),
+      borderColor:labels.map((_,i)=>STS_PAL[i%STS_PAL.length]),
+      borderWidth:2.5,borderSkipped:false,barThickness:40,order:3},
+    // Lower whisker
+    {type:'bar',label:'Whisker Lo',
+      data:labels.map((r,i)=>({x:i,y:[bsList[i].wlo,bsList[i].q1]})),
+      backgroundColor:'transparent',
+      borderColor:labels.map((_,i)=>STS_PAL[i%STS_PAL.length]),
+      borderWidth:2,borderSkipped:false,barThickness:10,order:3},
+    // Upper whisker
+    {type:'bar',label:'Whisker Hi',
+      data:labels.map((r,i)=>({x:i,y:[bsList[i].q3,bsList[i].whi]})),
+      backgroundColor:'transparent',
+      borderColor:labels.map((_,i)=>STS_PAL[i%STS_PAL.length]),
+      borderWidth:2,borderSkipped:false,barThickness:10,order:3},
+    // Median diamond
+    {type:'scatter',label:'Median \u25c6',
+      data:labels.map((r,i)=>({x:i,y:bsList[i].med})),
+      pointStyle:'rectRot',pointRadius:9,
+      backgroundColor:labels.map((_,i)=>STS_PAL[i%STS_PAL.length]),
+      borderColor:'#fff',borderWidth:1.5,order:1},
+    // Mean cross
+    {type:'scatter',label:'Mean \u2715',
+      data:labels.map((r,i)=>({x:i,y:bsList[i].mean})),
+      pointStyle:'crossRot',pointRadius:10,
+      backgroundColor:'transparent',
+      borderColor:labels.map((_,i)=>STS_PAL[i%STS_PAL.length]),
+      borderWidth:2.5,order:1},
+  ];
+  const outlierPts=[];
+  labels.forEach((r,i)=>{bsList[i].out.forEach(v=>outlierPts.push({x:i,y:v}));});
+  if(outlierPts.length)ds.push({type:'scatter',label:'Outlier \u25cf',
+    data:outlierPts,pointStyle:'circle',pointRadius:7,
+    backgroundColor:'rgba(187,34,51,.75)',borderColor:'#bb2233',borderWidth:1.5,order:0});
+
+  stsBoxChart=new Chart(document.getElementById('boxMainC').getContext('2d'),{
+    data:{datasets:ds},
+    options:{
+      responsive:true,maintainAspectRatio:false,animation:{duration:260},
+      plugins:{
+        legend:{labels:{color:CP.dim,font:{family:STS_MONO,size:10},boxWidth:13,padding:7}},
+        tooltip:{callbacks:{
+          title:c2=>{const idx=Math.round(c2[0]?.raw?.x??0);return labels[idx]||'';},
+          label:c2=>{const r=c2.raw;
+            if(r&&Array.isArray(r.y))return`${c2.dataset.label}: [${r.y[0].toFixed(3)}, ${r.y[1].toFixed(3)}]`;
+            return`${c2.dataset.label}: ${Number(r?.y??c2.parsed?.y??0).toFixed(3)}`;}
+        }}
+      },
+      scales:{
+        x:{type:'linear',
+          ticks:{color:CP.dim,font:{family:STS_MONO,size:9},
+            stepSize:1,callback:v=>labels[Math.round(v)]||''},
+          grid:{color:CP.grid},min:-0.6,max:labels.length-0.4},
+        y:{title:{display:true,text:fLbl,color:CP.dim,font:{family:STS_MONO,size:10}},
+          ticks:{color:CP.dim,font:{family:STS_MONO,size:9}},grid:{color:CP.grid2}}
+      }
+    }
+  });
+
+  // Per-region detail cards
+  const cardGrid=document.createElement('div');cardGrid.className='sg';cont.appendChild(cardGrid);
+  labels.forEach((rNm,ri)=>{
+    const bs=bsList[ri];
+    const col=STS_PAL[ri%STS_PAL.length];
+    const kv=parseFloat($('sk').value)||3;
+    const lo=bs.mean-kv*bs.std,hi=bs.mean+kv*bs.std;
+    const cpk=bs.std>0?Math.min((hi-bs.mean)/(3*bs.std),(bs.mean-lo)/(3*bs.std)):null;
+    const cc=cpk===null?'var(--dim)':cpk>=1.33?'var(--ok)':cpk>=1?'var(--warn)':'var(--err)';
+    const card=document.createElement('div');card.className='sc';
+    card.innerHTML=`
+      <div class="sch" style="border-left:3px solid ${col};">${rNm} <span style="font-size:.58rem;color:var(--dim)">(n=${bs.n})</span></div>
+      <div class="scb">
+        <div class="sr"><span class="sl">Min</span><span class="sv">${bs.min.toFixed(4)}</span></div>
+        <div class="sr"><span class="sl">Q1 (25%)</span><span class="sv">${bs.q1.toFixed(4)}</span></div>
+        <div class="sr"><span class="sl">Median \u25c6</span><span class="sv" style="color:${col};">${bs.med.toFixed(4)}</span></div>
+        <div class="sr"><span class="sl">Mean \u2715</span><span class="sv">${bs.mean.toFixed(4)}</span></div>
+        <div class="sr"><span class="sl">Q3 (75%)</span><span class="sv">${bs.q3.toFixed(4)}</span></div>
+        <div class="sr"><span class="sl">Max</span><span class="sv">${bs.max.toFixed(4)}</span></div>
+        <div class="sr" style="border-top:1px solid rgba(100,120,180,.1);margin-top:3px;padding-top:3px;">
+          <span class="sl">IQR</span><span class="sv">${bs.iqr.toFixed(4)}</span></div>
+        <div class="sr"><span class="sl">Std Dev (\u03c3)</span><span class="sv">${bs.std.toFixed(4)}</span></div>
+        <div class="sr"><span class="sl">Whisker Lo</span><span style="color:var(--dim);font-size:.61rem">${bs.wlo.toFixed(4)}</span></div>
+        <div class="sr"><span class="sl">Whisker Hi</span><span style="color:var(--dim);font-size:.61rem">${bs.whi.toFixed(4)}</span></div>
+        <div class="sr"><span class="sl">\u00b1${kv}\u03c3 Limits</span><span class="slm">[${lo.toFixed(3)} \u2026 ${hi.toFixed(3)}]</span></div>
+        ${cpk!==null?`<div class="sr"><span class="sl">Cpk</span><span style="color:${cc};font-weight:700;">${cpk.toFixed(3)}</span></div>`:''}
+        <div class="sr" style="border-top:1px solid rgba(100,120,180,.1);margin-top:3px;padding-top:3px;">
+          <span class="sl">Outliers (${bs.out.length})</span>
+          <span style="color:${bs.out.length?'var(--err)':'var(--ok)'};font-size:.60rem;font-weight:${bs.out.length?700:400};">
+            ${bs.out.length?bs.out.map(v=>v.toFixed(3)).join(', '):'None'}
+          </span>
+        </div>
+      </div>`;
+    cardGrid.appendChild(card);
+  });
+}
+
+// ══════════════════════════════
+//  Entry point
+// ══════════════════════════════
+async function renderSts(){
+  stsAllD={...PF};
+  if(stsFiles.length){
+    setst('LOADING\u2026');setpb(10);
+    for(let i=0;i<stsFiles.length;i++){
+      const f=stsFiles[i];
+      try{setpb(10+70*(i/stsFiles.length));const p=await parseF(f);const r=procData(p);stsAllD[r.key]=r;log(`Stats: ${r.key}`,'ok');}
+      catch(err){log(`Err: ${f.name}: ${err.message}`,'err');}
+    }
+    setpb(100);setst('READY');setTimeout(()=>setpb(0),700);
+  }
+  renderStsView();
+}
+function renderStsView(){
+  const keys=Object.keys(stsAllD);
+  const cont=document.getElementById('stsContent');
+  if(!keys.length){
+    cont.innerHTML='<div class="ec" style="position:relative;padding:60px 20px;"><div class="eci">\u29c7</div><p>Load files or use processed files, then click Compute</p></div>';
+    return;
+  }
+  const k=parseFloat($('sk').value)||3;
+  if(stsCurTab==='summary')renderStsSummary(keys,k);
+  else if(stsCurTab==='dist')renderStsDist(keys,k);
+  else if(stsCurTab==='box')renderStsBox(keys,k);
+}
+$('rsts').addEventListener('click',renderSts);
+document.getElementById('stsField').addEventListener('change',()=>{
+  if(Object.keys(stsAllD).length&&stsCurTab!=='summary')renderStsView();
+});
+document.getElementById('stsBins').addEventListener('change',()=>{
+  if(Object.keys(stsAllD).length&&stsCurTab==='dist')renderStsView();
+});
+
+// ═══════════════════════
+//  EXPORT STATS XLSX+TXT
+// ═══════════════════════
 $('expSts').addEventListener('click',async()=>{
   if(!Object.keys(spd).length){toast('Compute first.','err');return;}
-  showEO('Exporting Statistics files…');
+  showEO('Exporting Statistics\u2026');
   const ts=new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
   const k=parseFloat($('sk').value)||3;
-  // XLSX
-  setEO('Stats XLSX…',35);
-  const rows=[['Region','Parameter','N','Mean','Std Dev','Min','Max',`Lower (-${k}σ)`,`Upper (+${k}σ)`]];
-  Object.entries(spd).forEach(([rNm,rD])=>{Object.entries(rD).forEach(([f,s])=>{if(!s||!s.n)return;rows.push([rNm,s.label,s.n,+s.mean.toFixed(4),+s.std.toFixed(4),+s.min.toFixed(4),+s.max.toFixed(4),+s.lo.toFixed(4),+s.hi.toFixed(4)]);});});
-  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'Statistics');
-  const xlsxBlob=new Blob([XLSX.write(wb,{type:'array',bookType:'xlsx'})],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-  const a1=document.createElement('a');a1.href=URL.createObjectURL(xlsxBlob);a1.download=`Statistics_${ts}.xlsx`;a1.click();
+  setEO('Building XLSX\u2026',30);
+  const keys=Object.keys(stsAllD);
+  const rows=[['Region','Parameter','N','Mean','Std Dev','Min','Q1','Median','Q3','Max',`\u2212${k}\u03c3`,`+${k}\u03c3`,'Cpk','Outliers']];
+  Object.entries(spd).forEach(([rNm,rD])=>{
+    STS_FLDS.forEach(f=>{
+      const s=rD[f];if(!s||!s.n)return;
+      const vals=stsVals(keys,rNm,f);
+      const bs=vals.length?bxStats(vals):null;
+      const cpk=s.std>0?Math.min((s.hi-s.mean)/(3*s.std),(s.mean-s.lo)/(3*s.std)):'';
+      rows.push([rNm,s.label,s.n,+s.mean.toFixed(4),+s.std.toFixed(4),+s.min.toFixed(4),
+        bs?+bs.q1.toFixed(4):'',bs?+bs.med.toFixed(4):'',bs?+bs.q3.toFixed(4):'',
+        +s.max.toFixed(4),+s.lo.toFixed(4),+s.hi.toFixed(4),
+        cpk!==''?+Number(cpk).toFixed(3):'',
+        bs&&bs.out.length?bs.out.map(v=>v.toFixed(3)).join('; '):'None']);
+    });
+  });
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'Statistics');
+  const xb=new Blob([XLSX.write(wb,{type:'array',bookType:'xlsx'})],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const a1=document.createElement('a');a1.href=URL.createObjectURL(xb);a1.download=`Statistics_${ts}.xlsx`;a1.click();
   await new Promise(r=>setTimeout(r,300));
-  // Summary TXT
-  setEO('Summary TXT…',70);
-  const blob2=new Blob([stsSum(k)],{type:'text/plain'});
-  const a2=document.createElement('a');a2.href=URL.createObjectURL(blob2);a2.download=`Stats_Summary_${ts}.txt`;a2.click();
+  setEO('Summary TXT\u2026',70);
+  const b2=new Blob([stsSum(k)],{type:'text/plain'});
+  const a2=document.createElement('a');a2.href=URL.createObjectURL(b2);a2.download=`Stats_Summary_${ts}.txt`;a2.click();
   await new Promise(r=>setTimeout(r,300));
-  hideEO();toast('Statistics files exported!','ok');log('=== Statistics files downloaded ===','ok');
+  hideEO();toast('Statistics exported!','ok');log('=== Stats downloaded ===','ok');
 });
-function stsSum(k){const L=['PRODUCTION STATISTICS','='.repeat(55),`Generated: ${new Date().toLocaleString()}`,`k = ${k}`,``];Object.entries(spd).forEach(([rNm,rD])=>{L.push(`REGION: ${rNm}`,'-'.repeat(40));Object.entries(rD).forEach(([f,s])=>{if(!s||!s.n)return;L.push(`  ${s.label}:`,`    n: ${s.n}`,`    Mean: ${s.mean.toFixed(4)}  Std: ${s.std.toFixed(4)}`,`    Min: ${s.min.toFixed(4)}  Max: ${s.max.toFixed(4)}`,`    Lower(-${k}σ): ${s.lo.toFixed(4)}  Upper(+${k}σ): ${s.hi.toFixed(4)}`,'');});L.push('');});return L.join('\n');}
+function stsSum(k){
+  const L=['PRODUCTION STATISTICS','='.repeat(55),`Generated: ${new Date().toLocaleString()}`,`k = ${k}`,``];
+  Object.entries(spd).forEach(([rNm,rD])=>{
+    L.push(`REGION: ${rNm}`,'-'.repeat(40));
+    STS_FLDS.forEach(f=>{
+      const s=rD[f];if(!s||!s.n)return;
+      const cpk=s.std>0?Math.min((s.hi-s.mean)/(3*s.std),(s.mean-s.lo)/(3*s.std)):null;
+      L.push(`  ${s.label}:`,`    n=${s.n}  Mean=${s.mean.toFixed(4)}  Std=${s.std.toFixed(4)}`,
+        `    Min=${s.min.toFixed(4)}  Max=${s.max.toFixed(4)}`,
+        `    -${k}s=${s.lo.toFixed(4)}  +${k}s=${s.hi.toFixed(4)}`,
+        cpk!==null?`    Cpk=${cpk.toFixed(3)}`:'','');
+    });
+    L.push('');
+  });
+  return L.join('\n');
+}
+
+// ════════════════════════════
+//  EXPORT AVERAGE MOTOR CURVE
+// ════════════════════════════
+document.getElementById('expAvgCurve').addEventListener('click',async()=>{
+  const keys=Object.keys(stsAllD);
+  if(keys.length<2){toast('Load at least 2 motors first.','err');return;}
+  showEO('Building Average Motor Curve\u2026');
+  const ts=new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+  const sMin=Math.max(...keys.map(k=>Math.min(...stsAllD[k].speed)));
+  const sMax=Math.min(...keys.map(k=>Math.max(...stsAllD[k].speed)));
+  const nPts=100;
+  const avgSpd=Array.from({length:nPts},(_,i)=>sMin+(sMax-sMin)*i/(nPts-1));
+  const ipKeys=['Torque','Pin','Pout','eff','PF','It'];
+  const ipLbl=['Torque (N\u00b7m)','Pin (W)','Pout (W)','Efficiency (%)','PF','It (A)'];
+  const gridded={};
+  ipKeys.forEach(ik=>{
+    const mat=keys.map(k=>{
+      const d=stsAllD[k];
+      const arr=d.ip[ik]||d.ip[ik.charAt(0).toLowerCase()+ik.slice(1)]||[];
+      return avgSpd.map(s=>li(d.speed,arr,s));
+    });
+    gridded[ik]={
+      mean:avgSpd.map((_,i)=>avg(mat.map(r=>r[i]))),
+      std :avgSpd.map((_,i)=>sdv(mat.map(r=>r[i])))
+    };
+  });
+  // XLSX
+  setEO('Writing XLSX\u2026',38);
+  const hdr1=['Speed (RPM)',...ipLbl];
+  const rows1=[hdr1,...avgSpd.map((s,i)=>[+s.toFixed(1),...ipKeys.map(k=>+gridded[k].mean[i].toFixed(4))])];
+  const hdr2=['Speed (RPM)',...ipKeys.flatMap(k=>[k+'_avg',k+'_std',k+'_lo1s',k+'_hi1s'])];
+  const rows2=[hdr2,...avgSpd.map((s,i)=>[+s.toFixed(1),...ipKeys.flatMap(k=>[
+    +gridded[k].mean[i].toFixed(4),+gridded[k].std[i].toFixed(4),
+    +(gridded[k].mean[i]-gridded[k].std[i]).toFixed(4),
+    +(gridded[k].mean[i]+gridded[k].std[i]).toFixed(4)
+  ])])];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows1),'Avg_Motor_Curve');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows2),'Avg_with_Sigma_Band');
+  const xb=new Blob([XLSX.write(wb,{type:'array',bookType:'xlsx'})],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const a1=document.createElement('a');a1.href=URL.createObjectURL(xb);a1.download=`AvgMotorCurve_${ts}.xlsx`;a1.click();
+  await new Promise(r=>setTimeout(r,300));
+  // PNG chart
+  setEO('Rendering PNG\u2026',70);
+  const W=1280,H=600;
+  const oc=document.createElement('canvas');oc.width=W;oc.height=H;
+  const mn_e=gridded.eff.mean,sd_e=gridded.eff.std;
+  const mn_T=gridded.Torque.mean,sd_T=gridded.Torque.std;
+  const mn_Pi=gridded.Pin.mean,mn_Po=gridded.Pout.mean;
+  const mn_PF=gridded.PF.mean,mn_It=gridded.It.mean;
+  const tc=new Chart(oc.getContext('2d'),{type:'line',
+    data:{datasets:[
+      {label:'Eff \u2212\u03c3 band',yAxisID:'y2',borderColor:'rgba(138,96,0,.15)',borderWidth:1,pointRadius:0,tension:.4,
+        fill:'+1',backgroundColor:'rgba(138,96,0,.08)',data:avgSpd.map((s,i)=>({x:s,y:mn_e[i]-sd_e[i]}))},
+      {label:'Avg Efficiency (%)',yAxisID:'y2',borderColor:'#8a6000',borderWidth:2.5,pointRadius:0,tension:.4,fill:false,
+        data:avgSpd.map((s,i)=>({x:s,y:mn_e[i]}))},
+      {label:'Eff +\u03c3 band',yAxisID:'y2',borderColor:'rgba(138,96,0,.15)',borderWidth:1,pointRadius:0,tension:.4,
+        fill:false,data:avgSpd.map((s,i)=>({x:s,y:mn_e[i]+sd_e[i]}))},
+      {label:'Torque \u2212\u03c3 band',yAxisID:'y0',borderColor:'rgba(0,95,170,.12)',borderWidth:1,pointRadius:0,tension:.4,
+        fill:'+1',backgroundColor:'rgba(0,95,170,.07)',data:avgSpd.map((s,i)=>({x:s,y:mn_T[i]-sd_T[i]}))},
+      {label:'Avg Torque (N\u00b7m)',yAxisID:'y0',borderColor:'#005faa',borderWidth:2.5,pointRadius:0,tension:.4,fill:false,
+        data:avgSpd.map((s,i)=>({x:s,y:mn_T[i]}))},
+      {label:'Torque +\u03c3 band',yAxisID:'y0',borderColor:'rgba(0,95,170,.12)',borderWidth:1,pointRadius:0,tension:.4,
+        fill:false,data:avgSpd.map((s,i)=>({x:s,y:mn_T[i]+sd_T[i]}))},
+      {label:'Avg Pin (W)',yAxisID:'y1',borderColor:'#c04000',borderWidth:2,pointRadius:0,tension:.4,borderDash:[5,3],
+        data:avgSpd.map((s,i)=>({x:s,y:mn_Pi[i]}))},
+      {label:'Avg Pout (W)',yAxisID:'y1',borderColor:'#2e7000',borderWidth:2,pointRadius:0,tension:.4,
+        data:avgSpd.map((s,i)=>({x:s,y:mn_Po[i]}))},
+      {label:'Avg PF',yAxisID:'y2',borderColor:'#7700bb',borderWidth:1.8,pointRadius:0,tension:.4,borderDash:[4,3],
+        data:avgSpd.map((s,i)=>({x:s,y:mn_PF[i]}))},
+      {label:'Avg It (A)',yAxisID:'y3',borderColor:'#aa0033',borderWidth:1.8,pointRadius:0,tension:.4,
+        data:avgSpd.map((s,i)=>({x:s,y:mn_It[i]}))},
+    ]},
+    options:{responsive:false,maintainAspectRatio:false,animation:{duration:0},
+      plugins:{
+        legend:{labels:{color:'#5a6890',font:{family:STS_MONO,size:10},boxWidth:14,padding:7,
+          filter:i=>!i.text.includes('band')}},
+        title:{display:true,
+          text:`Production Average Motor Curve  \u00b7  n = ${keys.length} units  \u00b7  Shaded = \u00b11\u03c3`,
+          color:'#1a2040',font:{family:STS_MONO,size:13,weight:'bold'}}
+      },
+      scales:{
+        x:{type:'linear',title:{display:true,text:'Speed (RPM)',color:'#5a6890',font:{family:STS_MONO,size:10}},
+          ticks:{color:'#5a6890',font:{family:STS_MONO,size:9}},grid:{color:'rgba(100,120,180,.15)'},
+          min:avgSpd[0],max:avgSpd[avgSpd.length-1]},
+        y0:{type:'linear',position:'left',
+          title:{display:true,text:'Torque (N\u00b7m)',color:'#005faa',font:{family:STS_MONO,size:10}},
+          ticks:{color:'#005faa',font:{family:STS_MONO,size:9}},grid:{color:'rgba(100,120,180,.10)'}},
+        y1:{type:'linear',position:'right',
+          title:{display:true,text:'Power (W)',color:'#c04000',font:{family:STS_MONO,size:10}},
+          ticks:{color:'#c04000',font:{family:STS_MONO,size:9}},grid:{display:false}},
+        y2:{type:'linear',position:'right',offset:true,
+          title:{display:true,text:'Eff (%) / PF',color:'#8a6000',font:{family:STS_MONO,size:10}},
+          ticks:{color:'#8a6000',font:{family:STS_MONO,size:9}},grid:{display:false}},
+        y3:{type:'linear',position:'right',offset:true,
+          title:{display:true,text:'It (A)',color:'#aa0033',font:{family:STS_MONO,size:10}},
+          ticks:{color:'#aa0033',font:{family:STS_MONO,size:9}},grid:{display:false}},
+      }
+    }
+  });
+  await new Promise(r=>setTimeout(r,270));
+  const out=document.createElement('canvas');out.width=W;out.height=H;
+  const octx=out.getContext('2d');octx.fillStyle='#fff';octx.fillRect(0,0,W,H);octx.drawImage(oc,0,0);
+  tc.destroy();
+  const a2=document.createElement('a');a2.href=out.toDataURL('image/png');a2.download=`AvgMotorCurve_${ts}.png`;a2.click();
+  await new Promise(r=>setTimeout(r,300));
+  hideEO();toast('Average Motor Curve exported!','ok');log('=== Avg Curve XLSX+PNG downloaded ===','ok');
+});
 
 // ════════════════════════════
 //  HELPERS
@@ -1264,7 +1916,739 @@ $('clr').addEventListener('click',()=>{
 // ════════════════════════════
 $('ltg').addEventListener('click',()=>{const o=$('lp').classList.toggle('open');$('la').textContent=o?'▼':'▲';});
 
-log('Dynamometer Analysis Tool v8.1 ready','ok');
+// ═══════════════════════════════════════════════════
+//  COMPARE MOTORS — self-contained, independent tab
+// ═══════════════════════════════════════════════════
+(function(){
+
+// ── state ──
+let mtrFileA=null, mtrFileB=null;
+let mtrDataA=null, mtrDataB=null;
+let mtrKs=[], mtrKseq=0, mtrCRs=[];
+let mtrMainChart=null, mtrCurTab='all';
+
+// colour scheme: A=blue, B=orange
+const CA='#005faa', CB='#c04000';
+const LCC=['rgba(30,120,0,.88)','rgba(139,0,139,.85)','rgba(200,130,0,.85)'];
+
+// higher-is-better per region field key
+const HIB={Speed:true,Torque:true,Pin:false,Po:true,Eff:true,pf:true,It:false,Im:null,Ia:null};
+
+// ── panel toggle (reuse global tp) ──
+
+// ── drop zones ──
+function wireDZ(dzId,fiId,flId,slot){
+  const dz=document.getElementById(dzId), fi=document.getElementById(fiId), fl=document.getElementById(flId);
+  dz.addEventListener('click',()=>fi.click());
+  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over');});
+  dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
+  dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over');setMtrFile(e.dataTransfer.files[0],fl,slot,dz);});
+  fi.addEventListener('change',e=>{setMtrFile(e.target.files[0],fl,slot,dz);fi.value='';});
+}
+function setMtrFile(file,fl,slot,dz){
+  if(!file)return;
+  if(slot==='A'){mtrFileA=file;}else{mtrFileB=file;}
+  fl.textContent='✓ '+file.name;
+  dz.style.borderColor='var(--ok)';
+  toast(`Motor ${slot}: ${file.name}`,'ok');
+}
+wireDZ('mtrDzA','mtrFiA','mtrFlA','A');
+wireDZ('mtrDzB','mtrFiB','mtrFlB','B');
+
+// ── parse a file → rows ──
+function mtrParse(file){
+  return new Promise((res,rej)=>{
+    const nm=file.name.toLowerCase();
+    if(nm.endsWith('.csv')){
+      const r=new FileReader();
+      r.onload=e=>{try{res(Papa.parse(e.target.result,{header:true,dynamicTyping:true,skipEmptyLines:true}).data);}catch(err){rej(err);}};
+      r.readAsText(file);
+    }else{
+      const r=new FileReader();
+      r.onload=e=>{try{const wb=XLSX.read(e.target.result,{type:'array'});res(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''}));}catch(err){rej(err);}};
+      r.readAsArrayBuffer(file);
+    }
+  });
+}
+
+// ── process rows → data object ──
+function mtrProc(rows, labelOverride){
+  const h=Object.keys(rows[0]||{});
+  const sc=fc(h,['speed','rpm']), tc=fc(h,['torque']);
+  if(!sc||!tc) throw new Error('Cannot find Speed or Torque columns');
+  const pc=fc(h,['watts in','pin','input power','wattsin','win']);
+  const poc=fc(h,['watts out','pout','output power','wattsout','wout']);
+  const ec2=fc(h,['efficiency','eff']), pfc2=fc(h,['pf','power factor']);
+  const itc=fc(h,['amps 1','amps','it','total current']);
+  const imc=fc(h,['amps 2','im','mag','magnetizing']);
+  const iac=fc(h,['amps 3','ia','active']);
+  const mdf=parseInt(document.querySelector('input[name="mmdf"]:checked').value);
+  const col=(c,def)=>c?rows.map(r=>parseFloat(r[c])).filter(v=>!isNaN(v)):rows.map(()=>def);
+  let S=col(sc,0),T=col(tc,0),P=col(pc,0),Po=col(poc,0),ef=col(ec2,0),pf2=col(pfc2,1),It=col(itc,0);
+  let Im=(mdf===0&&imc)?col(imc,0):null, Ia=(mdf===0&&iac)?col(iac,0):null;
+  const ml=Math.min(S.length,T.length,P.length,Po.length,ef.length,pf2.length,It.length);
+  [S,T,P,Po,ef,pf2,It]=[S,T,P,Po,ef,pf2,It].map(a=>a.slice(0,ml));
+  if(Im)Im=Im.slice(0,ml); if(Ia)Ia=Ia.slice(0,ml);
+  if(S[S.length-1]<S[0]){[S,T,P,Po,ef,pf2,It]=[S,T,P,Po,ef,pf2,It].map(a=>[...a].reverse());if(Im)Im=[...Im].reverse();if(Ia)Ia=[...Ia].reverse();}
+  const sv=parseFloat(document.getElementById('msrs').value)||0;
+  const maxS=Math.max(...S);
+  const Sp=rng(Math.max(sv,Math.min(...S)),maxS,1);
+  const ip={Torque:iA(S,T,Sp),Pin:iA(S,P,Sp),Pout:iA(S,Po,Sp),eff:iA(S,ef,Sp),PF:iA(S,pf2,Sp),It:iA(S,It,Sp)};
+  if(Im)ip.Im=iA(S,Im,Sp); if(Ia)ip.Ia=iA(S,Ia,Sp);
+  if(ip.Pout.every(v=>v===0))ip.Pout=Sp.map((s,i)=>Math.max(0,ip.Torque[i]*s*2*Math.PI/60));
+  if(ip.Pin.every(v=>v===0))ip.Pin=ip.Pout.map(p=>p/0.85);
+  if(ip.eff.every(v=>v===0))ip.eff=ip.Pin.map((p,i)=>p>0?Math.min(ip.Pout[i]/p*100,100):0);
+  // Standard regions
+  const regs=[
+    mkR('No-Load',ip.Torque.indexOf(Math.min(...ip.Torque)),Sp,ip,mdf),
+    mkR('Max Eff.',ip.eff.indexOf(Math.max(...ip.eff)),Sp,ip,mdf),
+    mkR('MaxPout',ip.Pout.indexOf(Math.max(...ip.Pout)),Sp,ip,mdf),
+    mkR('Locked',0,Sp,ip,mdf)
+  ];
+  return{name:labelOverride,speed:Sp,ip,regs,mdf};
+}
+
+// ── apply K curves → extra regions ──
+function applyKs(data){
+  const Sp=data.speed,ip=data.ip,mdf=data.mdf;
+  const K1=parseFloat(document.getElementById('mK1').value)||0;
+  const ekRegs=[], lcs=[];
+  // K1 rated region
+  if(K1>0){
+    const lc=Sp.map(s=>K1*Math.pow(2*Math.PI*s/60,2));
+    lcs.push({K:K1,lc,idx:0});
+    let rI=Math.floor(Sp.length*0.75);
+    for(let i=Sp.length-1;i>=0;i--){if(lc[i]<ip.Torque[i]){rI=i;break;}}
+    const reg=mkR(`Rated K₁=${K1.toFixed(4)}`,rI,Sp,ip,mdf);reg.isEK=true;ekRegs.push(reg);
+  }
+  // Extra Ks
+  mtrKs.filter(ek=>ek.K>0).forEach((ek,ei)=>{
+    const lc=Sp.map(s=>ek.K*Math.pow(2*Math.PI*s/60,2));
+    lcs.push({K:ek.K,lc,idx:ei+1});
+    let rI=Math.floor(Sp.length*0.75);
+    for(let i=Sp.length-1;i>=0;i--){if(lc[i]<ip.Torque[i]){rI=i;break;}}
+    const reg=mkR(`Rated K${ei+2}=${ek.K.toFixed(4)}`,rI,Sp,ip,mdf);reg.isEK=true;ekRegs.push(reg);
+  });
+  // Custom regions
+  const crRegs=mtrCRs.map(cr=>{
+    let idx=0;
+    if(cr.by==='speed')idx=Sp.reduce((b,s,i)=>Math.abs(s-cr.val)<Math.abs(Sp[b]-cr.val)?i:b,0);
+    else if(cr.by==='torque')idx=ip.Torque.reduce((b,v,i)=>Math.abs(v-cr.val)<Math.abs(ip.Torque[b]-cr.val)?i:b,0);
+    else if(cr.by==='pout')idx=ip.Pout.reduce((b,v,i)=>Math.abs(v-cr.val)<Math.abs(ip.Pout[b]-cr.val)?i:b,0);
+    else if(cr.by==='eff')idx=ip.eff.reduce((b,v,i)=>Math.abs(v-cr.val)<Math.abs(ip.eff[b]-cr.val)?i:b,0);
+    const reg=mkR(cr.name,idx,Sp,ip,mdf);reg.isC=true;return reg;
+  });
+  return{ekRegs,crRegs,lcs,K1};
+}
+
+// ── K list UI ──
+function renderMtrKList(){
+  const el=document.getElementById('mExtraKList');el.innerHTML='';
+  mtrKs.forEach(ek=>{
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;flex-direction:column;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:5px 6px;';
+    row.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-family:var(--mono);font-size:.6rem;color:var(--accent);">K${mtrKs.indexOf(ek)+2} Curve</span>
+      <button onclick="mtrRemoveK(${ek.id})" style="background:none;border:1px solid rgba(187,34,51,.35);color:var(--err);border-radius:4px;padding:1px 6px;cursor:pointer;font-size:.63rem;font-family:var(--mono);">✕</button>
+    </div>
+    <div style="display:flex;gap:4px;align-items:center;">
+      <div style="flex:1;min-width:0;"><label style="font-family:var(--mono);font-size:.56rem;color:var(--dim);display:block;">K value</label>
+        <input type="number" value="${ek.K||''}" step="any" min="0" placeholder="0.006"
+          style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:.71rem;padding:4px 6px;border-radius:4px;outline:none;"
+          data-mkid="${ek.id}" data-role="k"/></div>
+      <div style="color:var(--dim);font-family:var(--mono);font-size:.7rem;padding-top:12px;">⇄</div>
+      <div style="flex:1;min-width:0;"><label style="font-family:var(--mono);font-size:.56rem;color:var(--dim);display:block;">Speed (RPM)</label>
+        <input type="number" value="${ek.spd||''}" step="any" min="0" placeholder="1350"
+          style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:.71rem;padding:4px 6px;border-radius:4px;outline:none;"
+          data-mkid="${ek.id}" data-role="spd"/></div>
+    </div>`;
+    el.appendChild(row);
+    row.querySelector('[data-role="k"]').addEventListener('input',e=>{
+      const x=mtrKs.find(x=>x.id===ek.id);if(!x)return;
+      x.K=parseFloat(e.target.value)||0;
+    });
+    row.querySelector('[data-role="spd"]').addEventListener('input',e=>{
+      const x=mtrKs.find(x=>x.id===ek.id);if(!x)return;
+      x.spd=parseFloat(e.target.value)||0;
+    });
+  });
+}
+window.mtrRemoveK=id=>{mtrKs=mtrKs.filter(x=>x.id!==id);renderMtrKList();};
+document.getElementById('mAddKBtn').addEventListener('click',()=>{mtrKs.push({id:++mtrKseq,K:0,spd:0});renderMtrKList();});
+
+// ── Custom region UI ──
+document.getElementById('mAcr').addEventListener('click',()=>{
+  const n=document.getElementById('mcrn').value.trim(),by=document.getElementById('mcrb').value,val=parseFloat(document.getElementById('mcrv').value);
+  if(!n){toast('Enter a name','err');return;}if(isNaN(val)){toast('Enter a value','err');return;}
+  mtrCRs.push({id:Date.now(),name:n,by,val});renderMtrCRL();toast(`Region "${n}" added`,'ok');
+});
+function renderMtrCRL(){
+  const l=document.getElementById('mCrl');l.innerHTML='';
+  mtrCRs.forEach(cr=>{
+    const c=document.createElement('div');c.className='fc';
+    c.innerHTML=`<span class="fcd" style="background:#7700bb;"></span>${cr.name} (${cr.by}=${cr.val})<button onclick="mtrDelCR(${cr.id})" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--err);">✕</button>`;
+    l.appendChild(c);
+  });
+}
+window.mtrDelCR=id=>{mtrCRs=mtrCRs.filter(c=>c.id!==id);renderMtrCRL();};
+
+// ── DEMO ──
+document.getElementById('mtrDemo').addEventListener('click',()=>{
+  mtrFileA=null;mtrFileB=null;
+  const mkDemo=(name,f)=>{
+    const Sp=rng(50,1480,5),maxS=Math.max(...Sp);
+    const ip={Torque:Sp.map(s=>Math.max(0.05,12*f*(1-s/maxS))),Pin:Sp.map(s=>220*f+s*0.6*f),Pout:Sp.map(()=>0),eff:Sp.map(s=>{const x=s/maxS;return 100*Math.min(0.95,(0.25+1.55*x-0.85*x*x)*f);}),PF:Sp.map(s=>Math.min(0.99,(0.48+0.45*(s/maxS))*f)),It:Sp.map(s=>4*f*(1-0.28*(s/maxS))),Im:Sp.map(s=>2.1*f*(1-0.08*(s/maxS))),Ia:Sp.map(s=>2.6*f*(s/maxS))};
+    ip.Pout=Sp.map((s,i)=>Math.max(0,ip.Torque[i]*s*2*Math.PI/60));
+    ip.eff=ip.Pin.map((p,i)=>p>0?Math.min(ip.Pout[i]/p*100,98):0);
+    const regs=[mkR('No-Load',ip.Torque.indexOf(Math.min(...ip.Torque)),Sp,ip,0),mkR('Max Eff.',ip.eff.indexOf(Math.max(...ip.eff)),Sp,ip,0),mkR('MaxPout',ip.Pout.indexOf(Math.max(...ip.Pout)),Sp,ip,0),mkR('Locked',0,Sp,ip,0)];
+    return{name,speed:Sp,ip,regs,mdf:0};
+  };
+  const lA=document.getElementById('mtrLblA').value.trim()||'Motor A';
+  const lB=document.getElementById('mtrLblB').value.trim()||'Motor B';
+  mtrDataA=mkDemo(lA,1.0);mtrDataB=mkDemo(lB,0.93);
+  renderMtrResult();toast('Demo loaded','ok');
+});
+
+// ── RUN ──
+document.getElementById('mtrRun').addEventListener('click',async()=>{
+  if(!mtrFileA&&!mtrDataA){toast('Upload Motor A file','err');return;}
+  if(!mtrFileB&&!mtrDataB){toast('Upload Motor B file','err');return;}
+  const lA=document.getElementById('mtrLblA').value.trim()||'Motor A';
+  const lB=document.getElementById('mtrLblB').value.trim()||'Motor B';
+  setst('COMPARING…');setpb(20);
+  try{
+    if(mtrFileA){const rows=await mtrParse(mtrFileA);mtrDataA=mtrProc(rows,lA);}
+    else mtrDataA.name=lA;
+    setpb(55);
+    if(mtrFileB){const rows=await mtrParse(mtrFileB);mtrDataB=mtrProc(rows,lB);}
+    else mtrDataB.name=lB;
+    setpb(85);
+    renderMtrResult();
+    setpb(100);setst('DONE');setTimeout(()=>setpb(0),600);
+  }catch(e){toast('Error: '+e.message,'err');log('Mtr err: '+e.message,'err');setst('ERROR');setpb(0);}
+});
+
+// ══════════════════════════════════
+//  RENDER
+// ══════════════════════════════════
+function renderMtrResult(){
+  if(!mtrDataA||!mtrDataB)return;
+  const lA=mtrDataA.name,lB=mtrDataB.name;
+  const kA=applyKs(mtrDataA),kB=applyKs(mtrDataB);
+  const allRA=[...mtrDataA.regs,...kA.ekRegs,...kA.crRegs];
+  const allRB=[...mtrDataB.regs,...kB.ekRegs,...kB.crRegs];
+
+  document.getElementById('mtrEc').style.display='none';
+  document.getElementById('mtrChartTitle').textContent=`PERFORMANCE CURVE OVERLAY — ${lA} vs ${lB}`;
+
+  buildMtrChart(kA,kB,lA,lB,mtrCurTab);
+  buildMtrTable(allRA,allRB,lA,lB);
+  buildMtrBanner(allRA,allRB,lA,lB);
+
+  // curve tab switching
+  document.querySelectorAll('#mtrCurveTabs .ctab').forEach(t=>{
+    t.onclick=()=>{
+      document.querySelectorAll('#mtrCurveTabs .ctab').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');mtrCurTab=t.dataset.mct;
+      buildMtrChart(kA,kB,lA,lB,mtrCurTab);
+    };
+  });
+}
+
+// ── Chart ──
+function buildMtrChart(kA,kB,lA,lB,tab){
+  if(mtrMainChart){try{mtrMainChart.destroy();}catch(e){}mtrMainChart=null;}
+  const ipA=mtrDataA.ip,ipB=mtrDataB.ip,sA=mtrDataA.speed,sB=mtrDataB.speed;
+  const ds=[];
+  const MONO2="'Share Tech Mono',monospace";
+  const allS=[...sA,...sB];
+
+  const push=(lbl,yID,cA,cB,arrA,arrB,dashB=[6,3])=>{
+    if(arrA)ds.push({label:`${lA} — ${lbl}`,yAxisID:yID,borderColor:cA,borderWidth:2,pointRadius:0,tension:.3,data:sA.map((s,i)=>({x:s,y:arrA[i]}))});
+    if(arrB)ds.push({label:`${lB} — ${lbl}`,yAxisID:yID,borderColor:cB,borderWidth:2,pointRadius:0,tension:.3,borderDash:dashB,data:sB.map((s,i)=>({x:s,y:arrB[i]}))});
+  };
+
+  const y0MaxA=ipA.Torque.length?Math.max(...ipA.Torque):1;
+  const y0MaxB=ipB.Torque.length?Math.max(...ipB.Torque):1;
+  let y0Max=Math.max(y0MaxA,y0MaxB)*1.18;
+
+  if(tab==='all'||tab==='torque'){
+    push('Torque (N·m)','y0',CA,CB,ipA.Torque,ipB.Torque,[]);
+    // K1 load curves on torque view
+    if(kA.lcs.length&&kA.K1>0){
+      const lc=kA.lcs[0].lc;
+      ds.push({label:`T_Load K₁=${kA.K1.toFixed(4)}`,yAxisID:'y0',borderColor:'rgba(30,120,0,.85)',borderWidth:2,borderDash:[8,5],pointRadius:0,tension:.3,data:sA.map((s,i)=>({x:s,y:lc[i]}))});
+      y0Max=Math.max(y0Max,Math.max(...lc)*1.1);
+    }
+    kA.lcs.slice(1).forEach((lc2,ei)=>{
+      if(lc2.K<=0)return;
+      ds.push({label:`T_Load K${ei+2}=${lc2.K.toFixed(4)}`,yAxisID:'y0',borderColor:LCC[(ei+1)%LCC.length],borderWidth:1.8,borderDash:[5,3],pointRadius:0,tension:.3,data:sA.map((s,i)=>({x:s,y:lc2.lc[i]}))});
+    });
+  }
+  if(tab==='all'||tab==='power'){
+    push('Pin (W)','y1','#c04000','#8a2000',ipA.Pin,ipB.Pin);
+    push('Pout (W)','y1','#2e7000','#1a4000',ipA.Pout,ipB.Pout);
+  }
+  if(tab==='all'||tab==='eff'){
+    push('Eff (%)','y2','#8a6000','#604000',ipA.eff,ipB.eff);
+    push('PF','y2','#7700bb','#440077',ipA.PF,ipB.PF,[4,3]);
+  }
+  if(tab==='all'||tab==='current'){
+    push('It (A)','y3','#aa0033','#770022',ipA.It,ipB.It);
+  }
+
+  const ax=(l,c)=>({type:'linear',title:{display:true,text:l,color:c,font:{family:MONO2,size:10}},ticks:{color:c,font:{family:MONO2,size:9}},grid:{display:false}});
+  mtrMainChart=new Chart(document.getElementById('mtrMainChart').getContext('2d'),{type:'line',data:{datasets:ds},options:{
+    responsive:true,maintainAspectRatio:false,animation:{duration:260},
+    interaction:{mode:'index',intersect:false},
+    plugins:{legend:{labels:{color:CP.dim,font:{family:MONO2,size:10},boxWidth:14,padding:6}},
+      tooltip:{backgroundColor:CP.tip,borderColor:CP.border,borderWidth:1,titleColor:CP.dim,bodyColor:CP.dim,
+        titleFont:{family:MONO2,size:10},bodyFont:{family:MONO2,size:10},
+        callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y?.toFixed(3)}`}}},
+    scales:{
+      x:{type:'linear',title:{display:true,text:'Speed (RPM)',color:CP.dim,font:{family:MONO2,size:10}},ticks:{color:CP.dim,font:{family:MONO2,size:9}},grid:{color:CP.grid},min:Math.min(...allS),max:Math.max(...allS)},
+      y0:{type:'linear',position:'left',min:0,max:y0Max,title:{display:tab==='all'||tab==='torque',text:'Torque (N·m)',color:CA,font:{family:MONO2,size:10}},ticks:{color:CA,font:{family:MONO2,size:9}},grid:{color:CP.grid2}},
+      y1:{...ax('Power (W)','#c04000'),position:'right',display:tab==='all'||tab==='power'},
+      y2:{...ax('Eff / PF','#8a6000'),position:'right',offset:true,display:tab==='all'||tab==='eff'},
+      y3:{...ax('Current (A)','#aa0033'),position:'right',offset:true,display:tab==='all'||tab==='current'}
+    }
+  }});
+}
+
+// ── Table ──
+function buildMtrTable(allRA,allRB,lA,lB){
+  const rN=[];
+  [...allRA,...allRB].forEach(r=>{if(!rN.includes(r.Region))rN.push(r.Region);});
+  const flds=['Speed','Torque','Pin','Po','Eff','pf','It'];
+  const fLbl=['Speed (RPM)','Torque (N·m)','Pin (W)','Pout (W)','Eff (%)','PF','It (A)'];
+  const th=document.getElementById('mtrTh'),tb=document.getElementById('mtrTb');
+  th.innerHTML='';tb.innerHTML='';
+
+  const hr=document.createElement('tr');
+  hr.innerHTML=`<th style="background:var(--surface2)">Region</th><th style="background:var(--surface2)">Parameter</th>
+    <th style="background:var(--surface2);color:${CA}">${lA}</th>
+    <th style="background:var(--surface2);color:${CB}">${lB}</th>
+    <th style="background:var(--surface2)">Δ (A−B)</th>
+    <th style="background:var(--surface2)">Best</th>`;
+  th.appendChild(hr);
+
+  let totalA=0,totalB=0,totalTie=0;
+
+  rN.forEach(rNm=>{
+    const rA=allRA.find(x=>x.Region===rNm);
+    const rB=allRB.find(x=>x.Region===rNm);
+    const isEK=rNm.includes('=')&&(rNm.startsWith('Rated K')||rNm.startsWith('K'));
+    const isCR=mtrCRs.some(c=>c.name===rNm);
+    const bgStyle=isEK?'background:rgba(180,80,0,.06);':isCR?'background:rgba(119,0,187,.06);':'';
+
+    flds.forEach((f,fi)=>{
+      const tr=document.createElement('tr');
+      tr.style.cssText=bgStyle;
+      if(fi===0){
+        const td=document.createElement('td');
+        td.rowSpan=flds.length;
+        td.style.cssText='font-weight:700;vertical-align:middle;border-right:2px solid var(--border);';
+        const cls=isEK?'ek':isCR?'cu':{'No-Load':'nl','Max Eff.':'me','MaxPout':'df','Locked':'df'}[rNm]||'df';
+        td.innerHTML=`<span class="rb ${cls}">${rNm}</span>`;
+        tr.appendChild(td);
+      }
+      const ptd=document.createElement('td');ptd.style.cssText='color:var(--dim);font-size:.65rem;';ptd.textContent=fLbl[fi];tr.appendChild(ptd);
+
+      const vA=rA&&rA[f]!=null?rA[f]:null;
+      const vB=rB&&rB[f]!=null?rB[f]:null;
+      const delta=vA!=null&&vB!=null?vA-vB:null;
+      const hib=HIB[f];
+      let winner=null;
+      if(vA!=null&&vB!=null&&hib!==null){
+        if(Math.abs(vA-vB)<1e-9)winner='tie';
+        else winner=(hib?vA>vB:vA<vB)?'A':'B';
+      }
+      if(fi===0||(fi>0&&rA&&rB)){// count wins only once per region (at fi===0 equivalent: count for every param)
+        if(winner==='A')totalA++;else if(winner==='B')totalB++;else if(winner==='tie')totalTie++;
+      }
+
+      // A cell
+      const tdA=document.createElement('td');
+      tdA.style.cssText=winner==='A'?`font-weight:700;color:${CA};`:'';
+      tdA.textContent=vA!=null?(winner==='A'?'★ ':'')+vA.toFixed(3):'—';
+      tr.appendChild(tdA);
+      // B cell
+      const tdB=document.createElement('td');
+      tdB.style.cssText=winner==='B'?`font-weight:700;color:${CB};`:'';
+      tdB.textContent=vB!=null?(winner==='B'?'★ ':'')+vB.toFixed(3):'—';
+      tr.appendChild(tdB);
+      // Delta
+      const tdD=document.createElement('td');tdD.style.cssText='font-size:.64rem;color:var(--dim);';
+      tdD.textContent=delta!=null?(delta>=0?'+':'')+delta.toFixed(3):'—';
+      tr.appendChild(tdD);
+      // Best
+      const tdW=document.createElement('td');
+      if(winner==='A'){tdW.style.cssText=`color:${CA};font-weight:700;`;tdW.textContent='🏆 '+lA;}
+      else if(winner==='B'){tdW.style.cssText=`color:${CB};font-weight:700;`;tdW.textContent='🏆 '+lB;}
+      else if(winner==='tie'){tdW.style.cssText='color:var(--warn);font-weight:600;';tdW.textContent='Tied';}
+      else tdW.textContent='—';
+      tr.appendChild(tdW);
+      tb.appendChild(tr);
+    });
+
+    // Region overall winner star row
+    const f2=['Eff','Po','pf'];let wA2=0,wB2=0;
+    f2.forEach(f=>{
+      const vA=rA?rA[f]:null,vB=rB?rB[f]:null;
+      if(vA!=null&&vB!=null&&HIB[f]!==null&&Math.abs(vA-vB)>1e-9){
+        if(HIB[f]?vA>vB:vA<vB)wA2++;else wB2++;
+      }
+    });
+    const rWin=wA2>wB2?'A':wB2>wA2?'B':'tie';
+    const starTr=document.createElement('tr');starTr.style.background='rgba(46,112,0,.06)';
+    const starTd=document.createElement('td');starTd.colSpan=6;
+    starTd.style.cssText='padding:2px 10px;font-family:var(--mono);font-size:.61rem;color:var(--accent3);border-bottom:2px solid var(--border);';
+    starTd.innerHTML=rWin==='A'?`★ <em>Region winner: <strong style="color:${CA}">${lA}</strong></em>`:
+                     rWin==='B'?`★ <em>Region winner: <strong style="color:${CB}">${lB}</strong></em>`:
+                     '★ <em>Region: Tied</em>';
+    starTr.appendChild(starTd);tb.appendChild(starTr);
+  });
+
+  // Footer score row
+  const ftTr=document.createElement('tr');ftTr.style.background='var(--surface2)';
+  const ftTd=document.createElement('td');ftTd.colSpan=6;
+  ftTd.style.cssText='padding:4px 10px;font-family:var(--mono);font-size:.65rem;border-top:2px solid var(--border);';
+  ftTd.innerHTML=`<strong>TOTAL:</strong> <span style="color:${CA}">${lA}: ${totalA} wins</span> &nbsp;·&nbsp; <span style="color:${CB}">${lB}: ${totalB} wins</span> &nbsp;·&nbsp; Tied: ${totalTie}`;
+  ftTr.appendChild(ftTd);tb.appendChild(ftTr);
+}
+
+// ── Banner ──
+function buildMtrBanner(allRA,allRB,lA,lB){
+  const banner=document.getElementById('mtrBanner');
+  const flds=['Speed','Torque','Pin','Po','Eff','pf','It'];
+  let tA=0,tB=0,tTie=0;
+  const rN=[];[...allRA,...allRB].forEach(r=>{if(!rN.includes(r.Region))rN.push(r.Region);});
+  rN.forEach(rNm=>{
+    const rA=allRA.find(x=>x.Region===rNm),rB=allRB.find(x=>x.Region===rNm);
+    flds.forEach(f=>{
+      const vA=rA?rA[f]:null,vB=rB?rB[f]:null;
+      if(vA!=null&&vB!=null&&HIB[f]!==null){
+        if(Math.abs(vA-vB)<1e-9)tTie++;
+        else if(HIB[f]?vA>vB:vA<vB)tA++;else tB++;
+      }
+    });
+  });
+  const best=tA>tB?lA:tB>tA?lB:'Tied';
+  const bestCol=tA>tB?CA:tB>tA?CB:'var(--warn)';
+  banner.style.display='block';
+  banner.innerHTML=`🏆 <strong>Overall Best:</strong> <span style="color:${bestCol};font-weight:700;">${best}</span>
+    &nbsp;·&nbsp; <span style="color:${CA}">${lA}: <strong>${tA}</strong></span>
+    vs <span style="color:${CB}">${lB}: <strong>${tB}</strong></span>
+    (Tied: ${tTie})`;
+}
+
+// ── Screenshot chart ──
+document.getElementById('mtrShotChart').addEventListener('click',()=>{
+  if(!mtrMainChart)return;
+  const src=document.getElementById('mtrMainChart');
+  const off=document.createElement('canvas');off.width=src.width;off.height=src.height;
+  const ctx=off.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,off.width,off.height);ctx.drawImage(src,0,0);
+  const ts=new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+  const a=document.createElement('a');a.href=off.toDataURL('image/png');a.download=`CompareMotors_Chart_${ts}.png`;a.click();
+  toast('Chart PNG saved','ok');
+});
+
+// ── Table PNG ──
+document.getElementById('mtrTblPng').addEventListener('click',()=>{
+  if(!mtrDataA||!mtrDataB){toast('No data','err');return;}
+  const kA=applyKs(mtrDataA),kB=applyKs(mtrDataB);
+  const allRA=[...mtrDataA.regs,...kA.ekRegs,...kA.crRegs];
+  const allRB=[...mtrDataB.regs,...kB.ekRegs,...kB.crRegs];
+  const lA=mtrDataA.name,lB=mtrDataB.name;
+  const rN=[];[...allRA,...allRB].forEach(r=>{if(!rN.includes(r.Region))rN.push(r.Region);});
+  const flds=['Speed','Torque','Pin','Po','Eff','pf','It'];
+  const fLbl=['Speed','Torque','Pin','Pout','Eff%','PF','It'];
+  const cols=['Region','Parameter',lA,lB,'Delta','Best'];
+  const cW=[110,80,80,80,70,80];
+  const W=cW.reduce((a,b)=>a+b)+20,rH=18;
+  const rowsData=[];
+  rN.forEach(rNm=>{
+    const rA=allRA.find(x=>x.Region===rNm),rB=allRB.find(x=>x.Region===rNm);
+    flds.forEach((f,fi)=>{
+      const vA=rA&&rA[f]!=null?rA[f]:null,vB=rB&&rB[f]!=null?rB[f]:null;
+      const d=vA!=null&&vB!=null?vA-vB:null;
+      const hib=HIB[f];
+      let best='—';
+      if(vA!=null&&vB!=null&&hib!==null){best=Math.abs(vA-vB)<1e-9?'Tied':(hib?vA>vB:vA<vB)?'★ '+lA:'★ '+lB;}
+      rowsData.push([fi===0?rNm:'',fLbl[fi],vA!=null?vA.toFixed(3):'—',vB!=null?vB.toFixed(3):'—',d!=null?(d>=0?'+':'')+d.toFixed(3):'—',best]);
+    });
+  });
+  const H=(rowsData.length+2)*rH+20;
+  const off=document.createElement('canvas');off.width=W;off.height=H;
+  const ctx=off.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#1a2040';ctx.font=`bold 10px 'Share Tech Mono',monospace`;
+  let hx=10;cols.forEach((h,i)=>{ctx.fillText(h,hx,14);hx+=cW[i]||80;});
+  ctx.fillStyle='#c8d0e8';ctx.fillRect(0,17,W,1);
+  rowsData.forEach((row,ri)=>{
+    hx=10;const ry=19+(ri+1)*rH;
+    if(ri%2===0){ctx.fillStyle='rgba(0,102,204,.04)';ctx.fillRect(0,ry-12,W,rH);}
+    row.forEach((v,ci)=>{
+      ctx.fillStyle=v.startsWith('★')&&ci===5?'#1a7a40':ci===0?'#0066cc':ci===1?'#5a6890':'#1a2040';
+      ctx.font=`${v.startsWith('★')?'bold ':''  }8px 'Share Tech Mono',monospace`;
+      ctx.fillText(String(v).slice(0,16),hx,ry);hx+=cW[ci]||80;
+    });
+  });
+  const ts=new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+  const a=document.createElement('a');a.href=off.toDataURL('image/png');a.download=`CompareMotors_Table_${ts}.png`;a.click();
+  toast('Table PNG saved','ok');
+});
+
+// ── Export PNG ──
+document.getElementById('mtrExpPng').addEventListener('click',()=>{
+  if(!mtrMainChart){toast('No chart','err');return;}
+  const src=document.getElementById('mtrMainChart');
+  const off=document.createElement('canvas');off.width=src.width;off.height=src.height;
+  const ctx=off.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,off.width,off.height);ctx.drawImage(src,0,0);
+  const ts=new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+  const a=document.createElement('a');a.href=off.toDataURL('image/png');a.download=`CompareMotors_${ts}.png`;a.click();
+  toast('PNG saved','ok');
+});
+
+// ── Export XLSX ──
+document.getElementById('mtrExpXlsx').addEventListener('click',()=>{
+  if(!mtrDataA||!mtrDataB){toast('Run comparison first','err');return;}
+  const lA=mtrDataA.name,lB=mtrDataB.name;
+  const kA=applyKs(mtrDataA),kB=applyKs(mtrDataB);
+  const allRA=[...mtrDataA.regs,...kA.ekRegs,...kA.crRegs];
+  const allRB=[...mtrDataB.regs,...kB.ekRegs,...kB.crRegs];
+  const rN=[];[...allRA,...allRB].forEach(r=>{if(!rN.includes(r.Region))rN.push(r.Region);});
+  const flds=['Speed','Torque','Pin','Po','Eff','pf','It'];
+  const fLbl=['Speed (RPM)','Torque (N·m)','Pin (W)','Pout (W)','Eff (%)','PF','It (A)'];
+  const wb=XLSX.utils.book_new();
+  // Sheet 1: comparison
+  const rows=[['Region','Parameter',lA,lB,'Delta (A-B)','Best']];
+  rN.forEach(rNm=>{
+    const rA=allRA.find(x=>x.Region===rNm),rB=allRB.find(x=>x.Region===rNm);
+    flds.forEach((f,fi)=>{
+      const vA=rA&&rA[f]!=null?+rA[f].toFixed(4):'';
+      const vB=rB&&rB[f]!=null?+rB[f].toFixed(4):'';
+      const d=vA!==''&&vB!==''?+(vA-vB).toFixed(4):'';
+      const hib=HIB[f];let best='';
+      if(vA!==''&&vB!==''&&hib!==null){best=Math.abs(vA-vB)<1e-9?'Tied':(hib?vA>vB:vA<vB)?lA:lB;}
+      rows.push([fi===0?rNm:'',fLbl[fi],vA,vB,d,best]);
+    });
+    rows.push(['','★ Region winner (Eff,Pout,PF basis)','','','','']);
+  });
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'Comparison');
+  // Sheet 2: winner summary
+  const wRows=[['Region','Parameter',lA,lB,'Winner','Direction']];
+  rN.forEach(rNm=>{
+    const rA=allRA.find(x=>x.Region===rNm),rB=allRB.find(x=>x.Region===rNm);
+    flds.forEach((f,fi)=>{
+      const vA=rA&&rA[f]!=null?+rA[f].toFixed(4):'';
+      const vB=rB&&rB[f]!=null?+rB[f].toFixed(4):'';
+      const hib=HIB[f];let winner='—',dir='';
+      if(vA!==''&&vB!==''&&hib!==null){winner=Math.abs(vA-vB)<1e-9?'Tied':(hib?vA>vB:vA<vB)?lA:lB;dir=hib?'Higher=Better':'Lower=Better';}
+      wRows.push([fi===0?rNm:'',fLbl[fi],vA,vB,winner,dir]);
+    });
+  });
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(wRows),'Winners');
+  const blob=new Blob([XLSX.write(wb,{type:'array',bookType:'xlsx'})],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const ts=new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`CompareMotors_${lA}_vs_${lB}_${ts}.xlsx`;a.click();
+  toast('XLSX exported!','ok');
+});
+
+// ── Export LaTeX ──
+document.getElementById('mtrExpLatex').addEventListener('click',()=>{
+  if(!mtrDataA||!mtrDataB){toast('Run comparison first','err');return;}
+  const lA=mtrDataA.name,lB=mtrDataB.name;
+  const kA=applyKs(mtrDataA),kB=applyKs(mtrDataB);
+  const allRA=[...mtrDataA.regs,...kA.ekRegs,...kA.crRegs];
+  const allRB=[...mtrDataB.regs,...kB.ekRegs,...kB.crRegs];
+  const rN=[];[...allRA,...allRB].forEach(r=>{if(!rN.includes(r.Region))rN.push(r.Region);});
+  const flds=['Speed','Torque','Pin','Po','Eff','pf','It'];
+  const fLbl=['Speed (RPM)','Torque (N\\textperiodcentered m)','Pin (W)','Pout (W)','Eff (\\%)','PF','It (A)'];
+  const esc=s=>String(s).replace(/_/g,'\\_').replace(/%/g,'\\%').replace(/&/g,'\\&').replace(/\$/g,'\\$').replace(/#/g,'\\#').replace(/"/g,"''");
+  const lAe=esc(lA),lBe=esc(lB);
+  const nPts=40;
+
+  let tex=`% ================================================================
+% Motor Performance Comparison — ${lAe} vs.\\ ${lBe}
+% Generated: ${new Date().toLocaleString()}
+% ================================================================
+\\documentclass[a4paper,11pt]{article}
+\\usepackage[margin=2cm]{geometry}
+\\usepackage{booktabs,longtable,multirow,xcolor,colortbl,graphicx,float}
+\\usepackage{pgfplots}
+\\pgfplotsset{compat=1.18}
+
+\\definecolor{hdr}{HTML}{1A2040}
+\\definecolor{hdrtext}{HTML}{FFFFFF}
+\\definecolor{rowA}{HTML}{EAF4FB}
+\\definecolor{rowB}{HTML}{FFFFFF}
+\\definecolor{rated}{HTML}{FFF9C4}
+\\definecolor{wingreen}{HTML}{D6F0DD}
+\\definecolor{wincell}{HTML}{1A7A40}
+\\definecolor{better}{HTML}{1A7A40}
+\\definecolor{worse}{HTML}{BB2233}
+\\definecolor{neutral}{HTML}{5A6890}
+\\definecolor{NavyBlue}{HTML}{003366}
+\\definecolor{MidBlue}{HTML}{005FAA}
+\\definecolor{BurntOrange}{HTML}{C04000}
+\\definecolor{ForestGreen}{HTML}{2E7000}
+\\definecolor{GoldBrown}{HTML}{8A6000}
+
+\\newcommand{\\win}[1]{\\textcolor{wincell}{\\textbf{#1}}}
+\\newcommand{\\MotA}{\\textbf{\\textcolor{better}{${lAe}}}}
+\\newcommand{\\MotB}{\\textbf{\\textcolor{worse}{${lBe}}}}
+\\newcommand{\\Tied}{\\textbf{\\textcolor{neutral}{Tied}}}
+
+\\begin{document}
+\\section*{Motor Performance Comparison --- ${lAe} vs.\\ ${lBe}}
+
+`;
+
+  // ── TABLE ──
+  tex+=`\\begin{table}[H]
+\\centering
+\\caption{Motor Performance Comparison --- ${lAe} vs.\\ ${lBe} with Difference \\& Best}
+\\scriptsize
+\\setlength{\\tabcolsep}{5pt}
+\\renewcommand{\\arraystretch}{1.3}
+\\begin{tabular}{>{\\bfseries}l l r r r l}
+\\toprule
+\\rowcolor{hdr}
+\\multicolumn{1}{l}{\\textcolor{hdrtext}{\\textbf{Region}}} &
+\\textcolor{hdrtext}{\\textbf{Parameter}} &
+\\textcolor{hdrtext}{\\textbf{${lAe}}} &
+\\textcolor{hdrtext}{\\textbf{${lBe}}} &
+\\textcolor{hdrtext}{\\textbf{Difference}} &
+\\textcolor{hdrtext}{\\textbf{Best}} \\\\
+\\midrule
+`;
+
+  rN.forEach((rNm,ri)=>{
+    const rA=allRA.find(x=>x.Region===rNm),rB=allRB.find(x=>x.Region===rNm);
+    const rowCol=ri%2===0?'rowA':'rowB';
+    const isEK=rNm.includes('=')&&rNm.startsWith('Rated');
+    const isCR=mtrCRs.some(c=>c.name===rNm);
+    const useCol=isEK||isCR?'rated':rowCol;
+
+    // Determine region winner
+    const f2=['Eff','Po','pf'];let wA2=0,wB2=0;
+    f2.forEach(f=>{
+      const vA=rA?rA[f]:null,vB=rB?rB[f]:null;
+      if(vA!=null&&vB!=null&&HIB[f]!==null&&Math.abs(vA-vB)>1e-9){if(HIB[f]?vA>vB:vA<vB)wA2++;else wB2++;}
+    });
+    const rWin=wA2>wB2?'A':wB2>wA2?'B':'tie';
+
+    flds.forEach((f,fi)=>{
+      const vA=rA&&rA[f]!=null?rA[f]:null,vB=rB&&rB[f]!=null?rB[f]:null;
+      const delta=vA!=null&&vB!=null?vA-vB:null;
+      const hib=HIB[f];
+      let winnerSide=null;
+      if(vA!=null&&vB!=null&&hib!==null&&Math.abs(vA-vB)>1e-9)winnerSide=hib?vA>vB?'A':'B':vA<vB?'A':'B';
+
+      tex+=`\\rowcolor{${useCol}}\n`;
+      if(fi===0)tex+=`\\multirow{${flds.length}}{*}{${esc(rNm)}}\n`;
+      tex+=`  & ${fLbl[fi]}`;
+      tex+=` & ${vA!=null?(winnerSide==='A'?`\\win{${vA.toFixed(3)}}`:`${vA.toFixed(3)}`):'---'}`;
+      tex+=` & ${vB!=null?(winnerSide==='B'?`\\win{${vB.toFixed(3)}}`:`${vB.toFixed(3)}`):'---'}`;
+      // Difference
+      if(delta!=null){tex+=` & $${delta>=0?'+':''}${delta.toFixed(3)}$`;}else tex+=' & ---';
+      // Best
+      if(winnerSide==='A')tex+=` & \\MotA`;
+      else if(winnerSide==='B')tex+=` & \\MotB`;
+      else if(vA!=null&&vB!=null&&Math.abs(vA-vB)<1e-9)tex+=` & \\Tied`;
+      else tex+=` & ---`;
+      tex+=` \\\\\n`;
+    });
+
+    // Star winner row
+    const starTex=rWin==='A'?'\\MotA':rWin==='B'?'\\MotB':'\\Tied';
+    tex+=`\\rowcolor{wingreen}\n\\multicolumn{5}{l}{\\hspace{2em}$\\star$ \\textit{Overall Winner --- ${esc(rNm)} Region}} &\n  ${starTex} \\\\\n`;
+    tex+=ri<rN.length-1?`\\midrule\n`:`\\bottomrule\n`;
+    tex+=`\n`;
+  });
+
+  tex+=`\\end{tabular}
+
+\\bigskip
+\\noindent
+\\footnotesize
+\\textbf{Notes:}
+Difference = ${lAe} $-$ ${lBe}.\\
+\\textcolor{better}{$\\blacksquare$}\\ Higher is better for Speed, Torque, Pout, Eff, PF.\\
+\\textcolor{worse}{$\\blacksquare$}\\ Lower is better for Pin.\\
+\\win{Bold green value} = winner for that parameter.\\ Region winner by majority of Pout, Eff, PF.
+
+\\end{table}
+
+`;
+
+  // ── FIGURES ──
+  const metFigs=[
+    {ip:'Torque',lbl:'Torque',yl:'Torque (N\\textperiodcentered m)',cA:'MidBlue',cB:'BurntOrange'},
+    {ip:'eff',lbl:'Efficiency',yl:'Efficiency (\\%)',cA:'GoldBrown',cB:'BurntOrange'},
+    {ip:'Pin',lbl:'Input Power',yl:'Pin (W)',cA:'BurntOrange',cB:'MidBlue'},
+    {ip:'Pout',lbl:'Output Power',yl:'Pout (W)',cA:'ForestGreen',cB:'BurntOrange'},
+    {ip:'PF',lbl:'Power Factor',yl:'Power Factor',cA:'GoldBrown',cB:'BurntOrange'},
+    {ip:'It',lbl:'Total Current',yl:'It (A)',cA:'MidBlue',cB:'BurntOrange'},
+  ];
+
+  metFigs.forEach(m=>{
+    const arrA=mtrDataA.ip[m.ip],arrB=mtrDataB.ip[m.ip];
+    if(!arrA&&!arrB)return;
+    const allVals=[...(arrA||[]),...(arrB||[])].filter(v=>!isNaN(v)&&v!=null);
+    if(!allVals.length)return;
+    const allSpds=[...mtrDataA.speed,...mtrDataB.speed];
+    const xMin=Math.floor(Math.min(...allSpds)/10)*10;
+    const xMax=Math.ceil(Math.max(...allSpds)/10)*10;
+    const yMax2=Math.ceil(Math.max(...allVals)*1.12/5)*5||10;
+    const stepA=Math.max(1,Math.floor(mtrDataA.speed.length/nPts));
+    const stepB=Math.max(1,Math.floor(mtrDataB.speed.length/nPts));
+    const ptsA=arrA?mtrDataA.speed.filter((_,i)=>i%stepA===0).map((s,j)=>`(${s.toFixed(0)},${(arrA[j*stepA]||0).toFixed(4)})`).join(''):'';
+    const ptsB=arrB?mtrDataB.speed.filter((_,i)=>i%stepB===0).map((s,j)=>`(${s.toFixed(0)},${(arrB[j*stepB]||0).toFixed(4)})`).join(''):'';
+
+    tex+=`\\begin{figure}[H]
+\\centering
+\\begin{tikzpicture}
+\\begin{axis}[
+  width=0.85\\linewidth, height=6cm,
+  xlabel={Speed (RPM)},
+  ylabel={${m.yl}},
+  xmin=${xMin}, xmax=${xMax},
+  ymin=0, ymax=${yMax2},
+  grid=both, grid style={line width=0.3pt, draw=gray!30},
+  legend pos=south east,
+  title={${m.lbl} vs.\\ Speed --- ${lAe} vs.\\ ${lBe}},
+  title style={color=NavyBlue, font=\\bfseries},
+  axis line style={color=NavyBlue},
+  tick style={color=NavyBlue},
+]\n`;
+    if(ptsA)tex+=`\\addplot[color=${m.cA}, thick] coordinates {${ptsA}};\n\\addlegendentry{${lAe}}\n`;
+    if(ptsB)tex+=`\\addplot[color=${m.cB}, thick, dashed] coordinates {${ptsB}};\n\\addlegendentry{${lBe}}\n`;
+    // K curves on Torque figure
+    if(m.ip==='Torque'&&kA.K1>0){
+      const stepR=Math.max(1,Math.floor(mtrDataA.speed.length/nPts));
+      const lcPts=mtrDataA.speed.filter((_,i)=>i%stepR===0).map(s=>`(${s.toFixed(0)},${(kA.K1*Math.pow(2*Math.PI*s/60,2)).toFixed(4)})`).join('');
+      tex+=`\\addplot[color=ForestGreen, thick, dashed] coordinates {${lcPts}};\n\\addlegendentry{$T_L$ ($K_1=${kA.K1.toFixed(5)}$)}\n`;
+    }
+    tex+=`\\end{axis}
+\\end{tikzpicture}
+\\caption{${m.lbl} vs.\\ Speed comparison: ${lAe} vs.\\ ${lBe}}
+\\label{fig:${m.ip}_speed}
+\\end{figure}
+
+`;
+  });
+
+  tex+=`\\end{document}\n`;
+
+  const blob=new Blob([tex],{type:'text/plain'});
+  const ts=new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`CompareMotors_${lA}_vs_${lB}_${ts}.tex`;a.click();
+  toast('LaTeX exported!','ok');log('=== Compare Motors LaTeX downloaded ===','ok');
+});
+
+})(); // end IIFE
+
 log('Load Curve: enter K or Speed — zero = no curve drawn. Curves apply to all loaded files.');
 // Hide rated value row on load (LC mode is default)
 document.getElementById('rpvrow').style.display='none';
