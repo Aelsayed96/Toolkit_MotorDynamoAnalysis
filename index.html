@@ -235,6 +235,7 @@ tbody td{padding:4px 8px;color:var(--text);white-space:nowrap;}
   <button class="ntab" data-p="compare">⊟ Compare</button>
   <button class="ntab" data-p="motors">⊡ Compare Motors</button>
   <button class="ntab" data-p="stats">⊠ Statistics</button>
+  <button class="ntab" data-p="settings">⚙ Settings</button>
 </div>
 
 <!-- ═══ PAGE: ANALYZE ═══ -->
@@ -295,7 +296,7 @@ tbody td{padding:4px 8px;color:var(--text);white-space:nowrap;}
       <div class="pb" id="b-upl">
         <p class="help">Columns: <strong>Speed, Torque, Pin, Pout, Efficiency, PF, It</strong>. SPIM: <strong>Im, Ia</strong>.</p>
         <div class="dz" id="dz"><div class="dzi">⬆</div><p><strong>Drop CSV / Excel here</strong><br>or click to browse</p></div>
-        <input type="file" id="fi" multiple accept=".csv,.xlsx,.xls" style="display:none;">
+        <input type="file" id="fi" multiple accept=".mdf,.csv,.xlsx,.xls" style="display:none;">
         <div class="flist" id="fl2"></div>
       </div>
     </div>
@@ -354,6 +355,7 @@ tbody td{padding:4px 8px;color:var(--text);white-space:nowrap;}
       <button class="btn bw" id="expAP" style="flex:1">🖼 Export All Plots</button>
       <button class="btn bgh" id="shot">📷 Save Plot</button>
     </div>
+    <button class="btn bw bfu" id="expAnalyzeLatex">⬇ Export LaTeX</button>
   </div>
 </div><!-- /sidebar -->
 
@@ -418,6 +420,7 @@ tbody td{padding:4px 8px;color:var(--text);white-space:nowrap;}
     <button class="btn bp" id="rcmp">↻ Update</button>
     <button class="btn bgh" id="cmpPng">🖼 Chart PNG</button>
     <button class="btn bo" id="expCmp">⬇ Export Compare</button>
+    <button class="btn bw" id="expCmpLatex">⬇ Export LaTeX</button>
   </div>
   <div class="cc2">
     <div class="cc2h">
@@ -648,6 +651,7 @@ tbody td{padding:4px 8px;color:var(--text);white-space:nowrap;}
     <button class="btn bp" id="rsts">↻ Compute</button>
     <button class="btn bo" id="expSts">⬇ Export Stats</button>
     <button class="btn bg2" id="expAvgCurve">⬇ Avg Motor Curve</button>
+    <button class="btn bw" id="expStsLatex">⬇ Export LaTeX</button>
   </div>
 
   <!-- SUB-TABS -->
@@ -666,6 +670,234 @@ tbody td{padding:4px 8px;color:var(--text);white-space:nowrap;}
 </div>
 
 </div><!-- /shell -->
+
+<!-- ═══ PAGE: SETTINGS ═══ -->
+<div class="page" id="page-settings">
+<div class="fta" style="max-width:900px;margin:0 auto;">
+
+  <!-- Header -->
+  <div style="padding:4px 0 8px;border-bottom:2px solid var(--border);margin-bottom:4px;">
+    <div style="font-family:var(--mono);font-size:1rem;color:var(--accent);font-weight:700;letter-spacing:.1em;">⚙ SETTINGS</div>
+    <div style="font-family:var(--mono);font-size:.66rem;color:var(--dim);margin-top:3px;">Customize font, text, and LaTeX document appearance</div>
+  </div>
+
+  <!-- ── SECTION: LaTeX Document Settings ── -->
+  <div class="cc2">
+    <div class="cc2h"><span>📄 LATEX DOCUMENT SETTINGS</span></div>
+    <div style="padding:14px 16px;display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div><label class="fl">Document Class</label>
+          <select id="set-docclass" style="">
+            <option value="article">article</option>
+            <option value="report" selected>report</option>
+            <option value="scrartcl">KOMA scrartcl</option>
+            <option value="memoir">memoir</option>
+          </select>
+        </div>
+        <div><label class="fl">Paper Size</label>
+          <div class="rg">
+            <label class="ro"><input type="radio" name="setpaper" value="a4paper" checked><span>A4</span></label>
+            <label class="ro"><input type="radio" name="setpaper" value="letterpaper"><span>Letter</span></label>
+            <label class="ro"><input type="radio" name="setpaper" value="a3paper"><span>A3</span></label>
+          </div>
+        </div>
+        <div><label class="fl">Orientation</label>
+          <div class="rg">
+            <label class="ro"><input type="radio" name="setorient" value="portrait" checked><span>Portrait</span></label>
+            <label class="ro"><input type="radio" name="setorient" value="landscape"><span>Landscape</span></label>
+          </div>
+        </div>
+        <div><label class="fl">Margins (geometry)</label>
+          <div style="display:flex;gap:6px;">
+            <div style="flex:1"><label class="fl" style="font-size:.57rem">Top</label><input type="text" id="set-margin-top" value="2.5cm"></div>
+            <div style="flex:1"><label class="fl" style="font-size:.57rem">Bottom</label><input type="text" id="set-margin-bot" value="2.5cm"></div>
+            <div style="flex:1"><label class="fl" style="font-size:.57rem">Left</label><input type="text" id="set-margin-left" value="2.5cm"></div>
+            <div style="flex:1"><label class="fl" style="font-size:.57rem">Right</label><input type="text" id="set-margin-right" value="2cm"></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div><label class="fl">Author / Organization</label><input type="text" id="set-author" value="El Araby Group · Dynamometer Lab"></div>
+        <div><label class="fl">Report Title Prefix</label><input type="text" id="set-title-prefix" value="Motor Performance Analysis Report"></div>
+        <div><label class="fl">Footer Text (fancyhdr)</label><input type="text" id="set-footer" value="Dynamometer Analysis Tool · El Araby Group"></div>
+        <div><label class="fl">Date Format</label>
+          <div class="rg">
+            <label class="ro"><input type="radio" name="setdate" value="auto" checked><span>Auto (today)</span></label>
+            <label class="ro"><input type="radio" name="setdate" value="custom"><span>Custom</span></label>
+          </div>
+          <input type="text" id="set-date-custom" placeholder="e.g. January 2025" style="margin-top:5px;display:none;">
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── SECTION: Font Settings ── -->
+  <div class="cc2">
+    <div class="cc2h"><span>🖋 FONT SETTINGS</span></div>
+    <div style="padding:14px 16px;display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div><label class="fl">Main Font Package</label>
+          <select id="set-mainfont">
+            <option value="none">Default (Computer Modern)</option>
+            <option value="lmodern" selected>Latin Modern (lmodern)</option>
+            <option value="palatino">Palatino (palatino)</option>
+            <option value="times">Times (times)</option>
+            <option value="helvet">Helvetica (helvet)</option>
+            <option value="bookman">Bookman</option>
+            <option value="charter">Charter (charter)</option>
+            <option value="fourier">Utopia/Fourier</option>
+          </select>
+        </div>
+        <div><label class="fl">Sans-Serif Font</label>
+          <select id="set-sansfont">
+            <option value="none">Default</option>
+            <option value="helvet" selected>Helvetica (helvet)</option>
+            <option value="opensans">Open Sans (opensans)</option>
+            <option value="arev">Arev Sans</option>
+          </select>
+        </div>
+        <div><label class="fl">Monospace Font</label>
+          <select id="set-monofont">
+            <option value="none">Default (Computer Modern TT)</option>
+            <option value="courier">Courier</option>
+            <option value="inconsolata" selected>Inconsolata</option>
+            <option value="sourcecodepro">Source Code Pro</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div><label class="fl">Base Font Size</label>
+          <div class="rg">
+            <label class="ro"><input type="radio" name="setfontsize" value="10pt"><span>10pt</span></label>
+            <label class="ro"><input type="radio" name="setfontsize" value="11pt" checked><span>11pt</span></label>
+            <label class="ro"><input type="radio" name="setfontsize" value="12pt"><span>12pt</span></label>
+          </div>
+        </div>
+        <div><label class="fl">Line Spacing</label>
+          <select id="set-linespacing">
+            <option value="none">Single (default)</option>
+            <option value="1.15" selected>1.15× (onehalfspacing lite)</option>
+            <option value="onehalfspacing">One-and-a-half (setspace)</option>
+            <option value="doublespacing">Double (setspace)</option>
+          </select>
+        </div>
+        <div><label class="fl">Paragraph Style</label>
+          <div class="rg">
+            <label class="ro"><input type="radio" name="setparagraph" value="indent"><span>Indent</span></label>
+            <label class="ro"><input type="radio" name="setparagraph" value="skip" checked><span>Skip (parskip)</span></label>
+          </div>
+        </div>
+        <div><label class="fl">Table Font Size</label>
+          <div class="rg">
+            <label class="ro"><input type="radio" name="settblfont" value="\\footnotesize"><span>footnote</span></label>
+            <label class="ro"><input type="radio" name="settblfont" value="\\small"><span>small</span></label>
+            <label class="ro"><input type="radio" name="settblfont" value="\\normalsize" checked><span>normal</span></label>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── SECTION: Color / Theme ── -->
+  <div class="cc2">
+    <div class="cc2h"><span>🎨 COLOR THEME & TABLE STYLE</span></div>
+    <div style="padding:14px 16px;display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div><label class="fl">Color Theme</label>
+          <select id="set-colortheme">
+            <option value="blue" selected>Blue (default)</option>
+            <option value="teal">Teal</option>
+            <option value="red">Red</option>
+            <option value="green">Forest Green</option>
+            <option value="navy">Navy</option>
+            <option value="gray">Grayscale</option>
+          </select>
+        </div>
+        <div><label class="fl">Table Row Colors</label>
+          <div class="rg">
+            <label class="ro"><input type="radio" name="settblrows" value="zebra" checked><span>Zebra</span></label>
+            <label class="ro"><input type="radio" name="settblrows" value="plain"><span>Plain</span></label>
+            <label class="ro"><input type="radio" name="settblrows" value="border"><span>Bordered</span></label>
+          </div>
+        </div>
+        <div><label class="fl">Figure Width</label>
+          <select id="set-figwidth">
+            <option value="0.70">70% linewidth</option>
+            <option value="0.80">80% linewidth</option>
+            <option value="0.85" selected>85% linewidth</option>
+            <option value="0.95">95% linewidth</option>
+            <option value="1.00">Full width</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div><label class="fl">Header / Accent Color (xcolor HTML)</label>
+          <input type="text" id="set-accentcolor" value="005FAA" placeholder="e.g. 005FAA" style="font-family:var(--mono);">
+          <div style="margin-top:5px;display:flex;gap:6px;flex-wrap:wrap;">
+            <span style="font-family:var(--mono);font-size:.58rem;color:var(--dim)">Presets:</span>
+            <button class="btn bgh" style="padding:2px 7px;font-size:.59rem;" onclick="$('set-accentcolor').value='005FAA'">Blue</button>
+            <button class="btn bgh" style="padding:2px 7px;font-size:.59rem;" onclick="$('set-accentcolor').value='007A6B'">Teal</button>
+            <button class="btn bgh" style="padding:2px 7px;font-size:.59rem;" onclick="$('set-accentcolor').value='BB2233'">Red</button>
+            <button class="btn bgh" style="padding:2px 7px;font-size:.59rem;" onclick="$('set-accentcolor').value='2E7000'">Green</button>
+            <button class="btn bgh" style="padding:2px 7px;font-size:.59rem;" onclick="$('set-accentcolor').value='1A2040'">Navy</button>
+            <button class="btn bgh" style="padding:2px 7px;font-size:.59rem;" onclick="$('set-accentcolor').value='444444'">Gray</button>
+          </div>
+        </div>
+        <div><label class="fl">Motor A Color (compare, HTML hex)</label>
+          <input type="text" id="set-colorA" value="005FAA" placeholder="005FAA"></div>
+        <div><label class="fl">Motor B Color (compare, HTML hex)</label>
+          <input type="text" id="set-colorB" value="C04000" placeholder="C04000"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── SECTION: Content Sections ── -->
+  <div class="cc2">
+    <div class="cc2h"><span>📋 CONTENT SECTIONS (shown in exported LaTeX)</span></div>
+    <div style="padding:12px 16px;">
+      <div class="cg" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+        <label class="co"><input type="checkbox" id="set-sec-cover" checked><span class="cb"></span>Title Page</label>
+        <label class="co"><input type="checkbox" id="set-sec-toc"><span class="cb"></span>Table of Contents</label>
+        <label class="co"><input type="checkbox" id="set-sec-intro" checked><span class="cb"></span>Introduction Section</label>
+        <label class="co"><input type="checkbox" id="set-sec-regions" checked><span class="cb"></span>Regions Table</label>
+        <label class="co"><input type="checkbox" id="set-sec-stats" checked><span class="cb"></span>Statistics Summary</label>
+        <label class="co"><input type="checkbox" id="set-sec-figures" checked><span class="cb"></span>Performance Figures</label>
+        <label class="co"><input type="checkbox" id="set-sec-notes" checked><span class="cb"></span>Notes / Footnotes</label>
+        <label class="co"><input type="checkbox" id="set-sec-appendix"><span class="cb"></span>Appendix (raw data)</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Save / Reset ── -->
+  <div class="ts" style="justify-content:flex-end;gap:8px;">
+    <span id="set-saved-msg" style="font-family:var(--mono);font-size:.66rem;color:var(--ok);display:none;">✓ Settings saved</span>
+    <button class="btn bs" id="set-reset">↺ Reset Defaults</button>
+    <button class="btn bp" id="set-save">💾 Save Settings</button>
+  </div>
+
+  <!-- ── Preview preamble ── -->
+  <div class="cc2">
+    <div class="cc2h">
+      <span>👁 PREAMBLE PREVIEW</span>
+      <button class="btn bgh" id="set-copy-preamble" style="padding:2px 8px;font-size:.59rem;">📋 Copy</button>
+    </div>
+    <div style="padding:10px;">
+      <pre id="set-preamble-preview" style="font-family:var(--mono);font-size:.63rem;color:var(--dim);background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:10px;overflow-x:auto;white-space:pre;line-height:1.7;max-height:280px;overflow-y:auto;"></pre>
+    </div>
+  </div>
+
+</div>
+</div>
+<!-- /page-settings -->
 
 <div class="lp" id="lp">
   <div class="lt" id="ltg"><span class="ltd"></span><span>CONSOLE</span><span style="margin-left:auto;" id="la">▲</span></div>
@@ -2584,12 +2816,12 @@ Difference = ${lAe} $-$ ${lBe}.\\
 
   // ── FIGURES ──
   const metFigs=[
-    {ip:'Torque',lbl:'Torque',yl:'Torque (N\\textperiodcentered m)',cA:'MidBlue',cB:'BurntOrange'},
+    {ip:'Torque',lbl:'Torque',yl:'Torque ($N\\cdot m$)',cA:'MidBlue',cB:'BurntOrange'},
     {ip:'eff',lbl:'Efficiency',yl:'Efficiency (\\%)',cA:'GoldBrown',cB:'BurntOrange'},
-    {ip:'Pin',lbl:'Input Power',yl:'Pin (W)',cA:'BurntOrange',cB:'MidBlue'},
-    {ip:'Pout',lbl:'Output Power',yl:'Pout (W)',cA:'ForestGreen',cB:'BurntOrange'},
+    {ip:'Pin',lbl:'Input Power',yl:'$P_{in}$ (W)',cA:'BurntOrange',cB:'MidBlue'},
+    {ip:'Pout',lbl:'Output Power',yl:'$P_{out}$ (W)',cA:'ForestGreen',cB:'BurntOrange'},
     {ip:'PF',lbl:'Power Factor',yl:'Power Factor',cA:'GoldBrown',cB:'BurntOrange'},
-    {ip:'It',lbl:'Total Current',yl:'It (A)',cA:'MidBlue',cB:'BurntOrange'},
+    {ip:'It',lbl:'Total Current',yl:'$I_t$ (A)',cA:'MidBlue',cB:'BurntOrange'},
   ];
 
   metFigs.forEach(m=>{
@@ -2600,7 +2832,11 @@ Difference = ${lAe} $-$ ${lBe}.\\
     const allSpds=[...mtrDataA.speed,...mtrDataB.speed];
     const xMin=Math.floor(Math.min(...allSpds)/10)*10;
     const xMax=Math.ceil(Math.max(...allSpds)/10)*10;
-    const yMax2=Math.ceil(Math.max(...allVals)*1.12/5)*5||10;
+    const rawYMinM=Math.min(...allVals);
+    const rawYMaxM=Math.max(...allVals);
+    const ySpanM=rawYMaxM-rawYMinM||rawYMaxM||1;
+    const yMinM=rawYMinM>0?Math.max(0,Math.floor((rawYMinM-ySpanM*0.08)/5)*5):Math.floor((rawYMinM-ySpanM*0.08)/5)*5;
+    const yMax2=Math.ceil((rawYMaxM+ySpanM*0.12)/5)*5||10;
     const stepA=Math.max(1,Math.floor(mtrDataA.speed.length/nPts));
     const stepB=Math.max(1,Math.floor(mtrDataB.speed.length/nPts));
     const ptsA=arrA?mtrDataA.speed.filter((_,i)=>i%stepA===0).map((s,j)=>`(${s.toFixed(0)},${(arrA[j*stepA]||0).toFixed(4)})`).join(''):'';
@@ -2614,7 +2850,7 @@ Difference = ${lAe} $-$ ${lBe}.\\
   xlabel={Speed (RPM)},
   ylabel={${m.yl}},
   xmin=${xMin}, xmax=${xMax},
-  ymin=0, ymax=${yMax2},
+  ymin=${yMinM}, ymax=${yMax2},
   grid=both, grid style={line width=0.3pt, draw=gray!30},
   legend pos=south east,
   title={${m.lbl} vs.\\ Speed --- ${lAe} vs.\\ ${lBe}},
@@ -2652,6 +2888,421 @@ Difference = ${lAe} $-$ ${lBe}.\\
 log('Load Curve: enter K or Speed — zero = no curve drawn. Curves apply to all loaded files.');
 // Hide rated value row on load (LC mode is default)
 document.getElementById('rpvrow').style.display='none';
+
+// ═══════════════════════════════════════════════════════════
+//  SETTINGS — state, persistence, preamble builder
+// ═══════════════════════════════════════════════════════════
+const SET_DEFAULTS={
+  docclass:'report', paper:'a4paper', orient:'portrait',
+  marginTop:'2.5cm', marginBot:'2.5cm', marginLeft:'2.5cm', marginRight:'2cm',
+  author:'El Araby Group · Dynamometer Lab',
+  titlePrefix:'Motor Performance Analysis Report',
+  footer:'Dynamometer Analysis Tool · El Araby Group',
+  dateMode:'auto', dateCustom:'',
+  mainfont:'lmodern', sansfont:'helvet', monofont:'inconsolata',
+  fontsize:'11pt', linespacing:'1.15', paragraph:'skip',
+  tblFontSize:'\\normalsize',
+  colorTheme:'blue', tblRows:'zebra', figWidth:'0.85',
+  accentColor:'005FAA', colorA:'005FAA', colorB:'C04000',
+  secCover:true, secToc:false, secIntro:true,
+  secRegions:true, secStats:true, secFigures:true, secNotes:true, secAppendix:false
+};
+let SET={...SET_DEFAULTS};
+
+function loadSettings(){
+  try{const s=localStorage.getItem('dat_settings');if(s)SET={...SET_DEFAULTS,...JSON.parse(s)};}catch(e){}
+  applySettingsToUI();
+}
+function saveSettingsFromUI(){
+  SET.docclass=$('set-docclass').value;
+  SET.paper=document.querySelector('input[name="setpaper"]:checked')?.value||'a4paper';
+  SET.orient=document.querySelector('input[name="setorient"]:checked')?.value||'portrait';
+  SET.marginTop=$('set-margin-top').value;
+  SET.marginBot=$('set-margin-bot').value;
+  SET.marginLeft=$('set-margin-left').value;
+  SET.marginRight=$('set-margin-right').value;
+  SET.author=$('set-author').value;
+  SET.titlePrefix=$('set-title-prefix').value;
+  SET.footer=$('set-footer').value;
+  SET.dateMode=document.querySelector('input[name="setdate"]:checked')?.value||'auto';
+  SET.dateCustom=$('set-date-custom').value;
+  SET.mainfont=$('set-mainfont').value;
+  SET.sansfont=$('set-sansfont').value;
+  SET.monofont=$('set-monofont').value;
+  SET.fontsize=document.querySelector('input[name="setfontsize"]:checked')?.value||'11pt';
+  SET.linespacing=$('set-linespacing').value;
+  SET.paragraph=document.querySelector('input[name="setparagraph"]:checked')?.value||'skip';
+  SET.tblFontSize=document.querySelector('input[name="settblfont"]:checked')?.value||'\\normalsize';
+  SET.colorTheme=$('set-colortheme').value;
+  SET.tblRows=document.querySelector('input[name="settblrows"]:checked')?.value||'zebra';
+  SET.figWidth=$('set-figwidth').value;
+  SET.accentColor=$('set-accentcolor').value;
+  SET.colorA=$('set-colorA').value;
+  SET.colorB=$('set-colorB').value;
+  SET.secCover=$('set-sec-cover').checked;
+  SET.secToc=$('set-sec-toc').checked;
+  SET.secIntro=$('set-sec-intro').checked;
+  SET.secRegions=$('set-sec-regions').checked;
+  SET.secStats=$('set-sec-stats').checked;
+  SET.secFigures=$('set-sec-figures').checked;
+  SET.secNotes=$('set-sec-notes').checked;
+  SET.secAppendix=$('set-sec-appendix').checked;
+  try{localStorage.setItem('dat_settings',JSON.stringify(SET));}catch(e){}
+  updatePreamblePreview();
+}
+function applySettingsToUI(){
+  try{
+    $('set-docclass').value=SET.docclass;
+    const p=document.querySelector(`input[name="setpaper"][value="${SET.paper}"]`);if(p)p.checked=true;
+    const o=document.querySelector(`input[name="setorient"][value="${SET.orient}"]`);if(o)o.checked=true;
+    $('set-margin-top').value=SET.marginTop;
+    $('set-margin-bot').value=SET.marginBot;
+    $('set-margin-left').value=SET.marginLeft;
+    $('set-margin-right').value=SET.marginRight;
+    $('set-author').value=SET.author;
+    $('set-title-prefix').value=SET.titlePrefix;
+    $('set-footer').value=SET.footer;
+    const dm=document.querySelector(`input[name="setdate"][value="${SET.dateMode}"]`);if(dm)dm.checked=true;
+    $('set-date-custom').value=SET.dateCustom||'';
+    $('set-date-custom').style.display=SET.dateMode==='custom'?'':'none';
+    $('set-mainfont').value=SET.mainfont;
+    $('set-sansfont').value=SET.sansfont;
+    $('set-monofont').value=SET.monofont;
+    const fs=document.querySelector(`input[name="setfontsize"][value="${SET.fontsize}"]`);if(fs)fs.checked=true;
+    $('set-linespacing').value=SET.linespacing;
+    const pp=document.querySelector(`input[name="setparagraph"][value="${SET.paragraph}"]`);if(pp)pp.checked=true;
+    const tf=document.querySelector(`input[name="settblfont"][value="${SET.tblFontSize}"]`);if(tf)tf.checked=true;
+    $('set-colortheme').value=SET.colorTheme;
+    const tr=document.querySelector(`input[name="settblrows"][value="${SET.tblRows}"]`);if(tr)tr.checked=true;
+    $('set-figwidth').value=SET.figWidth;
+    $('set-accentcolor').value=SET.accentColor;
+    $('set-colorA').value=SET.colorA;
+    $('set-colorB').value=SET.colorB;
+    $('set-sec-cover').checked=SET.secCover;
+    $('set-sec-toc').checked=SET.secToc;
+    $('set-sec-intro').checked=SET.secIntro;
+    $('set-sec-regions').checked=SET.secRegions;
+    $('set-sec-stats').checked=SET.secStats;
+    $('set-sec-figures').checked=SET.secFigures;
+    $('set-sec-notes').checked=SET.secNotes;
+    $('set-sec-appendix').checked=SET.secAppendix;
+  }catch(e){}
+  updatePreamblePreview();
+}
+
+// Build the LaTeX preamble from settings
+function buildPreamble(title=''){
+  const paper=SET.paper+(SET.orient==='landscape'?',landscape':'');
+  const dateStr=SET.dateMode==='custom'&&SET.dateCustom?SET.dateCustom:'\\today';
+  const acc='#'+SET.accentColor;
+  const cA='#'+SET.colorA;
+  const cB='#'+SET.colorB;
+  let lines=[];
+  lines.push(`\\documentclass[${SET.fontsize},${paper}]{${SET.docclass}}`);
+  lines.push(`\\usepackage[${SET.marginTop.startsWith('top')?'':('top='+SET.marginTop+',')}bottom=${SET.marginBot},left=${SET.marginLeft},right=${SET.marginRight}]{geometry}`.replace('top=,','top='+SET.marginTop+','));
+  lines.push('\\usepackage[T1]{fontenc}');
+  lines.push('\\usepackage[utf8]{inputenc}');
+  if(SET.mainfont!=='none')lines.push(`\\usepackage{${SET.mainfont}}`);
+  if(SET.sansfont!=='none')lines.push(`\\usepackage{${SET.sansfont}}`);
+  if(SET.monofont!=='none')lines.push(`\\usepackage{${SET.monofont}}`);
+  lines.push('\\usepackage[table,xcdraw]{xcolor}');
+  lines.push('\\usepackage{booktabs}');
+  lines.push('\\usepackage{multirow}');
+  lines.push('\\usepackage{longtable}');
+  lines.push('\\usepackage{array}');
+  lines.push('\\usepackage{graphicx}');
+  lines.push('\\usepackage{float}');
+  lines.push('\\usepackage{pgfplots}');
+  lines.push('\\pgfplotsset{compat=1.18}');
+  lines.push('\\usepackage{hyperref}');
+  lines.push('\\usepackage{fancyhdr}');
+  if(SET.paragraph==='skip')lines.push('\\usepackage{parskip}');
+  if(SET.linespacing==='onehalfspacing'||SET.linespacing==='doublespacing')lines.push(`\\usepackage{setspace}\n\\${SET.linespacing}`);
+  else if(SET.linespacing==='1.15')lines.push('\\linespread{1.15}');
+  lines.push('');
+  lines.push(`% ── Colors ──`);
+  lines.push(`\\definecolor{accent}{HTML}{${SET.accentColor}}`);
+  lines.push(`\\definecolor{motorA}{HTML}{${SET.colorA}}`);
+  lines.push(`\\definecolor{motorB}{HTML}{${SET.colorB}}`);
+  lines.push(`\\definecolor{hdr}{HTML}{E8EEF8}`);
+  lines.push(`\\definecolor{hdrtext}{HTML}{${SET.accentColor}}`);
+  lines.push(`\\definecolor{rowA}{HTML}{FFFFFF}`);
+  lines.push(`\\definecolor{rowB}{HTML}{F4F7FD}`);
+  lines.push(`\\definecolor{rated}{HTML}{FFF8E0}`);
+  lines.push(`\\definecolor{better}{HTML}{2E7000}`);
+  lines.push(`\\definecolor{worse}{HTML}{BB2233}`);
+  lines.push(`\\definecolor{wingreen}{HTML}{E6F4EC}`);
+  lines.push('');
+  lines.push(`% ── Hyperref ──`);
+  lines.push(`\\hypersetup{colorlinks=true,linkcolor=accent,urlcolor=accent,citecolor=accent}`);
+  lines.push('');
+  lines.push(`% ── Commands ──`);
+  lines.push(`\\newcommand{\\win}[1]{\\textbf{\\textcolor{better}{#1}}}`);
+  lines.push(`\\newcommand{\\MotA}{\\textcolor{motorA}{\\textbf{${title?title.split(' vs ')[0]||'Motor A':'Motor A'}}}}`);
+  lines.push(`\\newcommand{\\MotB}{\\textcolor{motorB}{\\textbf{${title?title.split(' vs ')[1]||'Motor B':'Motor B'}}}}`);
+  lines.push(`\\newcommand{\\Tied}{\\textcolor{gray}{\\textit{Tied}}}`);
+  lines.push('');
+  lines.push(`% ── Headers/Footers ──`);
+  lines.push(`\\pagestyle{fancy}\\fancyhf{}`);
+  lines.push(`\\setlength{\\headheight}{24pt}`);
+  lines.push(`\\lhead{\\raisebox{-2pt}{\\includegraphics[height=18pt]{Elaraby-group-logo.png}}}`);
+  lines.push(`\\rhead{\\footnotesize\\textcolor{accent}{${SET.titlePrefix||'Report'}}}`);
+  lines.push(`\\chead{\\footnotesize ${SET.author||''}}`);
+  lines.push(`\\rfoot{\\footnotesize Page \\thepage}`);
+  lines.push(`\\lfoot{\\footnotesize ${SET.footer||''}}`);
+  lines.push('');
+  lines.push(`\\title{\\textcolor{accent}{${title||SET.titlePrefix}}}`);
+  lines.push(`\\author{${SET.author||''}}`);
+  lines.push(`\\date{${dateStr}}`);
+  return lines.join('\n');
+}
+
+function updatePreamblePreview(){
+  const el=$('set-preamble-preview');if(!el)return;
+  el.textContent=buildPreamble('Motor A vs Motor B (example)');
+}
+
+// Save/Reset/Copy
+$('set-save').addEventListener('click',()=>{
+  saveSettingsFromUI();
+  const m=$('set-saved-msg');m.style.display='inline';setTimeout(()=>m.style.display='none',2200);
+});
+$('set-reset').addEventListener('click',()=>{
+  SET={...SET_DEFAULTS};applySettingsToUI();toast('Settings reset to defaults');
+});
+$('set-copy-preamble').addEventListener('click',()=>{
+  saveSettingsFromUI();
+  navigator.clipboard?.writeText($('set-preamble-preview').textContent).then(()=>toast('Preamble copied!','ok')).catch(()=>toast('Copy failed','err'));
+});
+document.querySelectorAll('input[name="setdate"]').forEach(r=>{
+  r.addEventListener('change',()=>{$('set-date-custom').style.display=r.value==='custom'&&r.checked?'':'none';});
+});
+// Live preview update
+['set-docclass','set-mainfont','set-sansfont','set-monofont','set-linespacing','set-colortheme','set-figwidth','set-accentcolor','set-colorA','set-colorB','set-author','set-title-prefix','set-footer','set-date-custom','set-margin-top','set-margin-bot','set-margin-left','set-margin-right'].forEach(id=>{
+  const el=document.getElementById(id);if(el)el.addEventListener('input',updatePreamblePreview);
+  if(el&&el.tagName==='SELECT')el.addEventListener('change',updatePreamblePreview);
+});
+document.querySelectorAll('input[name^="set"]').forEach(r=>r.addEventListener('change',updatePreamblePreview));
+
+loadSettings();
+
+// ═══════════════════════════════════════════════════════════
+//  SHARED LATEX HELPERS
+// ═══════════════════════════════════════════════════════════
+function texEsc(s){return String(s).replace(/\\/g,'\\textbackslash ').replace(/~/g,'\\textasciitilde ').replace(/\^/g,'\\textasciicircum ').replace(/[&%$#_{}]/g,c=>'\\'+c);}
+function latexTs(){return new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);}
+
+function buildLatexDoc(title,body,extraPreamble=''){
+  const preamble=buildPreamble(title);
+  const dateStr=SET.dateMode==='custom'&&SET.dateCustom?SET.dateCustom:'\\today';
+  let doc=preamble+'\n'+(extraPreamble||'')+'\n\\begin{document}\n';
+  if(SET.secCover){
+    doc+=`\\begin{titlepage}\n\\centering\n\\vspace*{2cm}\n{\\Large\\bfseries\\textcolor{accent}{${texEsc(title)}}\\par}\n\\vspace{0.8cm}\n{\\large ${texEsc(SET.author||'')}\\par}\n\\vspace{0.4cm}\n{\\normalsize ${dateStr}\\par}\n\\vspace{0.4cm}\n{\\small Generated by Dynamometer Analysis Tool\\par}\n\\end{titlepage}\n\n`;
+  }
+  if(SET.secToc){doc+='\\tableofcontents\n\\newpage\n\n';}
+  doc+=body;
+  doc+='\\end{document}\n';
+  return doc;
+}
+
+function latexTableStyle(){
+  if(SET.tblRows==='plain')return '';
+  if(SET.tblRows==='bordered')return '\\setlength{\\arrayrulewidth}{0.5pt}\n';
+  return ''; // zebra handled per-row with rowcolor
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ANALYZE PAGE — LaTeX Export
+// ═══════════════════════════════════════════════════════════
+document.getElementById('expAnalyzeLatex').addEventListener('click',()=>{
+  const keys=Object.keys(PF);
+  if(!keys.length){toast('Process data first.','err');return;}
+  saveSettingsFromUI();
+  const ts=latexTs();
+  const motor=$('mm').value||'Motor';
+  const title=`${texEsc(SET.titlePrefix||'Report')} --- ${texEsc(motor)}`;
+  const fs=SET.tblFontSize||'\\normalsize';
+  const fw=SET.figWidth||'0.85';
+  const nPts=80;
+
+  let body='';
+
+  if(SET.secIntro){
+    body+=`\\section{Overview}\n\nThis report presents dynamometer performance data for motor model \\textbf{${texEsc(motor)}}. Data was captured across ${keys.length} test file(s). All interpolation is linear between measured points.\n\n`;
+  }
+
+  keys.forEach(k=>{
+    const data=PF[k];
+    const regsAll=allR(data);
+    body+=`\\section{File: ${texEsc(data.name)}}\n\n`;
+    body+=`\\noindent\\textbf{Voltage:} ${data.volt}\\,V \\quad \\textbf{Frequency:} ${data.freq}\\,Hz \\quad \\textbf{Direction:} ${texEsc(data.dir)} \\quad \\textbf{MDF Config:} ${['SPIM','1-Phase','3-Phase'][data.mdf]||'SPIM'}\n\n`;
+
+    if(SET.secRegions){
+      body+=`\\subsection{Operating Regions}\n\n`;
+      body+=`${fs}\n\\setlength{\\tabcolsep}{5pt}\n\\renewcommand{\\arraystretch}{1.3}\n\\begin{table}[H]\n\\centering\n\\caption{Operating regions for ${texEsc(data.name)}}\n\\begin{tabular}{>{\\bfseries}l r r r r r r r}\n\\toprule\n\\rowcolor{hdr}\n\\textcolor{hdrtext}{\\textbf{Region}} & \\textcolor{hdrtext}{\\textbf{Speed}} & \\textcolor{hdrtext}{\\textbf{Torque}} & \\textcolor{hdrtext}{\\textbf{Pin}} & \\textcolor{hdrtext}{\\textbf{Pout}} & \\textcolor{hdrtext}{\\textbf{Eff}} & \\textcolor{hdrtext}{\\textbf{PF}} & \\textcolor{hdrtext}{\\textbf{It}} \\\\\n & \\textcolor{hdrtext}{(RPM)} & \\textcolor{hdrtext}{($N\\cdot m$)} & \\textcolor{hdrtext}{(W)} & \\textcolor{hdrtext}{(W)} & \\textcolor{hdrtext}{(\\%)} & & \\textcolor{hdrtext}{(A)} \\\\\n\\midrule\n`;
+      regsAll.forEach((r,ri)=>{
+        const rc=ri%2===0?'rowA':'rowB';
+        body+=`\\rowcolor{${rc}} ${texEsc(r.Region)} & ${r.Speed.toFixed(1)} & ${r.Torque.toFixed(3)} & ${r.Pin.toFixed(1)} & ${r.Po.toFixed(1)} & ${r.Eff.toFixed(2)} & ${r.pf.toFixed(3)} & ${r.It.toFixed(3)} \\\\\n`;
+      });
+      body+=`\\bottomrule\n\\end{tabular}\n\\end{table}\n\n`;
+    }
+
+    if(SET.secFigures){
+      const metrics=[
+        {key:'Torque',lbl:'Torque',yl:'Torque ($N\\cdot m$)'},
+        {key:'eff',lbl:'Efficiency',yl:'Efficiency (\\%)'},
+        {key:'Pin',lbl:'Input Power',yl:'$P_{in}$ (W)'},
+        {key:'Pout',lbl:'Output Power',yl:'$P_{out}$ (W)'},
+        {key:'PF',lbl:'Power Factor',yl:'Power Factor'},
+        {key:'It',lbl:'Total Current',yl:'$I_t$ (A)'},
+      ];
+      metrics.forEach(m=>{
+        const arr=data.ip[m.key];if(!arr||!arr.length)return;
+        const S=data.speed;
+        const validArr=arr.filter(v=>v!=null&&!isNaN(v));
+        const rawYMin=Math.min(...validArr);
+        const rawYMax=Math.max(...validArr);
+        const ySpan=rawYMax-rawYMin||rawYMax||1;
+        const yMin=rawYMin>0?Math.max(0,Math.floor((rawYMin-ySpan*0.08)/5)*5):Math.floor((rawYMin-ySpan*0.08)/5)*5;
+        const yMax=Math.ceil((rawYMax+ySpan*0.12)/5)*5||10;
+        const xMin=Math.floor(Math.min(...S)/10)*10;
+        const xMax=Math.ceil(Math.max(...S)/10)*10;
+        const step=Math.max(1,Math.floor(S.length/nPts));
+        const pts=S.filter((_,i)=>i%step===0).map((s,j)=>`(${s.toFixed(0)},${(arr[j*step]||0).toFixed(4)})`).join('');
+        body+=`\\begin{figure}[H]\n\\centering\n\\begin{tikzpicture}\n\\begin{axis}[\n  width=${fw}\\linewidth, height=5.5cm,\n  xlabel={Speed (RPM)}, ylabel={${m.yl}},\n  xmin=${xMin}, xmax=${xMax}, ymin=${yMin}, ymax=${yMax},\n  grid=both, grid style={line width=0.3pt, draw=gray!25},\n  legend pos=south east,\n  title={${m.lbl} vs.\\ Speed --- ${texEsc(data.name)}},\n  title style={color=accent, font=\\bfseries},\n  axis line style={color=accent}, tick style={color=accent},\n]\n\\addplot[color=motorA, thick] coordinates {${pts}};\n\\addlegendentry{${texEsc(data.name)}}\n`;
+        // Load curve on Torque
+        if(m.key==='Torque'&&data.lc&&data.lcK>0){
+          const lcPts=S.filter((_,i)=>i%step===0).map((s,j)=>`(${s.toFixed(0)},${(data.lc[j*step]||0).toFixed(4)})`).join('');
+          body+=`\\addplot[color=better, thick, dashed] coordinates {${lcPts}};\n\\addlegendentry{$T_L$, $K=${data.lcK.toFixed(5)}$}\n`;
+        }
+        body+=`\\end{axis}\n\\end{tikzpicture}\n\\caption{${m.lbl} vs.\\ Speed: ${texEsc(data.name)}}\n\\label{fig:${k}_${m.key}}\n\\end{figure}\n\n`;
+      });
+    }
+  });
+
+  if(SET.secNotes){
+    body+=`\\section*{Notes}\n\\noindent Generated by \\textit{Dynamometer Analysis Tool} on \\today.\\\\\nData interpolated linearly. Efficiency = $P_{out}/P_{in} \\times 100\\%$. Load curve: $T_L = K \\cdot (2\\pi N / 60)^2$.\n\n`;
+  }
+
+  const tex=buildLatexDoc(title,body);
+  const blob=new Blob([tex],{type:'text/plain'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`Analyze_${motor}_${ts}.tex`;a.click();
+  toast('Analyze LaTeX exported!','ok');log('=== Analyze LaTeX downloaded ===','ok');
+});
+
+// ═══════════════════════════════════════════════════════════
+//  COMPARE PAGE — LaTeX Export
+// ═══════════════════════════════════════════════════════════
+document.getElementById('expCmpLatex').addEventListener('click',()=>{
+  const keys=Object.keys(PF);
+  if(keys.length<2){toast('Need 2+ files to compare.','err');return;}
+  saveSettingsFromUI();
+  const ts=latexTs();
+  const metric=$('cm').value;
+  const metLabel={Torque:'Torque (N·m)',eff:'Efficiency (%)',Pin:'Pin (W)',Pout:'Pout (W)',PF:'Power Factor',It:'It (A)'}[metric]||metric;
+  const title=`${texEsc(SET.titlePrefix||'Report')} --- Multi-File Comparison`;
+  const fs=SET.tblFontSize||'\\normalsize';
+  const fw=SET.figWidth||'0.85';
+  const nPts=80;
+  const flds=['Speed','Torque','Pin','Po','Eff','pf','It'];
+  const fLbl=['Speed (RPM)','Torque (N·m)','Pin (W)','Pout (W)','Eff (%)','PF','It (A)'];
+  const rN=[];keys.forEach(k=>{allR(PF[k]).forEach(r=>{if(!rN.includes(r.Region))rN.push(r.Region);});});
+
+  let body='';
+  if(SET.secIntro){
+    body+=`\\section{Overview}\n\nThis report compares dynamometer performance curves across ${keys.length} motor files. Active metric for comparison: \\textbf{${texEsc(metLabel)}}.\n\n`;
+  }
+
+  if(SET.secFigures){
+    body+=`\\section{Curve Comparison: ${texEsc(metLabel)}}\n\n`;
+    const xMins=keys.map(k=>Math.min(...PF[k].speed));
+    const xMaxs=keys.map(k=>Math.max(...PF[k].speed));
+    const xMin=Math.floor(Math.min(...xMins)/10)*10;
+    const xMax=Math.ceil(Math.max(...xMaxs)/10)*10;
+    const allY=keys.flatMap(k=>PF[k].ip[metric]||PF[k].ip.eff||[]).filter(v=>v!=null&&!isNaN(v));
+    const rawYMinC=allY.length?Math.min(...allY):0;
+    const rawYMaxC=allY.length?Math.max(...allY):10;
+    const ySpanC=rawYMaxC-rawYMinC||rawYMaxC||1;
+    const yCmpMin=rawYMinC>0?Math.max(0,Math.floor((rawYMinC-ySpanC*0.08)/5)*5):Math.floor((rawYMinC-ySpanC*0.08)/5)*5;
+    const yMax=Math.ceil((rawYMaxC+ySpanC*0.12)/5)*5||10;
+    const COLS=['motorA','motorB','accent','better','worse','gray'];
+    const DASHES=['solid','dashed','dotted','dashdotted','densely dashed','loosely dashed'];
+    body+=`\\begin{figure}[H]\n\\centering\n\\begin{tikzpicture}\n\\begin{axis}[\n  width=${fw}\\linewidth, height=6cm,\n  xlabel={Speed (RPM)}, ylabel={${texEsc(metLabel)}},\n  xmin=${xMin}, xmax=${xMax}, ymin=${yCmpMin}, ymax=${yMax},\n  grid=both, grid style={line width=0.3pt, draw=gray!25},\n  legend pos=south east,\n  title={${texEsc(metLabel)} Comparison},\n  title style={color=accent, font=\\bfseries},\n]\n`;
+    keys.forEach((k,ki)=>{
+      const data=PF[k];const S=data.speed;const arr=data.ip[metric]||data.ip.eff||[];
+      const step=Math.max(1,Math.floor(S.length/nPts));
+      const pts=S.filter((_,i)=>i%step===0).map((s,j)=>`(${s.toFixed(0)},${(arr[j*step]||0).toFixed(4)})`).join('');
+      body+=`\\addplot[color=${COLS[ki%COLS.length]}, thick, ${DASHES[ki%DASHES.length]}] coordinates {${pts}};\n\\addlegendentry{${texEsc(data.name)}}\n`;
+    });
+    body+=`\\end{axis}\n\\end{tikzpicture}\n\\caption{${texEsc(metLabel)} comparison across ${keys.length} motors}\n\\end{figure}\n\n`;
+  }
+
+  if(SET.secRegions){
+    body+=`\\section{Side-by-Side Regions}\n\n${fs}\n\\setlength{\\tabcolsep}{4pt}\n\\renewcommand{\\arraystretch}{1.25}\n\\begin{longtable}{>{\\bfseries}l l ${keys.map(()=>'r').join(' ')}}\n\\toprule\n\\rowcolor{hdr}\n\\textcolor{hdrtext}{\\textbf{Region}} & \\textcolor{hdrtext}{\\textbf{Parameter}} ${keys.map(k=>`& \\textcolor{hdrtext}{\\textbf{${texEsc(PF[k].name)}}}`).join(' ')} \\\\\n\\midrule\n\\endfirsthead\n\\toprule\n\\rowcolor{hdr}\n\\textcolor{hdrtext}{\\textbf{Region}} & \\textcolor{hdrtext}{\\textbf{Parameter}} ${keys.map(k=>`& \\textcolor{hdrtext}{\\textbf{${texEsc(PF[k].name)}}}`).join(' ')} \\\\\n\\midrule\n\\endhead\n\\bottomrule\n\\endfoot\n`;
+    rN.forEach((rNm,ri)=>{
+      const rc=ri%2===0?'rowA':'rowB';
+      flds.forEach((f,fi)=>{
+        body+=`\\rowcolor{${rc}}\n`;
+        if(fi===0)body+=`\\multirow{${flds.length}}{*}{${texEsc(rNm)}}\n`;
+        body+=`  & ${texEsc(fLbl[fi])}`;
+        keys.forEach(k=>{const r=allR(PF[k]).find(x=>x.Region===rNm);const v=r?r[f]:null;body+=` & ${v!==null&&v!==undefined?v.toFixed(3):'---'}`;});
+        body+=` \\\\\n`;
+      });
+      body+=`\\midrule\n`;
+    });
+    body+=`\\end{longtable}\n\n`;
+  }
+
+  if(SET.secNotes){
+    body+=`\\section*{Notes}\n\\noindent Generated by \\textit{Dynamometer Analysis Tool} on \\today. Files compared: ${keys.map(k=>texEsc(PF[k].name)).join(', ')}.\n\n`;
+  }
+
+  const tex=buildLatexDoc(title,body);
+  const blob=new Blob([tex],{type:'text/plain'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`Compare_${ts}.tex`;a.click();
+  toast('Compare LaTeX exported!','ok');log('=== Compare LaTeX downloaded ===','ok');
+});
+
+// ═══════════════════════════════════════════════════════════
+//  STATISTICS PAGE — LaTeX Export
+// ═══════════════════════════════════════════════════════════
+document.getElementById('expStsLatex').addEventListener('click',()=>{
+  if(!Object.keys(spd).length){toast('Compute statistics first.','err');return;}
+  saveSettingsFromUI();
+  const ts=latexTs();
+  const k=parseFloat($('sk').value)||3;
+  const title=`${texEsc(SET.titlePrefix||'Report')} --- Production Statistics`;
+  const fs=SET.tblFontSize||'\\normalsize';
+
+  let body='';
+  if(SET.secIntro){
+    const nUnits=Object.keys(stsAllD).length;
+    body+=`\\section{Overview}\n\nProduction statistics computed from ${nUnits} motor unit(s). \\(\\sigma\\)-multiplier $k = ${k}$ used for limit calculations.\n\n`;
+  }
+
+  if(SET.secStats){
+    body+=`\\section{Summary Statistics}\n\n`;
+    Object.entries(spd).forEach(([rNm,rD])=>{
+      body+=`\\subsection{Region: ${texEsc(rNm)}}\n\n${fs}\n\\setlength{\\tabcolsep}{4pt}\n\\renewcommand{\\arraystretch}{1.2}\n\\begin{table}[H]\n\\centering\n\\caption{Statistics for region: ${texEsc(rNm)}}\n\\begin{tabular}{>{\\bfseries}l r r r r r r r}\n\\toprule\n\\rowcolor{hdr}\n\\textcolor{hdrtext}{\\textbf{Parameter}} & \\textcolor{hdrtext}{\\textbf{n}} & \\textcolor{hdrtext}{\\textbf{Mean}} & \\textcolor{hdrtext}{\\textbf{$\\sigma$}} & \\textcolor{hdrtext}{\\textbf{Min}} & \\textcolor{hdrtext}{\\textbf{Max}} & \\textcolor{hdrtext}{\\textbf{$-k\\sigma$}} & \\textcolor{hdrtext}{\\textbf{$+k\\sigma$}} \\\\\n\\midrule\n`;
+      STS_FLDS.forEach((f,fi)=>{
+        const s=rD[f];if(!s||!s.n)return;
+        const cpk=s.std>0?Math.min((s.hi-s.mean)/(3*s.std),(s.mean-s.lo)/(3*s.std)):null;
+        const rc=fi%2===0?'rowA':'rowB';
+        body+=`\\rowcolor{${rc}} ${texEsc(s.label)} & ${s.n} & ${s.mean.toFixed(4)} & ${s.std.toFixed(4)} & ${s.min.toFixed(4)} & ${s.max.toFixed(4)} & ${s.lo.toFixed(4)} & ${s.hi.toFixed(4)} \\\\\n`;
+      });
+      body+=`\\bottomrule\n\\end{tabular}\n\\end{table}\n\n`;
+    });
+  }
+
+  if(SET.secNotes){
+    body+=`\\section*{Notes}\n\\noindent Generated by \\textit{Dynamometer Analysis Tool} on \\today. $k = ${k}$, limits: $\\mu \\pm k\\sigma$. Cpk $= \\min\\left(\\frac{USL-\\mu}{3\\sigma}, \\frac{\\mu-LSL}{3\\sigma}\\right)$.\n\n`;
+  }
+
+  const tex=buildLatexDoc(title,body);
+  const blob=new Blob([tex],{type:'text/plain'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`Statistics_${ts}.tex`;a.click();
+  toast('Statistics LaTeX exported!','ok');log('=== Stats LaTeX downloaded ===','ok');
+});
 </script>
 </body>
 </html>
