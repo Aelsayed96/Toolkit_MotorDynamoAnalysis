@@ -235,6 +235,7 @@ tbody td{padding:4px 8px;color:var(--text);white-space:nowrap;}
   <button class="ntab" data-p="compare">⊟ Compare</button>
   <button class="ntab" data-p="motors">⊡ Compare Motors</button>
   <button class="ntab" data-p="stats">⊠ Statistics</button>
+  <button class="ntab" data-p="stscompare">⊠⊟ Stats Compare</button>
   <button class="ntab" data-p="settings">⚙ Settings</button>
 </div>
 
@@ -669,26 +670,63 @@ tbody td{padding:4px 8px;color:var(--text);white-space:nowrap;}
 </div>
 </div>
 
-</div><!-- /shell -->
 
-<!-- ═══ PAGE: SETTINGS ═══ -->
+<!-- ═══ PAGE: STATS COMPARE ═══ -->
+<div class="page" id="page-stscompare">
+<div style="display:flex;flex-direction:column;height:100%;overflow:hidden;">
+  <div class="ts" style="flex-shrink:0;border-bottom:1px solid var(--border);border-radius:0;margin:0;flex-wrap:wrap;gap:6px;">
+    <span class="tsl">⊠⊟ STATISTICS COMPARE</span>
+    <div style="display:flex;align-items:center;gap:5px;">
+      <label class="fl" style="display:inline;margin:0;white-space:nowrap;">Field:</label>
+      <select id="scField" style="width:auto;">
+        <option value="Speed">Speed (RPM)</option>
+        <option value="Torque">Torque (N·m)</option>
+        <option value="Pin">Pin (W)</option>
+        <option value="Po" selected>Pout (W)</option>
+        <option value="Eff">Eff (%)</option>
+        <option value="pf">PF</option>
+        <option value="It">It (A)</option>
+        <option value="Im">Im (A)</option>
+        <option value="Ia">Ia (A)</option>
+      </select>
+    </div>
+    <div class="dz" id="sc-dz" style="padding:4px 10px;display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;border-width:1px;cursor:pointer;" title="Load a previously exported Stats JSON">
+      <span>⬆</span><span style="font-size:.66rem;font-family:var(--mono);">Load Previous Stats (JSON)</span>
+    </div>
+    <input type="file" id="sc-fi" multiple accept=".json" style="display:none;">
+    <div id="sc-loaded-list" style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;"></div>
+    <button class="btn bp" id="sc-run">↻ Compare</button>
+    <button class="btn bo" id="sc-expXlsx">⬇ XLSX</button>
+    <button class="btn bw" id="sc-expLatex">⬇ Export LaTeX</button>
+    <button class="btn bs" id="sc-clear">✕ Clear Previous</button>
+  </div>
+  <div style="display:flex;gap:0;flex-shrink:0;background:var(--surface);border-bottom:2px solid var(--border);padding:0 12px;">
+    <button class="ntab active" id="sctab-overlay" onclick="switchSCTab('overlay')">📈 Avg Curve Overlay</button>
+    <button class="ntab" id="sctab-stats" onclick="switchSCTab('stats')">⊠ Stats Table</button>
+    <button class="ntab" id="sctab-box" onclick="switchSCTab('box')">⊟ Box Compare</button>
+  </div>
+  <div style="flex:1;overflow-y:auto;overflow-x:hidden;padding:10px;" id="scContent">
+    <div class="ec" style="position:relative;padding:60px 20px;">
+      <div class="eci">⊠⊟</div>
+      <p style="font-family:var(--mono);font-size:.7rem;text-align:center;">Compute Statistics first, then optionally load a previous stats JSON to compare.<br>Click Compare to overlay current session vs previous.</p>
+    </div>
+  </div>
+</div>
+</div><!-- /page-stscompare -->
+
+<!-- ═══ PAGE: SETTINGS (inside shell) ═══ -->
 <div class="page" id="page-settings">
 <div class="fta" style="max-width:900px;margin:0 auto;">
-
-  <!-- Header -->
   <div style="padding:4px 0 8px;border-bottom:2px solid var(--border);margin-bottom:4px;">
     <div style="font-family:var(--mono);font-size:1rem;color:var(--accent);font-weight:700;letter-spacing:.1em;">⚙ SETTINGS</div>
     <div style="font-family:var(--mono);font-size:.66rem;color:var(--dim);margin-top:3px;">Customize font, text, and LaTeX document appearance</div>
   </div>
-
-  <!-- ── SECTION: LaTeX Document Settings ── -->
   <div class="cc2">
     <div class="cc2h"><span>📄 LATEX DOCUMENT SETTINGS</span></div>
     <div style="padding:14px 16px;display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-
       <div style="display:flex;flex-direction:column;gap:10px;">
         <div><label class="fl">Document Class</label>
-          <select id="set-docclass" style="">
+          <select id="set-docclass">
             <option value="article">article</option>
             <option value="report" selected>report</option>
             <option value="scrartcl">KOMA scrartcl</option>
@@ -717,7 +755,6 @@ tbody td{padding:4px 8px;color:var(--text);white-space:nowrap;}
           </div>
         </div>
       </div>
-
       <div style="display:flex;flex-direction:column;gap:10px;">
         <div><label class="fl">Author / Organization</label><input type="text" id="set-author" value="El Araby Group · Dynamometer Lab"></div>
         <div><label class="fl">Report Title Prefix</label><input type="text" id="set-title-prefix" value="Motor Performance Analysis Report"></div>
@@ -730,15 +767,11 @@ tbody td{padding:4px 8px;color:var(--text);white-space:nowrap;}
           <input type="text" id="set-date-custom" placeholder="e.g. January 2025" style="margin-top:5px;display:none;">
         </div>
       </div>
-
     </div>
   </div>
-
-  <!-- ── SECTION: Font Settings ── -->
   <div class="cc2">
     <div class="cc2h"><span>🖋 FONT SETTINGS</span></div>
     <div style="padding:14px 16px;display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-
       <div style="display:flex;flex-direction:column;gap:10px;">
         <div><label class="fl">Main Font Package</label>
           <select id="set-mainfont">
@@ -769,7 +802,6 @@ tbody td{padding:4px 8px;color:var(--text);white-space:nowrap;}
           </select>
         </div>
       </div>
-
       <div style="display:flex;flex-direction:column;gap:10px;">
         <div><label class="fl">Base Font Size</label>
           <div class="rg">
@@ -781,7 +813,7 @@ tbody td{padding:4px 8px;color:var(--text);white-space:nowrap;}
         <div><label class="fl">Line Spacing</label>
           <select id="set-linespacing">
             <option value="none">Single (default)</option>
-            <option value="1.15" selected>1.15× (onehalfspacing lite)</option>
+            <option value="1.15" selected>1.15x (onehalfspacing lite)</option>
             <option value="onehalfspacing">One-and-a-half (setspace)</option>
             <option value="doublespacing">Double (setspace)</option>
           </select>
@@ -794,21 +826,17 @@ tbody td{padding:4px 8px;color:var(--text);white-space:nowrap;}
         </div>
         <div><label class="fl">Table Font Size</label>
           <div class="rg">
-            <label class="ro"><input type="radio" name="settblfont" value="\\footnotesize"><span>footnote</span></label>
-            <label class="ro"><input type="radio" name="settblfont" value="\\small"><span>small</span></label>
-            <label class="ro"><input type="radio" name="settblfont" value="\\normalsize" checked><span>normal</span></label>
+            <label class="ro"><input type="radio" name="settblfont" value="footnotesize"><span>footnote</span></label>
+            <label class="ro"><input type="radio" name="settblfont" value="small"><span>small</span></label>
+            <label class="ro"><input type="radio" name="settblfont" value="normalsize" checked><span>normal</span></label>
           </div>
         </div>
       </div>
-
     </div>
   </div>
-
-  <!-- ── SECTION: Color / Theme ── -->
   <div class="cc2">
-    <div class="cc2h"><span>🎨 COLOR THEME & TABLE STYLE</span></div>
+    <div class="cc2h"><span>🎨 COLOR THEME &amp; TABLE STYLE</span></div>
     <div style="padding:14px 16px;display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-
       <div style="display:flex;flex-direction:column;gap:10px;">
         <div><label class="fl">Color Theme</label>
           <select id="set-colortheme">
@@ -837,7 +865,6 @@ tbody td{padding:4px 8px;color:var(--text);white-space:nowrap;}
           </select>
         </div>
       </div>
-
       <div style="display:flex;flex-direction:column;gap:10px;">
         <div><label class="fl">Header / Accent Color (xcolor HTML)</label>
           <input type="text" id="set-accentcolor" value="005FAA" placeholder="e.g. 005FAA" style="font-family:var(--mono);">
@@ -856,11 +883,8 @@ tbody td{padding:4px 8px;color:var(--text);white-space:nowrap;}
         <div><label class="fl">Motor B Color (compare, HTML hex)</label>
           <input type="text" id="set-colorB" value="C04000" placeholder="C04000"></div>
       </div>
-
     </div>
   </div>
-
-  <!-- ── SECTION: Content Sections ── -->
   <div class="cc2">
     <div class="cc2h"><span>📋 CONTENT SECTIONS (shown in exported LaTeX)</span></div>
     <div style="padding:12px 16px;">
@@ -873,31 +897,29 @@ tbody td{padding:4px 8px;color:var(--text);white-space:nowrap;}
         <label class="co"><input type="checkbox" id="set-sec-figures" checked><span class="cb"></span>Performance Figures</label>
         <label class="co"><input type="checkbox" id="set-sec-notes" checked><span class="cb"></span>Notes / Footnotes</label>
         <label class="co"><input type="checkbox" id="set-sec-appendix"><span class="cb"></span>Appendix (raw data)</label>
+        <label class="co"><input type="checkbox" id="set-sec-avgcurve" checked><span class="cb"></span>Avg Motor Curve (Stats)</label>
       </div>
     </div>
   </div>
-
-  <!-- ── Save / Reset ── -->
   <div class="ts" style="justify-content:flex-end;gap:8px;">
-    <span id="set-saved-msg" style="font-family:var(--mono);font-size:.66rem;color:var(--ok);display:none;">✓ Settings saved</span>
-    <button class="btn bs" id="set-reset">↺ Reset Defaults</button>
-    <button class="btn bp" id="set-save">💾 Save Settings</button>
+    <span id="set-saved-msg" style="font-family:var(--mono);font-size:.66rem;color:var(--ok);display:none;">&#x2713; Settings saved</span>
+    <button class="btn bs" id="set-reset">&#x21BA; Reset Defaults</button>
+    <button class="btn bp" id="set-save">&#x1F4BE; Save Settings</button>
   </div>
-
-  <!-- ── Preview preamble ── -->
   <div class="cc2">
     <div class="cc2h">
-      <span>👁 PREAMBLE PREVIEW</span>
-      <button class="btn bgh" id="set-copy-preamble" style="padding:2px 8px;font-size:.59rem;">📋 Copy</button>
+      <span>&#x1F441; PREAMBLE PREVIEW</span>
+      <button class="btn bgh" id="set-copy-preamble" style="padding:2px 8px;font-size:.59rem;">&#x1F4CB; Copy</button>
     </div>
     <div style="padding:10px;">
       <pre id="set-preamble-preview" style="font-family:var(--mono);font-size:.63rem;color:var(--dim);background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:10px;overflow-x:auto;white-space:pre;line-height:1.7;max-height:280px;overflow-y:auto;"></pre>
     </div>
   </div>
-
 </div>
 </div>
 <!-- /page-settings -->
+
+</div><!-- /shell -->
 
 <div class="lp" id="lp">
   <div class="lt" id="ltg"><span class="ltd"></span><span>CONSOLE</span><span style="margin-left:auto;" id="la">▲</span></div>
@@ -936,6 +958,7 @@ document.querySelectorAll('.ntab').forEach(t=>{
     const pg='page-'+t.dataset.p;$(pg).classList.add('active');
     if(t.dataset.p==='compare')renderCmp();
     if(t.dataset.p==='stats')renderSts();
+    if(t.dataset.p==='stscompare'){scCurTab='overlay';['overlay','stats','box'].forEach(id=>{const b=document.getElementById('sctab-'+id);if(b)b.classList.toggle('active',id==='overlay');});}
   });
 });
 
@@ -1979,7 +2002,49 @@ $('expSts').addEventListener('click',async()=>{
   const b2=new Blob([stsSum(k)],{type:'text/plain'});
   const a2=document.createElement('a');a2.href=URL.createObjectURL(b2);a2.download=`Stats_Summary_${ts}.txt`;a2.click();
   await new Promise(r=>setTimeout(r,300));
-  hideEO();toast('Statistics exported!','ok');log('=== Stats downloaded ===','ok');
+  setEO('Stats JSON…',90);
+  // Build stats snapshot JSON for Stats Compare tab
+  const stsSnapshot={
+    version:1, exported:new Date().toISOString(), label:'Session '+ts,
+    k:k, nUnits:keys.length, regions:{}, avgCurve:null
+  };
+  Object.entries(spd).forEach(([rNm,rD])=>{
+    stsSnapshot.regions[rNm]={};
+    STS_FLDS.forEach(f=>{
+      const s=rD[f];if(!s||!s.n)return;
+      const vals=stsVals(keys,rNm,f);
+      const bs=vals.length?bxStats(vals):null;
+      stsSnapshot.regions[rNm][f]={label:s.label,n:s.n,mean:s.mean,std:s.std,min:s.min,max:s.max,
+        lo:s.lo,hi:s.hi,q1:bs?bs.q1:null,med:bs?bs.med:null,q3:bs?bs.q3:null,
+        iqr:bs?bs.iqr:null,outliers:bs?bs.out:[]};
+    });
+  });
+  // Include avg curve data if enough units
+  if(keys.length>=2){
+    try{
+      const acSMin=Math.max(...keys.map(kk=>Math.min(...stsAllD[kk].speed)));
+      const acSMax=Math.min(...keys.map(kk=>Math.max(...stsAllD[kk].speed)));
+      if(acSMin<acSMax){
+        const nPts=60;
+        const acSpd=Array.from({length:nPts},(_,i)=>acSMin+(acSMax-acSMin)*i/(nPts-1));
+        const acIpKeys=['Torque','Pin','Pout','eff','PF','It'];
+        const acG={};
+        acIpKeys.forEach(ik=>{
+          const mat=keys.map(kk=>{
+            const d=stsAllD[kk];
+            const arr=d.ip[ik]||d.ip[ik.charAt(0).toLowerCase()+ik.slice(1)]||[];
+            return acSpd.map(s=>li(d.speed,arr,s));
+          });
+          acG[ik]={mean:acSpd.map((_,i)=>avg(mat.map(r=>r[i]))),std:acSpd.map((_,i)=>sdv(mat.map(r=>r[i])))};
+        });
+        stsSnapshot.avgCurve={speed:acSpd,gridded:acG};
+      }
+    }catch(e){}
+  }
+  const jb=new Blob([JSON.stringify(stsSnapshot,null,2)],{type:'application/json'});
+  const a3=document.createElement('a');a3.href=URL.createObjectURL(jb);a3.download=`Statistics_Snapshot_${ts}.json`;a3.click();
+  await new Promise(r=>setTimeout(r,300));
+  hideEO();toast('Statistics exported (XLSX + TXT + JSON)!','ok');log('=== Stats downloaded ===','ok');
 });
 function stsSum(k){
   const L=['PRODUCTION STATISTICS','='.repeat(55),`Generated: ${new Date().toLocaleString()}`,`k = ${k}`,``];
@@ -2905,7 +2970,8 @@ const SET_DEFAULTS={
   colorTheme:'blue', tblRows:'zebra', figWidth:'0.85',
   accentColor:'005FAA', colorA:'005FAA', colorB:'C04000',
   secCover:true, secToc:false, secIntro:true,
-  secRegions:true, secStats:true, secFigures:true, secNotes:true, secAppendix:false
+  secRegions:true, secStats:true, secFigures:true, secNotes:true, secAppendix:false,
+  secAvgCurve:true
 };
 let SET={...SET_DEFAULTS};
 
@@ -2932,7 +2998,9 @@ function saveSettingsFromUI(){
   SET.fontsize=document.querySelector('input[name="setfontsize"]:checked')?.value||'11pt';
   SET.linespacing=$('set-linespacing').value;
   SET.paragraph=document.querySelector('input[name="setparagraph"]:checked')?.value||'skip';
-  SET.tblFontSize=document.querySelector('input[name="settblfont"]:checked')?.value||'\\normalsize';
+  // tblFontSize stored WITH backslash prefix (e.g. \normalsize)
+  const _tfn=document.querySelector('input[name="settblfont"]:checked')?.value||'normalsize';
+  SET.tblFontSize='\\'+_tfn.replace(/^\\/,'');
   SET.colorTheme=$('set-colortheme').value;
   SET.tblRows=document.querySelector('input[name="settblrows"]:checked')?.value||'zebra';
   SET.figWidth=$('set-figwidth').value;
@@ -2947,6 +3015,8 @@ function saveSettingsFromUI(){
   SET.secFigures=$('set-sec-figures').checked;
   SET.secNotes=$('set-sec-notes').checked;
   SET.secAppendix=$('set-sec-appendix').checked;
+  const avgcurveEl=document.getElementById('set-sec-avgcurve');
+  if(avgcurveEl)SET.secAvgCurve=avgcurveEl.checked;
   try{localStorage.setItem('dat_settings',JSON.stringify(SET));}catch(e){}
   updatePreamblePreview();
 }
@@ -2971,7 +3041,8 @@ function applySettingsToUI(){
     const fs=document.querySelector(`input[name="setfontsize"][value="${SET.fontsize}"]`);if(fs)fs.checked=true;
     $('set-linespacing').value=SET.linespacing;
     const pp=document.querySelector(`input[name="setparagraph"][value="${SET.paragraph}"]`);if(pp)pp.checked=true;
-    const tf=document.querySelector(`input[name="settblfont"][value="${SET.tblFontSize}"]`);if(tf)tf.checked=true;
+    const _tfv=(SET.tblFontSize||'\\normalsize').replace(/^\\/,'');
+    const tf=document.querySelector(`input[name="settblfont"][value="${_tfv}"]`);if(tf)tf.checked=true;
     $('set-colortheme').value=SET.colorTheme;
     const tr=document.querySelector(`input[name="settblrows"][value="${SET.tblRows}"]`);if(tr)tr.checked=true;
     $('set-figwidth').value=SET.figWidth;
@@ -2986,6 +3057,7 @@ function applySettingsToUI(){
     $('set-sec-figures').checked=SET.secFigures;
     $('set-sec-notes').checked=SET.secNotes;
     $('set-sec-appendix').checked=SET.secAppendix;
+    const avgEl=document.getElementById('set-sec-avgcurve');if(avgEl)avgEl.checked=SET.secAvgCurve!==false;
   }catch(e){}
   updatePreamblePreview();
 }
@@ -3038,8 +3110,11 @@ function buildPreamble(title=''){
   lines.push('');
   lines.push(`% ── Commands ──`);
   lines.push(`\\newcommand{\\win}[1]{\\textbf{\\textcolor{better}{#1}}}`);
-  lines.push(`\\newcommand{\\MotA}{\\textcolor{motorA}{\\textbf{${title?title.split(' vs ')[0]||'Motor A':'Motor A'}}}}`);
-  lines.push(`\\newcommand{\\MotB}{\\textcolor{motorB}{\\textbf{${title?title.split(' vs ')[1]||'Motor B':'Motor B'}}}}`);
+  const vsparts=title?title.split(' vs '):[];
+  const motAname=vsparts.length>=2?(vsparts[0].trim()||'Motor A'):'Motor A';
+  const motBname=vsparts.length>=2?(vsparts[1].trim()||'Motor B'):'Motor B';
+  lines.push(`\\newcommand{\\MotA}{\\textcolor{motorA}{\\textbf{${motAname}}}}`);
+  lines.push(`\\newcommand{\\MotB}{\\textcolor{motorB}{\\textbf{${motBname}}}}`);
   lines.push(`\\newcommand{\\Tied}{\\textcolor{gray}{\\textit{Tied}}}`);
   lines.push('');
   lines.push(`% ── Headers/Footers ──`);
@@ -3121,7 +3196,7 @@ document.getElementById('expAnalyzeLatex').addEventListener('click',()=>{
   const ts=latexTs();
   const motor=$('mm').value||'Motor';
   const title=`${texEsc(SET.titlePrefix||'Report')} --- ${texEsc(motor)}`;
-  const fs=SET.tblFontSize||'\\normalsize';
+  const fs=(SET.tblFontSize||'\\normalsize');
   const fw=SET.figWidth||'0.85';
   const nPts=80;
 
@@ -3201,7 +3276,7 @@ document.getElementById('expCmpLatex').addEventListener('click',()=>{
   const metric=$('cm').value;
   const metLabel={Torque:'Torque (N·m)',eff:'Efficiency (%)',Pin:'Pin (W)',Pout:'Pout (W)',PF:'Power Factor',It:'It (A)'}[metric]||metric;
   const title=`${texEsc(SET.titlePrefix||'Report')} --- Multi-File Comparison`;
-  const fs=SET.tblFontSize||'\\normalsize';
+  const fs=(SET.tblFontSize||'\\normalsize');
   const fw=SET.figWidth||'0.85';
   const nPts=80;
   const flds=['Speed','Torque','Pin','Po','Eff','pf','It'];
@@ -3264,45 +3339,795 @@ document.getElementById('expCmpLatex').addEventListener('click',()=>{
 });
 
 // ═══════════════════════════════════════════════════════════
-//  STATISTICS PAGE — LaTeX Export
+//  STATISTICS PAGE — LaTeX Export  (Summary + Dist + BoxPlot)
 // ═══════════════════════════════════════════════════════════
 document.getElementById('expStsLatex').addEventListener('click',()=>{
   if(!Object.keys(spd).length){toast('Compute statistics first.','err');return;}
   saveSettingsFromUI();
   const ts=latexTs();
   const k=parseFloat($('sk').value)||3;
+  const bins=Math.max(3,Math.min(30,parseInt(document.getElementById('stsBins').value)||8));
+  const distField=document.getElementById('stsField').value;
+  const distFLbl=STS_FLBL[distField]||distField;
   const title=`${texEsc(SET.titlePrefix||'Report')} --- Production Statistics`;
-  const fs=SET.tblFontSize||'\\normalsize';
+  const fs=(SET.tblFontSize||'\\normalsize');
+  const fw=SET.figWidth||'0.85';
+  const nUnits=Object.keys(stsAllD).length;
+  const keys=Object.keys(stsAllD);
+
+  // rebuild full spd so we have .vals arrays
+  const{sd:spdFull,rN}=buildSpd(keys,k);
 
   let body='';
+
+  // ── 1. INTRODUCTION ──────────────────────────────────────
   if(SET.secIntro){
-    const nUnits=Object.keys(stsAllD).length;
-    body+=`\\section{Overview}\n\nProduction statistics computed from ${nUnits} motor unit(s). \\(\\sigma\\)-multiplier $k = ${k}$ used for limit calculations.\n\n`;
+    body+=`\\section{Overview}\n\nProduction statistics computed from \\textbf{${nUnits}} motor unit(s). Production limit multiplier $k = ${k}$ (limits: $\\mu \\pm k\\sigma$). Distribution field: \\textbf{${texEsc(distFLbl)}} (${bins} bins). Regions analysed: ${rN.map(r=>texEsc(r)).join(', ')}.\n\n`;
   }
 
+  // ── 2. SUMMARY STATISTICS ────────────────────────────────
   if(SET.secStats){
     body+=`\\section{Summary Statistics}\n\n`;
-    Object.entries(spd).forEach(([rNm,rD])=>{
-      body+=`\\subsection{Region: ${texEsc(rNm)}}\n\n${fs}\n\\setlength{\\tabcolsep}{4pt}\n\\renewcommand{\\arraystretch}{1.2}\n\\begin{table}[H]\n\\centering\n\\caption{Statistics for region: ${texEsc(rNm)}}\n\\begin{tabular}{>{\\bfseries}l r r r r r r r}\n\\toprule\n\\rowcolor{hdr}\n\\textcolor{hdrtext}{\\textbf{Parameter}} & \\textcolor{hdrtext}{\\textbf{n}} & \\textcolor{hdrtext}{\\textbf{Mean}} & \\textcolor{hdrtext}{\\textbf{$\\sigma$}} & \\textcolor{hdrtext}{\\textbf{Min}} & \\textcolor{hdrtext}{\\textbf{Max}} & \\textcolor{hdrtext}{\\textbf{$-k\\sigma$}} & \\textcolor{hdrtext}{\\textbf{$+k\\sigma$}} \\\\\n\\midrule\n`;
+    body+=`\\noindent Full descriptive statistics per region. \\textbf{Pp} $= \\frac{\\mathrm{Max}-\\mathrm{Min}}{6\\sigma}$ (performance ratio). \\textbf{Ppk} $= \\min\\left(\\frac{\\mathrm{Max}-\\mu}{3\\sigma},\\,\\frac{\\mu-\\mathrm{Min}}{3\\sigma}\\right)$ (one-sided performance). Production limits: $\\mu \\pm k\\sigma$, $k=${k}$.\n\n`;
+    rN.forEach(rNm=>{
+      const rD=spdFull[rNm];if(!rD)return;
+      body+=`\\subsection{Region: ${texEsc(rNm)}}\n\n`;
+      body+=`${fs}\n\\setlength{\\tabcolsep}{4pt}\n\\renewcommand{\\arraystretch}{1.2}\n`;
+      body+=`\\begin{table}[H]\n\\centering\n\\caption{Summary statistics — region: ${texEsc(rNm)} ($n=${nUnits}$, $k=${k}$)}\n`;
+      body+=`\\begin{tabular}{>{\\bfseries}l r r r r r r r r}\n\\toprule\n`;
+      body+=`\\rowcolor{hdr}\n\\textcolor{hdrtext}{\\textbf{Parameter}} & \\textcolor{hdrtext}{\\textbf{n}} & \\textcolor{hdrtext}{\\textbf{Mean}} & \\textcolor{hdrtext}{\\textbf{$\\sigma$}} & \\textcolor{hdrtext}{\\textbf{Min}} & \\textcolor{hdrtext}{\\textbf{Max}} & \\textcolor{hdrtext}{\\textbf{Median}} & \\textcolor{hdrtext}{\\textbf{$-k\\sigma$}} & \\textcolor{hdrtext}{\\textbf{$+k\\sigma$}} \\\\\n\\midrule\n`;
       STS_FLDS.forEach((f,fi)=>{
         const s=rD[f];if(!s||!s.n)return;
-        const cpk=s.std>0?Math.min((s.hi-s.mean)/(3*s.std),(s.mean-s.lo)/(3*s.std)):null;
+        const bs=bxStats(s.vals||[]);
         const rc=fi%2===0?'rowA':'rowB';
-        body+=`\\rowcolor{${rc}} ${texEsc(s.label)} & ${s.n} & ${s.mean.toFixed(4)} & ${s.std.toFixed(4)} & ${s.min.toFixed(4)} & ${s.max.toFixed(4)} & ${s.lo.toFixed(4)} & ${s.hi.toFixed(4)} \\\\\n`;
+        const medStr=bs?bs.med.toFixed(4):'---';
+        body+=`\\rowcolor{${rc}} ${texEsc(s.label)} & ${s.n} & ${s.mean.toFixed(4)} & ${s.std.toFixed(4)} & ${s.min.toFixed(4)} & ${s.max.toFixed(4)} & ${medStr} & ${s.lo.toFixed(4)} & ${s.hi.toFixed(4)} \\\\\n`;
+      });
+      body+=`\\bottomrule\n\\end{tabular}\n\\end{table}\n\n`;
+
+      // Pp/Ppk mini table
+      body+=`${fs}\n\\setlength{\\tabcolsep}{4pt}\n\\renewcommand{\\arraystretch}{1.2}\n`;
+      body+=`\\begin{table}[H]\n\\centering\n\\caption{Process performance (Pp / Ppk) — region: ${texEsc(rNm)}}\n`;
+      body+=`\\begin{tabular}{>{\\bfseries}l r r r r r}\n\\toprule\n`;
+      body+=`\\rowcolor{hdr}\n\\textcolor{hdrtext}{\\textbf{Parameter}} & \\textcolor{hdrtext}{\\textbf{Pp}} & \\textcolor{hdrtext}{\\textbf{Ppk}} & \\textcolor{hdrtext}{\\textbf{IQR}} & \\textcolor{hdrtext}{\\textbf{Outliers}} & \\textcolor{hdrtext}{\\textbf{Assessment}} \\\\\n\\midrule\n`;
+      STS_FLDS.forEach((f,fi)=>{
+        const s=rD[f];if(!s||!s.n)return;
+        const bs=bxStats(s.vals||[]);
+        // Pp = (max-min)/(6σ) — observed range capability
+        const pp=s.std>0?(s.max-s.min)/(6*s.std):null;
+        // Ppk = min((max-μ)/3σ, (μ-min)/3σ)
+        const ppk=s.std>0?Math.min((s.max-s.mean)/(3*s.std),(s.mean-s.min)/(3*s.std)):null;
+        const rc=fi%2===0?'rowA':'rowB';
+        const ppStr=pp!==null?pp.toFixed(3):'---';
+        const ppkStr=ppk!==null?ppk.toFixed(3):'---';
+        const iqrStr=bs?bs.iqr.toFixed(4):'---';
+        const outN=bs?bs.out.length:0;
+        // Assessment based on Ppk
+        const assess=ppk===null?'N/A':ppk>=1.33?'\\textcolor{better}{Capable}':ppk>=1.0?'\\textcolor{accent}{Marginal}':'\\textcolor{worse}{Poor}';
+        body+=`\\rowcolor{${rc}} ${texEsc(s.label)} & ${ppStr} & ${ppkStr} & ${iqrStr} & ${outN} & ${assess} \\\\\n`;
       });
       body+=`\\bottomrule\n\\end{tabular}\n\\end{table}\n\n`;
     });
   }
 
-  if(SET.secNotes){
-    body+=`\\section*{Notes}\n\\noindent Generated by \\textit{Dynamometer Analysis Tool} on \\today. $k = ${k}$, limits: $\\mu \\pm k\\sigma$. Cpk $= \\min\\left(\\frac{USL-\\mu}{3\\sigma}, \\frac{\\mu-LSL}{3\\sigma}\\right)$.\n\n`;
+  // ── 3. DISTRIBUTION ──────────────────────────────────────
+  if(SET.secFigures){
+    body+=`\\section{Distribution Analysis}\n\n`;
+    body+=`\\noindent Histogram of \\textbf{${texEsc(distFLbl)}} across $n=${nUnits}$ motor units per region (${bins} bins). Vertical lines show $\\mu$ (mean) and $\\mu \\pm k\\sigma$ production limits.\n\n`;
+
+    rN.forEach((rNm,ri)=>{
+      const s=spdFull[rNm]?.[distField];
+      if(!s||!s.n||!s.vals||!s.vals.length)return;
+      const vals=s.vals;
+      const mn=s.mean,st=s.std,lo=s.lo,hi=s.hi;
+      const bs=bxStats(vals);
+      const vmin=bs.min,vmax=bs.max,span=vmax-vmin||1e-9;
+      const bw=span/bins;
+      const counts=new Array(bins).fill(0);
+      vals.forEach(v=>{let b=Math.floor((v-vmin)/bw);if(b>=bins)b=bins-1;counts[b]++;});
+      const centres=Array.from({length:bins},(_,i)=>+(vmin+(i+0.5)*bw).toFixed(6));
+      const yMax=Math.max(...counts)*1.2||1;
+      const col=['MidBlue','BurntOrange','ForestGreen','GoldBrown','Purple','DarkRed'][ri%6];
+      const palHex=['005FAA','C04000','2E7000','8A6000','7700BB','AA0033'][ri%6];
+
+      body+=`\\subsection{Distribution: ${texEsc(rNm)}}\n\n`;
+      body+=`\\noindent $n=${vals.length}$,\\; $\\mu = ${mn.toFixed(4)}$,\\; $\\sigma = ${st.toFixed(4)}$,\\; Min $= ${bs.min.toFixed(4)}$,\\; Max $= ${bs.max.toFixed(4)}$,\\; $-${k}\\sigma = ${lo.toFixed(4)}$,\\; $+${k}\\sigma = ${hi.toFixed(4)}$.\n\n`;
+
+      // Histogram table
+      body+=`${fs}\n\\setlength{\\tabcolsep}{4pt}\n\\renewcommand{\\arraystretch}{1.2}\n`;
+      body+=`\\begin{table}[H]\n\\centering\n\\caption{Histogram bin counts — ${texEsc(rNm)}, ${texEsc(distFLbl)}}\n`;
+      body+=`\\begin{tabular}{r r r r}\n\\toprule\n`;
+      body+=`\\rowcolor{hdr}\\textcolor{hdrtext}{\\textbf{Bin Centre}} & \\textcolor{hdrtext}{\\textbf{Count}} & \\textcolor{hdrtext}{\\textbf{Rel.\\,Freq.}} & \\textcolor{hdrtext}{\\textbf{Cumul.}}\\\\\n\\midrule\n`;
+      let cumul=0;
+      centres.forEach((c,ci)=>{
+        cumul+=counts[ci];
+        const rc=ci%2===0?'rowA':'rowB';
+        body+=`\\rowcolor{${rc}} ${c.toFixed(4)} & ${counts[ci]} & ${(counts[ci]/vals.length*100).toFixed(1)}\\% & ${(cumul/vals.length*100).toFixed(1)}\\% \\\\\n`;
+      });
+      body+=`\\bottomrule\n\\end{tabular}\n\\end{table}\n\n`;
+
+      // pgfplots histogram figure
+      body+=`\\begin{figure}[H]\n\\centering\n\\begin{tikzpicture}\n\\begin{axis}[\n`;
+      body+=`  width=${fw}\\linewidth, height=6cm,\n`;
+      body+=`  xlabel={${texEsc(distFLbl)}}, ylabel={Count},\n`;
+      body+=`  xmin=${(vmin-bw*0.7).toFixed(4)}, xmax=${(vmax+bw*0.7).toFixed(4)}, ymin=0, ymax=${yMax.toFixed(2)},\n`;
+      body+=`  grid=both, grid style={line width=0.3pt,draw=gray!25},\n`;
+      body+=`  title={${texEsc(distFLbl)} Distribution --- ${texEsc(rNm)} ($n=${vals.length}$)},\n`;
+      body+=`  title style={color=accent,font=\\bfseries},\n`;
+      body+=`  ybar interval, bar width=${(bw*0.88).toFixed(6)},\n`;
+      body+=`  xtick style={color=gray!50}, ytick style={color=gray!50},\n`;
+      body+=`]\n`;
+      const barPts=centres.map((c,ci)=>`(${c.toFixed(6)},${counts[ci]})`).join('');
+      body+=`\\addplot[fill=${col}!35,draw=${col}!80,line width=0.8pt] coordinates {${barPts}};\n`;
+      // Mean vertical line
+      body+=`\\addplot[color=better,thick,dashed] coordinates {(${mn.toFixed(4)},0)(${mn.toFixed(4)},${yMax.toFixed(2)})};\n`;
+      // ±kσ limits
+      body+=`\\addplot[color=worse,thick,dashed] coordinates {(${lo.toFixed(4)},0)(${lo.toFixed(4)},${yMax.toFixed(2)})};\n`;
+      body+=`\\addplot[color=worse,thick,dashed] coordinates {(${hi.toFixed(4)},0)(${hi.toFixed(4)},${yMax.toFixed(2)})};\n`;
+      body+=`\\legend{Count, Mean $\\mu$, $-${k}\\sigma$, $+${k}\\sigma$}\n`;
+      body+=`\\end{axis}\n\\end{tikzpicture}\n\\caption{${texEsc(distFLbl)} histogram --- region: ${texEsc(rNm)}}\n\\end{figure}\n\n`;
+    });
   }
 
-  const tex=buildLatexDoc(title,body);
+  // ── 4. BOX PLOT ──────────────────────────────────────────
+  if(SET.secRegions){
+    body+=`\\section{Box-and-Whisker Analysis}\n\n`;
+    body+=`\\noindent Five-number summary and box plot statistics for \\textbf{${texEsc(distFLbl)}} across all regions. Box = Q1--Q3; Whiskers = $\\min / \\max$ within $1.5 \\times \\mathrm{IQR}$ fence; $\\diamond$ = Median; $\\times$ = Mean.\n\n`;
+
+    // Collect box stats per region for the selected field
+    const bxLabels=[],bxList=[];
+    rN.forEach(rNm=>{
+      const s=spdFull[rNm]?.[distField];
+      if(!s||!s.n||!s.vals||!s.vals.length)return;
+      const bs=bxStats(s.vals);
+      if(!bs)return;
+      bxLabels.push(rNm);bxList.push({...bs,mean:s.mean,std:s.std,lo:s.lo,hi:s.hi});
+    });
+
+    if(bxLabels.length){
+      // Table
+      body+=`${fs}\n\\setlength{\\tabcolsep}{4pt}\n\\renewcommand{\\arraystretch}{1.2}\n`;
+      body+=`\\begin{table}[H]\n\\centering\n\\caption{Box plot summary — ${texEsc(distFLbl)} — all regions}\n`;
+      body+=`\\begin{tabular}{>{\\bfseries}l r r r r r r r r r r}\n\\toprule\n`;
+      body+=`\\rowcolor{hdr}\n\\textcolor{hdrtext}{\\textbf{Region}} & \\textcolor{hdrtext}{\\textbf{n}} & \\textcolor{hdrtext}{\\textbf{Min}} & \\textcolor{hdrtext}{\\textbf{Q1}} & \\textcolor{hdrtext}{\\textbf{Median}} & \\textcolor{hdrtext}{\\textbf{Mean}} & \\textcolor{hdrtext}{\\textbf{Q3}} & \\textcolor{hdrtext}{\\textbf{Max}} & \\textcolor{hdrtext}{\\textbf{IQR}} & \\textcolor{hdrtext}{\\textbf{$\\sigma$}} & \\textcolor{hdrtext}{\\textbf{Outliers}} \\\\\n\\midrule\n`;
+      bxLabels.forEach((rNm,ri)=>{
+        const b=bxList[ri];
+        const rc=ri%2===0?'rowA':'rowB';
+        body+=`\\rowcolor{${rc}} ${texEsc(rNm)} & ${b.n} & ${b.min.toFixed(4)} & ${b.q1.toFixed(4)} & ${b.med.toFixed(4)} & ${b.mean.toFixed(4)} & ${b.q3.toFixed(4)} & ${b.max.toFixed(4)} & ${b.iqr.toFixed(4)} & ${b.std.toFixed(4)} & ${b.out.length} \\\\\n`;
+      });
+      body+=`\\bottomrule\n\\end{tabular}\n\\end{table}\n\n`;
+
+      // pgfplots box plot figure
+      const allVals=bxList.flatMap(b=>[b.wlo,b.q1,b.med,b.q3,b.whi,...b.out]).filter(v=>!isNaN(v));
+      const allMin=Math.min(...allVals),allMax=Math.max(...allVals);
+      const span2=allMax-allMin||allMax||1;
+      const yLo=Math.floor((allMin-span2*0.1)*1000)/1000;
+      const yHi=Math.ceil((allMax+span2*0.1)*1000)/1000;
+
+      body+=`\\begin{figure}[H]\n\\centering\n\\begin{tikzpicture}\n\\begin{axis}[\n`;
+      body+=`  width=${fw}\\linewidth, height=7cm,\n`;
+      body+=`  xlabel={Region}, ylabel={${texEsc(distFLbl)}},\n`;
+      body+=`  ymin=${yLo}, ymax=${yHi},\n`;
+      body+=`  xtick={${bxLabels.map((_,i)=>i+1).join(',')}},\n`;
+      body+=`  xticklabels={${bxLabels.map(r=>texEsc(r)).join(',')}},\n`;
+      body+=`  xticklabel style={rotate=30,anchor=north east,font=\\small},\n`;
+      body+=`  grid=major, grid style={line width=0.3pt,draw=gray!25},\n`;
+      body+=`  title={Box Plot --- ${texEsc(distFLbl)} --- All Regions},\n`;
+      body+=`  title style={color=accent,font=\\bfseries},\n`;
+      body+=`  boxplot/draw direction=y,\n`;
+      body+=`]\n`;
+      bxLabels.forEach((rNm,ri)=>{
+        const b=bxList[ri];
+        const col=['MidBlue','BurntOrange','ForestGreen','GoldBrown','Purple','DarkRed'][ri%6];
+        body+=`\\addplot+[${col},\n  boxplot prepared={\n`;
+        body+=`    lower whisker=${b.wlo.toFixed(6)},\n`;
+        body+=`    lower quartile=${b.q1.toFixed(6)},\n`;
+        body+=`    median=${b.med.toFixed(6)},\n`;
+        body+=`    upper quartile=${b.q3.toFixed(6)},\n`;
+        body+=`    upper whisker=${b.whi.toFixed(6)},\n`;
+        body+=`    sample size=${b.n}\n`;
+        body+=`  },\n] coordinates {\n`;
+        if(b.out.length)body+=b.out.map(v=>`  (${ri+1},${v.toFixed(6)})`).join('\n')+'\n';
+        body+=`};\n`;
+        // mean mark
+        body+=`\\addplot[only marks,mark=x,mark size=3pt,${col},thick] coordinates {(${ri+1},${b.mean.toFixed(6)})};\n`;
+      });
+      body+=`\\end{axis}\n\\end{tikzpicture}\n\\caption{Box-and-Whisker plot --- ${texEsc(distFLbl)} across all regions}\n\\end{figure}\n\n`;
+
+      // Whisker detail table (wlo, whi, ±kσ, Ppk)
+      body+=`${fs}\n\\setlength{\\tabcolsep}{4pt}\n\\renewcommand{\\arraystretch}{1.2}\n`;
+      body+=`\\begin{table}[H]\n\\centering\n\\caption{Whisker limits, production limits and Ppk — ${texEsc(distFLbl)}}\n`;
+      body+=`\\begin{tabular}{>{\\bfseries}l r r r r r r}\n\\toprule\n`;
+      body+=`\\rowcolor{hdr}\n\\textcolor{hdrtext}{\\textbf{Region}} & \\textcolor{hdrtext}{\\textbf{Whisker Lo}} & \\textcolor{hdrtext}{\\textbf{Whisker Hi}} & \\textcolor{hdrtext}{\\textbf{$-k\\sigma$}} & \\textcolor{hdrtext}{\\textbf{$+k\\sigma$}} & \\textcolor{hdrtext}{\\textbf{Pp}} & \\textcolor{hdrtext}{\\textbf{Ppk}} \\\\\n\\midrule\n`;
+      bxLabels.forEach((rNm,ri)=>{
+        const b=bxList[ri];
+        const pp=b.std>0?(b.max-b.min)/(6*b.std):null;
+        const ppk=b.std>0?Math.min((b.max-b.mean)/(3*b.std),(b.mean-b.min)/(3*b.std)):null;
+        const rc=ri%2===0?'rowA':'rowB';
+        const ppStr=pp!==null?pp.toFixed(3):'---';
+        const ppkStr=ppk!==null?ppk.toFixed(3):'---';
+        body+=`\\rowcolor{${rc}} ${texEsc(rNm)} & ${b.wlo.toFixed(4)} & ${b.whi.toFixed(4)} & ${b.lo.toFixed(4)} & ${b.hi.toFixed(4)} & ${ppStr} & ${ppkStr} \\\\\n`;
+      });
+      body+=`\\bottomrule\n\\end{tabular}\n\\end{table}\n\n`;
+
+      // Per-field full box stats (all fields, all regions)
+      body+=`\\subsection{Per-Parameter Box Statistics — All Fields}\n\n`;
+      STS_FLDS.forEach(f=>{
+        const fLblF=STS_FLBL[f]||f;
+        const bxL2=[],bxD2=[];
+        rN.forEach(rNm=>{
+          const s=spdFull[rNm]?.[f];
+          if(!s||!s.n||!s.vals||!s.vals.length)return;
+          const bs=bxStats(s.vals);if(!bs)return;
+          bxL2.push(rNm);bxD2.push({...bs,mean:s.mean,std:s.std,lo:s.lo,hi:s.hi});
+        });
+        if(!bxL2.length)return;
+        body+=`${fs}\n\\setlength{\\tabcolsep}{3pt}\n\\renewcommand{\\arraystretch}{1.15}\n`;
+        body+=`\\begin{table}[H]\n\\centering\n\\caption{Box statistics — ${texEsc(fLblF)}}\n`;
+        body+=`\\begin{tabular}{>{\\bfseries}l r r r r r r r r r}\n\\toprule\n`;
+        body+=`\\rowcolor{hdr}\n\\textcolor{hdrtext}{\\textbf{Region}} & \\textcolor{hdrtext}{\\textbf{n}} & \\textcolor{hdrtext}{\\textbf{Q1}} & \\textcolor{hdrtext}{\\textbf{Median}} & \\textcolor{hdrtext}{\\textbf{Q3}} & \\textcolor{hdrtext}{\\textbf{Mean}} & \\textcolor{hdrtext}{\\textbf{IQR}} & \\textcolor{hdrtext}{\\textbf{Wlo}} & \\textcolor{hdrtext}{\\textbf{Whi}} & \\textcolor{hdrtext}{\\textbf{Out}} \\\\\n\\midrule\n`;
+        bxL2.forEach((rNm,ri)=>{
+          const b=bxD2[ri];
+          const rc=ri%2===0?'rowA':'rowB';
+          body+=`\\rowcolor{${rc}} ${texEsc(rNm)} & ${b.n} & ${b.q1.toFixed(4)} & ${b.med.toFixed(4)} & ${b.q3.toFixed(4)} & ${b.mean.toFixed(4)} & ${b.iqr.toFixed(4)} & ${b.wlo.toFixed(4)} & ${b.whi.toFixed(4)} & ${b.out.length} \\\\\n`;
+        });
+        body+=`\\bottomrule\n\\end{tabular}\n\\end{table}\n\n`;
+      });
+    }
+  }
+
+  // ── 5. APPENDIX — raw per-unit values ────────────────────
+  if(SET.secAppendix){
+    body+=`\\appendix\n\\section{Raw Per-Unit Data}\n\n`;
+    body+=`\\noindent Individual motor unit values per region and parameter (n = ${nUnits} units).\n\n`;
+    rN.forEach(rNm=>{
+      body+=`\\subsection{Region: ${texEsc(rNm)}}\n\n`;
+      const validFlds=STS_FLDS.filter(f=>{const s=spdFull[rNm]?.[f];return s&&s.n>0&&s.vals&&s.vals.length;});
+      if(!validFlds.length)return;
+      body+=`${fs}\n\\setlength{\\tabcolsep}{3pt}\n\\renewcommand{\\arraystretch}{1.1}\n`;
+      body+=`\\begin{longtable}{r ${validFlds.map(()=>'r').join(' ')}}\n\\toprule\n`;
+      body+=`\\rowcolor{hdr}\n\\textcolor{hdrtext}{\\textbf{Unit}} ${validFlds.map(f=>`& \\textcolor{hdrtext}{\\textbf{${texEsc(STS_FLBL[f]||f)}}}`).join(' ')} \\\\\n\\midrule\n\\endfirsthead\n`;
+      body+=`\\rowcolor{hdr}\\textcolor{hdrtext}{\\textbf{Unit}} ${validFlds.map(f=>`& \\textcolor{hdrtext}{${texEsc(STS_FLBL[f]||f)}}`).join(' ')} \\\\\n\\midrule\n\\endhead\n\\bottomrule\n\\endfoot\n`;
+      const maxN=Math.max(...validFlds.map(f=>spdFull[rNm][f].vals.length));
+      for(let i=0;i<maxN;i++){
+        const rc=i%2===0?'rowA':'rowB';
+        body+=`\\rowcolor{${rc}} ${i+1} `;
+        validFlds.forEach(f=>{const v=spdFull[rNm][f].vals[i];body+=` & ${v!==undefined?v.toFixed(4):'---'}`;});
+        body+=` \\\\\n`;
+      }
+      body+=`\\end{longtable}\n\n`;
+    });
+  }
+
+  // ── 5b. AVERAGE MOTOR CURVE ────────────────────────────
+  if(SET.secAvgCurve && keys.length>=2){
+    const acKeys=keys;
+    const acSMin=Math.max(...acKeys.map(k=>Math.min(...stsAllD[k].speed)));
+    const acSMax=Math.min(...acKeys.map(k=>Math.max(...stsAllD[k].speed)));
+    if(acSMin<acSMax){
+      const nPts=60;
+      const acSpd=Array.from({length:nPts},(_,i)=>acSMin+(acSMax-acSMin)*i/(nPts-1));
+      const acIpKeys=['Torque','Pin','Pout','eff','PF','It'];
+      const acLbl={'Torque':'Torque (N\\cdot m)','Pin':'Pin (W)','Pout':'Pout (W)','eff':'Eff (\\%)','PF':'PF','It':'I_t (A)'};
+      const acGridded={};
+      acIpKeys.forEach(ik=>{
+        const mat=acKeys.map(kk=>{
+          const d=stsAllD[kk];
+          const arr=d.ip[ik]||d.ip[ik.charAt(0).toLowerCase()+ik.slice(1)]||[];
+          return acSpd.map(s=>li(d.speed,arr,s));
+        });
+        acGridded[ik]={
+          mean:acSpd.map((_,i)=>avg(mat.map(r=>r[i]))),
+          std:acSpd.map((_,i)=>sdv(mat.map(r=>r[i])))
+        };
+      });
+      body+=`\\section{Average Motor Curve}\n\n`;
+      body+=`\\noindent Average performance curve computed from $n = ${acKeys.length}$ motor units. Shaded band shows $\\mu \\pm \\sigma$ spread.\n\n`;
+      // Build pgfplots figure
+      body+=`\\begin{figure}[H]\n\\centering\n\\begin{tikzpicture}\n\\begin{axis}[\n`;
+      body+=`  width=${fw}\\linewidth, height=8cm,\n`;
+      body+=`  xlabel={Speed (RPM)}, ylabel={Value},\n`;
+      body+=`  xmin=${acSpd[0].toFixed(1)}, xmax=${acSpd[nPts-1].toFixed(1)},\n`;
+      body+=`  grid=both, grid style={line width=0.3pt,draw=gray!25},\n`;
+      body+=`  title={Average Motor Curve --- $n = ${acKeys.length}$ units --- Shaded band $= \\mu \\pm \\sigma$},\n`;
+      body+=`  title style={color=accent,font=\\bfseries},\n`;
+      body+=`  legend pos=outer north east, legend style={font=\\footnotesize},\n`;
+      body+=`]\n`;
+      const acCols=['MidBlue','BurntOrange','ForestGreen','GoldBrown'];
+      const acPlotKeys=['Torque','eff','Pin','Pout'];
+      acPlotKeys.forEach((ik,ci)=>{
+        if(!acGridded[ik])return;
+        const col=acCols[ci%acCols.length];
+        const mn=acGridded[ik].mean, st=acGridded[ik].std;
+        // band (addplot fill between needs two addplots, use fill=between approach)
+        const bandPts=acSpd.map((s,i)=>`(${s.toFixed(2)},${(mn[i]-st[i]).toFixed(4)})`).join('');
+        const bandHiPts=acSpd.map((s,i)=>`(${s.toFixed(2)},${(mn[i]+st[i]).toFixed(4)})`).join('');
+        const meanPts=acSpd.map((s,i)=>`(${s.toFixed(2)},${mn[i].toFixed(4)})`).join('');
+        // sigma band as fill between lo and hi
+        body+=`\\addplot[${col}!20,fill=${col}!15,draw=none,name path=lo${ci}] coordinates {${bandPts}};\n`;
+        body+=`\\addplot[${col}!20,fill=${col}!15,draw=none,name path=hi${ci}] coordinates {${bandHiPts}};\n`;
+        body+=`\\addplot[fill=${col}!12,draw=none] fill between[of=lo${ci} and hi${ci}];\n`;
+        body+=`\\addplot[${col},line width=1.4pt] coordinates {${meanPts}};\n`;
+        body+=`\\addlegendentry{Avg ${texEsc(acLbl[ik]||ik)}};\n`;
+      });
+      body+=`\\end{axis}\n\\end{tikzpicture}\n\\caption{Production average motor curve ($n=${acKeys.length}$ units)}\n\\end{figure}\n\n`;
+      // Speed range summary table
+      body+=`${fs}\n\\setlength{\\tabcolsep}{4pt}\n\\renewcommand{\\arraystretch}{1.2}\n`;
+      body+=`\\begin{table}[H]\n\\centering\n\\caption{Average motor performance at selected speeds}\n`;
+      body+=`\\begin{tabular}{r r r r r r r}\n\\toprule\n`;
+      body+=`\\rowcolor{hdr}\n\\textcolor{hdrtext}{\\textbf{Speed}} & \\textcolor{hdrtext}{\\textbf{Torque}} & \\textcolor{hdrtext}{\\textbf{Pin (W)}} & \\textcolor{hdrtext}{\\textbf{Pout (W)}} & \\textcolor{hdrtext}{\\textbf{Eff (\\%)}} & \\textcolor{hdrtext}{\\textbf{PF}} & \\textcolor{hdrtext}{\\textbf{It (A)}} \\\\\n\\midrule\n`;
+      const tableIdxs=[0,Math.floor(nPts*0.1),Math.floor(nPts*0.2),Math.floor(nPts*0.3),Math.floor(nPts*0.4),
+        Math.floor(nPts*0.5),Math.floor(nPts*0.6),Math.floor(nPts*0.7),Math.floor(nPts*0.8),Math.floor(nPts*0.9),nPts-1];
+      tableIdxs.forEach((ii,tii)=>{
+        const rc=tii%2===0?'rowA':'rowB';
+        const T=acGridded.Torque.mean[ii]||0, Pi=acGridded.Pin.mean[ii]||0;
+        const Po=acGridded.Pout.mean[ii]||0, ef=acGridded.eff.mean[ii]||0;
+        const pf=acGridded.PF.mean[ii]||0, it=acGridded.It.mean[ii]||0;
+        body+=`\\rowcolor{${rc}} ${acSpd[ii].toFixed(0)} & ${T.toFixed(3)} & ${Pi.toFixed(1)} & ${Po.toFixed(1)} & ${ef.toFixed(2)} & ${pf.toFixed(4)} & ${it.toFixed(3)} \\\\\n`;
+      });
+      body+=`\\bottomrule\n\\end{tabular}\n\\end{table}\n\n`;
+    }
+  }
+
+  // ── 6. NOTES ─────────────────────────────────────────────
+  if(SET.secNotes){
+    body+=`\\section*{Notes}\n\\noindent Generated by \\textit{Dynamometer Analysis Tool} on \\today. $n = ${nUnits}$ motor units. $k = ${k}$; production limits: $\\mu \\pm k\\sigma$. Distribution field: ${texEsc(distFLbl)}. \\textbf{Pp} $= (\\mathrm{Max}-\\mathrm{Min})/(6\\sigma)$; \\textbf{Ppk} $= \\min\\left(\\frac{\\mathrm{Max}-\\mu}{3\\sigma},\\,\\frac{\\mu-\\mathrm{Min}}{3\\sigma}\\right)$ (observed data bounds used as natural tolerance). Box-plot whiskers at $1.5 \\times \\mathrm{IQR}$ fence.\n\n`;
+  }
+
+  // colour defines needed for box plots
+  const extraPreamble='\\definecolor{Purple}{HTML}{7700BB}\n\\definecolor{DarkRed}{HTML}{AA0033}\n\\definecolor{GoldBrown}{HTML}{8A6000}\n\\definecolor{ForestGreen}{HTML}{2E7000}\n\\definecolor{BurntOrange}{HTML}{C04000}\n\\definecolor{MidBlue}{HTML}{005FAA}\n';
+
+  const tex=buildLatexDoc(title,body,extraPreamble);
   const blob=new Blob([tex],{type:'text/plain'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`Statistics_${ts}.tex`;a.click();
   toast('Statistics LaTeX exported!','ok');log('=== Stats LaTeX downloaded ===','ok');
 });
+
+// ══════════════════════════════════════════════════════════════════
+//  STATS COMPARE — state, tab switching, file load, render, export
+// ══════════════════════════════════════════════════════════════════
+let scPrevData=[];      // array of loaded snapshot objects {label, data}
+let scCurTab='overlay'; // overlay | stats | box
+let scChart=null;       // Chart.js instance for overlay chart
+
+function switchSCTab(t){
+  scCurTab=t;
+  ['overlay','stats','box'].forEach(id=>{
+    const btn=document.getElementById('sctab-'+id);
+    if(btn)btn.classList.toggle('active',id===t);
+  });
+  renderSCView();
+}
+
+// ─── File drop / open ────────────────────────────────────────────
+const scDz=document.getElementById('sc-dz');
+const scFi=document.getElementById('sc-fi');
+scDz.addEventListener('click',()=>scFi.click());
+scDz.addEventListener('dragover',e=>{e.preventDefault();scDz.style.borderColor='var(--accent)';});
+scDz.addEventListener('dragleave',()=>{scDz.style.borderColor='';});
+scDz.addEventListener('drop',e=>{
+  e.preventDefault();scDz.style.borderColor='';
+  loadSCFiles([...e.dataTransfer.files]);
+});
+scFi.addEventListener('change',()=>{loadSCFiles([...scFi.files]);scFi.value='';});
+
+async function loadSCFiles(files){
+  for(const f of files){
+    if(!f.name.endsWith('.json')){toast('Only .json snapshots supported','err');continue;}
+    try{
+      const text=await f.text();
+      const data=JSON.parse(text);
+      if(!data.version||!data.regions){toast(`${f.name}: not a valid stats snapshot`,'err');continue;}
+      data.label=data.label||f.name.replace(/\.json$/,'');
+      scPrevData.push({label:data.label,data});
+      toast(`Loaded: ${data.label}`,'ok');
+      log(`Stats Compare: loaded ${data.label}`,'ok');
+    }catch(e){toast(`Failed to parse ${f.name}`,'err');}
+  }
+  renderSCLoadedList();
+}
+
+function renderSCLoadedList(){
+  const el=document.getElementById('sc-loaded-list');
+  if(!el)return;
+  el.innerHTML='';
+  scPrevData.forEach((entry,i)=>{
+    const tag=document.createElement('span');
+    tag.style.cssText='display:inline-flex;align-items:center;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:2px 8px;font-family:var(--mono);font-size:.61rem;color:var(--accent);';
+    tag.innerHTML=`${entry.label} <button onclick="removeSCEntry(${i})" style="background:none;border:none;color:var(--err);cursor:pointer;font-size:.7rem;padding:0;">✕</button>`;
+    el.appendChild(tag);
+  });
+}
+function removeSCEntry(i){scPrevData.splice(i,1);renderSCLoadedList();}
+
+document.getElementById('sc-clear').addEventListener('click',()=>{
+  scPrevData=[];renderSCLoadedList();
+  document.getElementById('scContent').innerHTML='<div class="ec" style="position:relative;padding:60px 20px;"><div class="eci">⊠⊟</div><p style="font-family:var(--mono);font-size:.7rem;text-align:center;">Previous snapshots cleared. Load new ones or click Compare.</p></div>';
+  toast('Previous stats cleared');
+});
+
+document.getElementById('sc-run').addEventListener('click',renderSCView);
+
+// ─── Build current-session snapshot on the fly ──────────────────
+function buildCurrentSnapshot(){
+  const keys=Object.keys(stsAllD);
+  if(!keys.length||!Object.keys(spd).length)return null;
+  const k=parseFloat($('sk').value)||3;
+  const snap={version:1,exported:new Date().toISOString(),label:'Current Session',k,nUnits:keys.length,regions:{},avgCurve:null};
+  const{sd:spdFull}=buildSpd(keys,k);
+  Object.entries(spdFull).forEach(([rNm,rD])=>{
+    snap.regions[rNm]={};
+    STS_FLDS.forEach(f=>{
+      const s=rD[f];if(!s||!s.n)return;
+      const bs=bxStats(s.vals||[]);
+      snap.regions[rNm][f]={label:s.label,n:s.n,mean:s.mean,std:s.std,min:s.min,max:s.max,
+        lo:s.lo,hi:s.hi,q1:bs?bs.q1:null,med:bs?bs.med:null,q3:bs?bs.q3:null,
+        iqr:bs?bs.iqr:null,outliers:bs?bs.out:[]};
+    });
+  });
+  if(keys.length>=2){
+    try{
+      const acSMin=Math.max(...keys.map(kk=>Math.min(...stsAllD[kk].speed)));
+      const acSMax=Math.min(...keys.map(kk=>Math.max(...stsAllD[kk].speed)));
+      if(acSMin<acSMax){
+        const nPts=60;
+        const acSpd=Array.from({length:nPts},(_,i)=>acSMin+(acSMax-acSMin)*i/(nPts-1));
+        const acIpKeys=['Torque','Pin','Pout','eff','PF','It'];
+        const acG={};
+        acIpKeys.forEach(ik=>{
+          const mat=keys.map(kk=>{
+            const d=stsAllD[kk];
+            const arr=d.ip[ik]||d.ip[ik.charAt(0).toLowerCase()+ik.slice(1)]||[];
+            return acSpd.map(s=>li(d.speed,arr,s));
+          });
+          acG[ik]={mean:acSpd.map((_,i2)=>avg(mat.map(r=>r[i2]))),std:acSpd.map((_,i2)=>sdv(mat.map(r=>r[i2])))};
+        });
+        snap.avgCurve={speed:acSpd,gridded:acG};
+      }
+    }catch(e){}
+  }
+  return snap;
+}
+
+// ─── Main render dispatcher ─────────────────────────────────────
+function renderSCView(){
+  const curSnap=buildCurrentSnapshot();
+  const allSnaps=[...scPrevData.map(e=>({label:e.label,data:e.data}))];
+  if(curSnap)allSnaps.unshift({label:'Current Session',data:curSnap});
+  if(allSnaps.length===0){
+    document.getElementById('scContent').innerHTML='<div class="ec" style="position:relative;padding:60px 20px;"><div class="eci">⊠⊟</div><p style="font-family:var(--mono);font-size:.7rem;text-align:center;">Compute statistics first, then click Compare.</p></div>';
+    return;
+  }
+  if(scCurTab==='overlay')renderSCOverlay(allSnaps);
+  else if(scCurTab==='stats')renderSCStats(allSnaps);
+  else if(scCurTab==='box')renderSCBox(allSnaps);
+}
+
+// ─── Color palette ───────────────────────────────────────────────
+const SC_COLS=['#005faa','#c04000','#2e7000','#8a6000','#7700bb','#aa0033'];
+const SC_COL_RGBA=(i,a=1)=>{const h=SC_COLS[i%SC_COLS.length];const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return `rgba(${r},${g},${b},${a})`;};
+
+// ─── Overlay: avg curve comparison ──────────────────────────────
+function renderSCOverlay(allSnaps){
+  const cont=document.getElementById('scContent');
+  const field=document.getElementById('scField').value;
+  const fLbl=STS_FLBL[field]||field;
+  // Filter to snaps that have avgCurve
+  const acSnaps=allSnaps.filter(s=>s.data.avgCurve&&s.data.avgCurve.speed);
+  if(acSnaps.length===0){
+    cont.innerHTML=`<div style="padding:20px;font-family:${STS_MONO};font-size:.7rem;color:var(--dim);">No average curve data available. Export Statistics first (includes avg curve), then load the JSON snapshot.</div>`;
+    return;
+  }
+  // Map field to ipKey
+  const fieldToIpKey={Speed:null,Torque:'Torque',Pin:'Pin',Po:'Pout',Eff:'eff',pf:'PF',It:'It'};
+  const ipKey=fieldToIpKey[field];
+  if(!ipKey){
+    cont.innerHTML=`<div style="padding:20px;font-family:${STS_MONO};font-size:.7rem;color:var(--dim);">Avg curve comparison not available for ${fLbl}. Choose Torque, Pin, Pout, Eff, PF, or It.</div>`;
+    return;
+  }
+  cont.innerHTML='';
+  // Chart wrapper
+  const wrap=document.createElement('div');
+  wrap.style.cssText='background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:10px;margin-bottom:12px;';
+  const hdr=document.createElement('div');
+  hdr.style.cssText='font-family:var(--mono);font-size:.67rem;color:var(--dim);padding:4px 0 10px;display:flex;justify-content:space-between;align-items:center;';
+  hdr.innerHTML=`<span>📈 AVG CURVE OVERLAY — ${fLbl} — ${acSnaps.length} session(s)</span><button id="sc-savepng" class="btn bgh" style="padding:2px 8px;font-size:.59rem;">📷 Save PNG</button>`;
+  wrap.appendChild(hdr);
+  const cc=document.createElement('div');cc.style.cssText='position:relative;height:350px;';
+  const canvas=document.createElement('canvas');canvas.id='scOverlayCanvas';
+  cc.appendChild(canvas);wrap.appendChild(cc);cont.appendChild(wrap);
+  const datasets=[];
+  acSnaps.forEach((snap,si)=>{
+    const ac=snap.data.avgCurve;
+    const g=ac.gridded[ipKey];
+    if(!g)return;
+    const col=SC_COLS[si%SC_COLS.length];
+    const rba=SC_COL_RGBA(si,.12);
+    datasets.push({
+      label:`${snap.label} -σ`,yAxisID:'y0',borderColor:'transparent',backgroundColor:rba,fill:'+1',
+      pointRadius:0,tension:.4,data:ac.speed.map((s,i)=>({x:s,y:g.mean[i]-g.std[i]}))
+    });
+    datasets.push({
+      label:`${snap.label} (avg)`,yAxisID:'y0',borderColor:col,borderWidth:2.2,fill:false,
+      pointRadius:0,tension:.4,data:ac.speed.map((s,i)=>({x:s,y:g.mean[i]}))
+    });
+    datasets.push({
+      label:`${snap.label} +σ`,yAxisID:'y0',borderColor:'transparent',backgroundColor:rba,fill:'-1',
+      pointRadius:0,tension:.4,data:ac.speed.map((s,i)=>({x:s,y:g.mean[i]+g.std[i]}))
+    });
+  });
+  if(scChart){try{scChart.destroy();}catch(e){}}
+  scChart=new Chart(canvas.getContext('2d'),{
+    type:'line',data:{datasets},
+    options:{responsive:true,maintainAspectRatio:false,animation:{duration:0},
+      interaction:{mode:'nearest',axis:'x',intersect:false},
+      plugins:{
+        legend:{labels:{color:'#5a6890',font:{family:STS_MONO,size:9},boxWidth:12,padding:6,
+          filter:i=>!(i.text.endsWith('-σ')||i.text.endsWith('+σ'))}},
+        title:{display:true,text:`Avg Motor Curve Comparison — ${fLbl}`,color:'#1a2040',font:{family:STS_MONO,size:12,weight:'bold'}}
+      },
+      scales:{
+        x:{type:'linear',title:{display:true,text:'Speed (RPM)',color:'#5a6890',font:{family:STS_MONO,size:9}},
+          ticks:{color:'#5a6890',font:{family:STS_MONO,size:8}},grid:{color:'rgba(100,120,180,.15)'}},
+        y0:{type:'linear',position:'left',title:{display:true,text:fLbl,color:'#1a2040',font:{family:STS_MONO,size:9}},
+          ticks:{color:'#1a2040',font:{family:STS_MONO,size:8}},grid:{color:'rgba(100,120,180,.12)'}}
+      }
+    }
+  });
+  // PNG save
+  document.getElementById('sc-savepng').addEventListener('click',()=>{
+    const oc=document.createElement('canvas');oc.width=canvas.width;oc.height=canvas.height;
+    const octx=oc.getContext('2d');octx.fillStyle='#fff';octx.fillRect(0,0,oc.width,oc.height);octx.drawImage(canvas,0,0);
+    const a=document.createElement('a');a.href=oc.toDataURL('image/png');a.download=`SC_Overlay_${fLbl.replace(/[^a-z0-9]/gi,'_')}.png`;a.click();
+  });
+  // Speed comparison table
+  _renderSCOverlayTable(cont,acSnaps,ipKey,fLbl);
+}
+
+function _renderSCOverlayTable(cont,acSnaps,ipKey,fLbl){
+  const tbl=document.createElement('div');
+  tbl.style.cssText='background:var(--surface);border:1px solid var(--border);border-radius:7px;overflow:hidden;';
+  const hdr=document.createElement('div');hdr.className='rh';hdr.textContent=`⊠ ${fLbl} — Mean ± σ at key speeds`;
+  tbl.appendChild(hdr);
+  const tw=document.createElement('div');tw.className='tw';
+  // Build table: columns = sessions, rows = speeds
+  const sampleSpeeds=acSnaps[0].data.avgCurve.speed.filter((_,i)=>i%6===0||i===acSnaps[0].data.avgCurve.speed.length-1);
+  let html=`<table><thead><tr><th>Speed</th>${acSnaps.map((s,i)=>`<th style="color:${SC_COLS[i%SC_COLS.length]}">${s.label}</th>`).join('')}</tr></thead><tbody>`;
+  sampleSpeeds.forEach((spd2,ri)=>{
+    html+=`<tr class="${ri%2===0?'':'odd'}"><td>${spd2.toFixed(0)} RPM</td>`;
+    acSnaps.forEach((snap,si)=>{
+      const ac=snap.data.avgCurve;
+      const g=ac.gridded[ipKey];
+      // find nearest index
+      const idx2=ac.speed.reduce((best,s2,i)=>Math.abs(s2-spd2)<Math.abs(ac.speed[best]-spd2)?i:best,0);
+      const m=g?g.mean[idx2]:null, sd2=g?g.std[idx2]:null;
+      const colSt=`color:${SC_COLS[si%SC_COLS.length]}`;
+      html+=m!==null?`<td style="${colSt}">${m.toFixed(3)} <span style="color:var(--dim);font-size:.75em">±${sd2.toFixed(3)}</span></td>`:`<td>—</td>`;
+    });
+    html+=`</tr>`;
+  });
+  html+=`</tbody></table>`;
+  tw.innerHTML=html;tbl.appendChild(tw);cont.appendChild(tbl);
+}
+
+// ─── Stats Table comparison ──────────────────────────────────────
+function renderSCStats(allSnaps){
+  const cont=document.getElementById('scContent');
+  cont.innerHTML='';
+  const field=document.getElementById('scField').value;
+  // Get all regions across all snaps
+  const allRegions=[];
+  allSnaps.forEach(s=>{Object.keys(s.data.regions).forEach(r=>{if(!allRegions.includes(r))allRegions.push(r);});});
+  allRegions.forEach(rNm=>{
+    const card=document.createElement('div');
+    card.style.cssText='background:var(--surface);border:1px solid var(--border);border-radius:7px;margin-bottom:12px;overflow:hidden;';
+    const hdr=document.createElement('div');hdr.className='rh';hdr.textContent=`⊠ REGION: ${rNm}`;
+    card.appendChild(hdr);
+    const tw=document.createElement('div');tw.className='tw';
+    let html=`<table><thead><tr><th>Parameter</th><th>Stat</th>`;
+    allSnaps.forEach((s,i)=>`<th style="color:${SC_COLS[i%SC_COLS.length]}">${s.label}</th>`).forEach(h=>{html+=h;});
+    html+=`</tr></thead><tbody>`;
+    STS_FLDS.forEach((f,fi)=>{
+      // Check if any snap has this field
+      const hasAny=allSnaps.some(s=>s.data.regions[rNm]&&s.data.regions[rNm][f]);
+      if(!hasAny)return;
+      const lbl=STS_FLBL[f]||f;
+      const rowBase=fi%2===0?'':'odd';
+      ['mean','std','min','max','med','q1','q3'].forEach((stat,si2)=>{
+        const statLbl={mean:'Mean',std:'σ',min:'Min',max:'Max',med:'Median',q1:'Q1',q3:'Q3'}[stat];
+        html+=`<tr class="${rowBase}"><td${si2===0?` rowspan="7" style="font-weight:600;color:var(--accent);"`:''}>`;
+        if(si2===0)html+=lbl;
+        html+=`</td><td style="font-family:var(--mono);font-size:.65rem;color:var(--dim);">${statLbl}</td>`;
+        allSnaps.forEach((s,sni)=>{
+          const fld=s.data.regions[rNm]?.[f];
+          const val=fld?.[stat];
+          const colSt=`color:${SC_COLS[sni%SC_COLS.length]}`;
+          html+=val!=null?`<td style="${colSt}">${val.toFixed(4)}</td>`:`<td style="color:var(--dim)">—</td>`;
+        });
+        html+=`</tr>`;
+      });
+    });
+    html+=`</tbody></table>`;
+    tw.innerHTML=html;card.appendChild(tw);cont.appendChild(card);
+  });
+}
+
+// ─── Box compare ────────────────────────────────────────────────
+function renderSCBox(allSnaps){
+  const cont=document.getElementById('scContent');
+  cont.innerHTML='';
+  const field=document.getElementById('scField').value;
+  const fLbl=STS_FLBL[field]||field;
+  const allRegions=[];
+  allSnaps.forEach(s=>{Object.keys(s.data.regions).forEach(r=>{if(!allRegions.includes(r))allRegions.push(r);});});
+  allRegions.forEach(rNm=>{
+    const card=document.createElement('div');
+    card.style.cssText='background:var(--surface);border:1px solid var(--border);border-radius:7px;margin-bottom:12px;overflow:hidden;';
+    const hdr=document.createElement('div');hdr.className='rh';hdr.textContent=`⊟ REGION: ${rNm} — ${fLbl}`;
+    card.appendChild(hdr);
+    const tw=document.createElement('div');tw.className='tw';
+    let html=`<table><thead><tr><th>Session</th><th>n</th><th>Min</th><th>Q1</th><th>Median</th><th>Mean</th><th>Q3</th><th>Max</th><th>σ</th><th>IQR</th></tr></thead><tbody>`;
+    allSnaps.forEach((s,si)=>{
+      const fd=s.data.regions[rNm]?.[field];
+      if(!fd){html+=`<tr><td colspan="10" style="color:var(--dim)">${s.label} — no data</td></tr>`;return;}
+      const colSt=`color:${SC_COLS[si%SC_COLS.length]};font-weight:600;`;
+      const v=(n,dp=3)=>n!=null?n.toFixed(dp):'—';
+      html+=`<tr><td style="${colSt}">${s.label}</td><td>${fd.n}</td>
+        <td>${v(fd.min)}</td><td>${v(fd.q1)}</td><td>${v(fd.med)}</td>
+        <td style="font-weight:600">${v(fd.mean)}</td>
+        <td>${v(fd.q3)}</td><td>${v(fd.max)}</td><td>${v(fd.std)}</td><td>${v(fd.iqr)}</td></tr>`;
+    });
+    html+=`</tbody></table>`;
+    tw.innerHTML=html;card.appendChild(tw);cont.appendChild(card);
+  });
+}
+
+// ─── XLSX export ─────────────────────────────────────────────────
+document.getElementById('sc-expXlsx').addEventListener('click',()=>{
+  const curSnap=buildCurrentSnapshot();
+  const allSnaps=[...scPrevData.map(e=>({label:e.label,data:e.data}))];
+  if(curSnap)allSnaps.unshift({label:'Current Session',data:curSnap});
+  if(allSnaps.length===0){toast('No data to export','err');return;}
+  const ts=latexTs();
+  const wb=XLSX.utils.book_new();
+  // Sheet 1: stats comparison per region
+  const allRegions=[];
+  allSnaps.forEach(s=>{Object.keys(s.data.regions).forEach(r=>{if(!allRegions.includes(r))allRegions.push(r);});});
+  const rows=[['Region','Field','Stat',...allSnaps.map(s=>s.label)]];
+  allRegions.forEach(rNm=>{
+    STS_FLDS.forEach(f=>{
+      const lbl=STS_FLBL[f]||f;
+      ['mean','std','min','max','med','q1','q3','iqr'].forEach(stat=>{
+        rows.push([rNm,lbl,stat,...allSnaps.map(s=>{const fd=s.data.regions[rNm]?.[f];return fd&&fd[stat]!=null?+fd[stat].toFixed(4):'';})]);
+      });
+    });
+  });
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'Stats_Compare');
+  // Sheet 2: avg curve comparison
+  const acSnaps=allSnaps.filter(s=>s.data.avgCurve);
+  if(acSnaps.length){
+    const ipKeys=['Torque','Pin','Pout','eff','PF','It'];
+    const maxLen=Math.max(...acSnaps.map(s=>s.data.avgCurve.speed.length));
+    const acHdr=['Speed',...acSnaps.flatMap(s=>ipKeys.map(ik=>`${s.label}_${ik}_avg`)),...acSnaps.flatMap(s=>ipKeys.map(ik=>`${s.label}_${ik}_std`))];
+    const acRows=[acHdr];
+    for(let i=0;i<maxLen;i++){
+      const spd2=acSnaps[0].data.avgCurve.speed[i];
+      acRows.push([+spd2.toFixed(1),...acSnaps.flatMap(s=>ipKeys.map(ik=>s.data.avgCurve.gridded[ik]?.mean[i]!=null?+s.data.avgCurve.gridded[ik].mean[i].toFixed(4):'')),...acSnaps.flatMap(s=>ipKeys.map(ik=>s.data.avgCurve.gridded[ik]?.std[i]!=null?+s.data.avgCurve.gridded[ik].std[i].toFixed(4):''))]);
+    }
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(acRows),'AvgCurve_Compare');
+  }
+  const xb=new Blob([XLSX.write(wb,{type:'array',bookType:'xlsx'})],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(xb);a.download=`StatsCompare_${ts}.xlsx`;a.click();
+  toast('Stats Compare XLSX exported!','ok');
+});
+
+// ─── LaTeX export ────────────────────────────────────────────────
+document.getElementById('sc-expLatex').addEventListener('click',()=>{
+  const curSnap=buildCurrentSnapshot();
+  const allSnaps=[...scPrevData.map(e=>({label:e.label,data:e.data}))];
+  if(curSnap)allSnaps.unshift({label:'Current Session',data:curSnap});
+  if(allSnaps.length===0){toast('No data to export','err');return;}
+  saveSettingsFromUI();
+  const ts=latexTs();
+  const field=document.getElementById('scField').value;
+  const fLbl=STS_FLBL[field]||field;
+  const title=`${texEsc(SET.titlePrefix||'Report')} --- Statistics Comparison`;
+  const fs=(SET.tblFontSize||'\\normalsize');
+  const fw=SET.figWidth||'0.85';
+  const allRegions=[];
+  allSnaps.forEach(s=>{Object.keys(s.data.regions).forEach(r=>{if(!allRegions.includes(r))allRegions.push(r);});});
+  let body='';
+  // Overview
+  body+=`\\section{Overview}\n\nStatistics comparison across ${allSnaps.length} session(s): ${allSnaps.map(s=>texEsc(s.label)).join(', ')}. Active field for curve comparison: \\textbf{${texEsc(fLbl)}}.\n\n`;
+  // Stats table per region
+  body+=`\\section{Descriptive Statistics Comparison}\n\n`;
+  allRegions.forEach(rNm=>{
+    body+=`\\subsection{Region: ${texEsc(rNm)}}\n\n`;
+    body+=`${fs}\n\\setlength{\\tabcolsep}{3pt}\n\\renewcommand{\\arraystretch}{1.15}\n`;
+    body+=`\\begin{table}[H]\n\\centering\n\\caption{Comparison — ${texEsc(rNm)}}\n`;
+    body+=`\\begin{tabular}{>{\\bfseries}l l ${allSnaps.map(()=>'r').join(' ')}}\n\\toprule\n`;
+    body+=`\\rowcolor{hdr}\n\\textcolor{hdrtext}{\\textbf{Parameter}} & \\textcolor{hdrtext}{\\textbf{Stat}} ${allSnaps.map(s=>`& \\textcolor{hdrtext}{\\textbf{${texEsc(s.label)}}}`).join(' ')} \\\\\n\\midrule\n`;
+    STS_FLDS.forEach((f,fi)=>{
+      const hasAny=allSnaps.some(s=>s.data.regions[rNm]&&s.data.regions[rNm][f]);
+      if(!hasAny)return;
+      const lbl=STS_FLBL[f]||f;
+      const rc=fi%2===0?'rowA':'rowB';
+      ['mean','std','min','max','med'].forEach((stat,si2)=>{
+        const statLbl={mean:'Mean',std:'$\\sigma$',min:'Min',max:'Max',med:'Median'}[stat];
+        body+=`\\rowcolor{${rc}} `;
+        if(si2===0)body+=`\\multirow{5}{*}{${texEsc(lbl)}}`;
+        body+=` & ${statLbl} `;
+        allSnaps.forEach(s=>{
+          const fd=s.data.regions[rNm]?.[f];
+          const val=fd?.[stat];
+          body+=val!=null?` & ${val.toFixed(4)}`:" & ---";
+        });
+        body+=` \\\\\n`;
+      });
+      body+=`\\midrule\n`;
+    });
+    body+=`\\bottomrule\n\\end{tabular}\n\\end{table}\n\n`;
+  });
+  // Avg curve section
+  const acSnaps=allSnaps.filter(s=>s.data.avgCurve);
+  const fieldToIpKey={Torque:'Torque',Pin:'Pin',Po:'Pout',Eff:'eff',pf:'PF',It:'It'};
+  const ipKey=fieldToIpKey[field];
+  if(acSnaps.length&&ipKey){
+    body+=`\\section{Average Curve Comparison --- ${texEsc(fLbl)}}\n\n`;
+    body+=`\\noindent Overlay of production average motor curves for ${texEsc(fLbl)} from all sessions. Shaded regions show $\\pm\\sigma$ bands.\n\n`;
+    // pgfplots overlay
+    const colNames=['MidBlue','BurntOrange','ForestGreen','GoldBrown','Purple','DarkRed'];
+    body+=`\\begin{figure}[H]\n\\centering\n\\begin{tikzpicture}\n\\begin{axis}[\n`;
+    body+=`  width=${fw}\\linewidth, height=8cm,\n`;
+    body+=`  xlabel={Speed (RPM)}, ylabel={${texEsc(fLbl)}},\n`;
+    body+=`  grid=both, grid style={line width=0.3pt,draw=gray!25},\n`;
+    body+=`  title={Avg Curve Comparison --- ${texEsc(fLbl)}},\n`;
+    body+=`  title style={color=accent,font=\\bfseries},\n`;
+    body+=`  legend pos=outer north east, legend style={font=\\footnotesize},\n`;
+    body+=`]\n`;
+    acSnaps.forEach((snap,si)=>{
+      const ac=snap.data.avgCurve;
+      const g=ac.gridded[ipKey];
+      if(!g)return;
+      const col=colNames[si%colNames.length];
+      const meanPts=ac.speed.map((s2,i)=>`(${s2.toFixed(1)},${g.mean[i].toFixed(4)})`).join('');
+      const loPts=ac.speed.map((s2,i)=>`(${s2.toFixed(1)},${(g.mean[i]-g.std[i]).toFixed(4)})`).join('');
+      const hiPts=ac.speed.map((s2,i)=>`(${s2.toFixed(1)},${(g.mean[i]+g.std[i]).toFixed(4)})`).join('');
+      body+=`\\addplot[name path=lo${si},${col}!20,draw=none] coordinates {${loPts}};\n`;
+      body+=`\\addplot[name path=hi${si},${col}!20,draw=none] coordinates {${hiPts}};\n`;
+      body+=`\\addplot[fill=${col}!15,draw=none] fill between[of=lo${si} and hi${si}];\n`;
+      body+=`\\addplot[${col},line width=1.6pt] coordinates {${meanPts}};\n`;
+      body+=`\\addlegendentry{${texEsc(snap.label)}};\n`;
+    });
+    body+=`\\end{axis}\n\\end{tikzpicture}\n\\caption{Avg motor curve comparison --- ${texEsc(fLbl)}}\n\\end{figure}\n\n`;
+    // Comparison table
+    body+=`${fs}\n\\setlength{\\tabcolsep}{4pt}\n\\renewcommand{\\arraystretch}{1.2}\n`;
+    body+=`\\begin{table}[H]\n\\centering\n\\caption{Avg curve comparison --- ${texEsc(fLbl)} --- selected speeds}\n`;
+    body+=`\\begin{tabular}{r ${acSnaps.map(()=>'r').join(' ')}}\n\\toprule\n`;
+    body+=`\\rowcolor{hdr}\n\\textcolor{hdrtext}{\\textbf{Speed}} ${acSnaps.map(s=>`& \\textcolor{hdrtext}{\\textbf{${texEsc(s.label)}}}`).join(' ')} \\\\\n\\midrule\n`;
+    const refSpd=acSnaps[0].data.avgCurve.speed;
+    const sampleIdxs=Array.from({length:11},(_,i)=>Math.round(i*(refSpd.length-1)/10));
+    sampleIdxs.forEach((idx2,ri)=>{
+      const rc=ri%2===0?'rowA':'rowB';
+      const spd2=refSpd[idx2];
+      body+=`\\rowcolor{${rc}} ${spd2.toFixed(0)} `;
+      acSnaps.forEach(snap=>{
+        const ac=snap.data.avgCurve;
+        const g=ac.gridded[ipKey];
+        const ni=ac.speed.reduce((b,s2,i)=>Math.abs(s2-spd2)<Math.abs(ac.speed[b]-spd2)?i:b,0);
+        body+=g&&g.mean[ni]!=null?` & ${g.mean[ni].toFixed(3)}`:" & ---";
+      });
+      body+=` \\\\\n`;
+    });
+    body+=`\\bottomrule\n\\end{tabular}\n\\end{table}\n\n`;
+  }
+  const extraPreamble='\\usepackage{pgfplotstable}\n\\usepgfplotslibrary{fillbetween}\n\\definecolor{Purple}{HTML}{7700BB}\n\\definecolor{DarkRed}{HTML}{AA0033}\n\\definecolor{GoldBrown}{HTML}{8A6000}\n\\definecolor{ForestGreen}{HTML}{2E7000}\n\\definecolor{BurntOrange}{HTML}{C04000}\n\\definecolor{MidBlue}{HTML}{005FAA}\n';
+  const tex=buildLatexDoc(title,body,extraPreamble);
+  const blob=new Blob([tex],{type:'text/plain'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`StatsCompare_${ts}.tex`;a.click();
+  toast('Stats Compare LaTeX exported!','ok');
+});
+
 </script>
 </body>
 </html>
