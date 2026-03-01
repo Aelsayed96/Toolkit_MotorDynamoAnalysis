@@ -6,7 +6,79 @@
 <title>Dynamometer Analysis Tool</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<!-- ═══ PASSWORD OVERLAY ═══ -->
+<div id="pw-overlay">
+  <div class="pw-box">
+    <div class="pw-icon">🔒</div>
+    <div class="pw-title">
+      <h2>Dynamometer Analysis</h2>
+      <p>Enter access password to continue</p>
+    </div>
+    <div class="pw-field">
+      <input type="password" id="pw-input" placeholder="••••••••" autocomplete="off" maxlength="32"/>
+      <button class="pw-toggle" id="pw-eye" title="Show/hide">👁</button>
+    </div>
+    <div class="pw-dots" id="pw-dots"></div>
+    <button class="pw-btn" id="pw-submit">Unlock &nbsp;→</button>
+    <div class="pw-err hidden" id="pw-err">Incorrect password. Try again.</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const CORRECT = 'midea2024'; // ← change password here
+  const overlay = document.getElementById('pw-overlay');
+  const input   = document.getElementById('pw-input');
+  const btn     = document.getElementById('pw-submit');
+  const errMsg  = document.getElementById('pw-err');
+  const dots    = document.getElementById('pw-dots');
+  const eye     = document.getElementById('pw-eye');
+
+  // Render dots
+  function updateDots(){
+    const len = Math.min(input.value.length, 16);
+    dots.innerHTML = Array.from({length: Math.max(len, 6)}, (_, i) =>
+      `<div class="pw-dot${i < len ? ' filled' : ''}"></div>`
+    ).join('');
+  }
+  updateDots();
+  input.addEventListener('input', updateDots);
+
+  // Toggle show/hide
+  eye.addEventListener('click', () => {
+    input.type = input.type === 'password' ? 'text' : 'password';
+    eye.textContent = input.type === 'password' ? '👁' : '🙈';
+  });
+
+  function tryUnlock(){
+    if(input.value === CORRECT){
+      errMsg.classList.add('hidden');
+      overlay.classList.add('exit');
+      overlay.addEventListener('animationend', () => overlay.remove(), {once:true});
+    } else {
+      errMsg.classList.remove('hidden');
+      // Re-trigger shake
+      errMsg.style.animation = 'none';
+      void errMsg.offsetWidth;
+      errMsg.style.animation = '';
+      input.value = '';
+      updateDots();
+      input.focus();
+    }
+  }
+
+  btn.addEventListener('click', tryUnlock);
+  input.addEventListener('keydown', e => { if(e.key === 'Enter') tryUnlock(); });
+  input.focus();
+})();
+</script>
+
+<!-- original body content below -->
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;400;500;600;700&display=swap');
 :root{
@@ -22,6 +94,108 @@
   --mono:'Share Tech Mono',monospace;--sans:'Barlow',sans-serif;
   --sw:306px;
 }
+/* ═══ PASSWORD OVERLAY ═══ */
+#pw-overlay{
+  position:fixed;inset:0;z-index:99999;
+  background:#0a0e1a;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Share Tech Mono',monospace;
+}
+#pw-overlay::before{
+  content:'';position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(0,102,204,.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,102,204,.04) 1px,transparent 1px);
+  background-size:40px 40px;
+  pointer-events:none;
+}
+#pw-overlay::after{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 60% at 50% 50%,rgba(0,102,204,.08) 0%,transparent 70%);
+  pointer-events:none;
+}
+.pw-box{
+  position:relative;z-index:2;
+  width:360px;
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(0,102,204,.35);
+  border-radius:12px;
+  padding:36px 32px 32px;
+  box-shadow:0 0 60px rgba(0,102,204,.15),0 0 0 1px rgba(255,255,255,.04) inset;
+  display:flex;flex-direction:column;align-items:center;gap:22px;
+  animation:pw-fadein .5s ease both;
+}
+@keyframes pw-fadein{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.pw-icon{
+  width:52px;height:52px;border-radius:50%;
+  background:rgba(0,102,204,.12);
+  border:1px solid rgba(0,102,204,.3);
+  display:grid;place-items:center;
+  font-size:1.4rem;
+  box-shadow:0 0 20px rgba(0,102,204,.2);
+}
+.pw-title{
+  text-align:center;line-height:1.4;
+}
+.pw-title h2{
+  font-size:.95rem;letter-spacing:.18em;text-transform:uppercase;
+  color:#c8d8f8;font-weight:400;
+}
+.pw-title p{
+  font-size:.62rem;color:rgba(100,140,200,.6);letter-spacing:.1em;
+  margin-top:4px;
+}
+.pw-field{width:100%;position:relative;}
+.pw-field input{
+  width:100%;
+  background:rgba(0,10,30,.5);
+  border:1px solid rgba(0,102,204,.3);
+  color:#c8d8f8;
+  font-family:'Share Tech Mono',monospace;
+  font-size:.8rem;
+  padding:10px 42px 10px 14px;
+  border-radius:6px;
+  outline:none;
+  letter-spacing:.15em;
+  transition:border-color .2s,box-shadow .2s;
+  text-align:center;
+}
+.pw-field input:focus{
+  border-color:rgba(0,102,204,.7);
+  box-shadow:0 0 0 3px rgba(0,102,204,.12);
+}
+.pw-toggle{
+  position:absolute;right:11px;top:50%;transform:translateY(-50%);
+  background:none;border:none;cursor:pointer;
+  color:rgba(100,140,200,.5);font-size:.85rem;padding:2px;
+  transition:color .15s;
+}
+.pw-toggle:hover{color:rgba(100,140,200,.9);}
+.pw-btn{
+  width:100%;padding:10px;
+  background:linear-gradient(135deg,#0055bb,#0077ee);
+  border:none;border-radius:6px;
+  color:#fff;font-family:'Share Tech Mono',monospace;
+  font-size:.72rem;letter-spacing:.15em;text-transform:uppercase;
+  cursor:pointer;
+  box-shadow:0 4px 18px rgba(0,102,204,.3);
+  transition:filter .15s,transform .1s;
+}
+.pw-btn:hover{filter:brightness(1.15);}
+.pw-btn:active{transform:scale(.98);}
+.pw-err{
+  font-size:.63rem;letter-spacing:.1em;color:#ff6060;
+  text-align:center;min-height:16px;
+  animation:pw-shake .3s ease;
+}
+@keyframes pw-shake{0%,100%{transform:none}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.pw-err.hidden{visibility:hidden;}
+.pw-dots{display:flex;gap:6px;margin-top:2px;}
+.pw-dot{width:5px;height:5px;border-radius:50%;background:rgba(0,102,204,.25);transition:background .2s;}
+.pw-dot.filled{background:#0077ee;box-shadow:0 0 6px rgba(0,119,238,.6);}
+#pw-overlay.exit{animation:pw-exit .4s ease forwards;}
+@keyframes pw-exit{to{opacity:0;transform:scale(1.03)}}
+
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;overflow:hidden;}
 body{background:var(--bg);color:var(--text);font-family:var(--sans);}
