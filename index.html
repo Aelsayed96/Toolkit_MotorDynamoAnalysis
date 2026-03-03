@@ -1454,9 +1454,11 @@ function apCR(data,cr){
   if(cr.by==='speed')idx=Sp.reduce((b,s,i)=>Math.abs(s-cr.val)<Math.abs(Sp[b]-cr.val)?i:b,0);
   else if(cr.by==='torque')idx=ip.Torque.reduce((b,v,i)=>Math.abs(v-cr.val)<Math.abs(ip.Torque[b]-cr.val)?i:b,0);
   else if(cr.by==='pout'){
-    // Scan from max speed (high index) downward → always picks rated region, not the rising part of the Pout curve
-    let best=ip.Pout.length-1,bestDiff=Infinity;
-    for(let i=ip.Pout.length-1;i>=0;i--){const d=Math.abs(ip.Pout[i]-cr.val);if(d<bestDiff){bestDiff=d;best=i;}else if(bestDiff<1e-9)break;}
+    // Pout curve rises then falls (non-monotonic). Find peak, then search only on
+    // the high-speed side (peak → end) so we always pick the rated region.
+    const peakIdx=ip.Pout.indexOf(Math.max(...ip.Pout));
+    let best=peakIdx,bestDiff=Infinity;
+    for(let i=peakIdx;i<ip.Pout.length;i++){const d=Math.abs(ip.Pout[i]-cr.val);if(d<bestDiff){bestDiff=d;best=i;}}
     idx=best;
   }
   else if(cr.by==='eff')idx=ip.eff.reduce((b,v,i)=>Math.abs(v-cr.val)<Math.abs(ip.eff[b]-cr.val)?i:b,0);
@@ -2511,9 +2513,11 @@ function applyKs(data){
     if(cr.by==='speed')idx=Sp.reduce((b,s,i)=>Math.abs(s-cr.val)<Math.abs(Sp[b]-cr.val)?i:b,0);
     else if(cr.by==='torque')idx=ip.Torque.reduce((b,v,i)=>Math.abs(v-cr.val)<Math.abs(ip.Torque[b]-cr.val)?i:b,0);
     else if(cr.by==='pout'){
-      // Scan from max speed (high index) downward → always picks rated region, not the rising part of the Pout curve
-      let best=ip.Pout.length-1,bestDiff=Infinity;
-      for(let i=ip.Pout.length-1;i>=0;i--){const d=Math.abs(ip.Pout[i]-cr.val);if(d<bestDiff){bestDiff=d;best=i;}else if(bestDiff<1e-9)break;}
+      // Pout curve rises then falls (non-monotonic). Find peak, then search only on
+      // the high-speed side (peak → end) so we always pick the rated region.
+      const peakIdx=ip.Pout.indexOf(Math.max(...ip.Pout));
+      let best=peakIdx,bestDiff=Infinity;
+      for(let i=peakIdx;i<ip.Pout.length;i++){const d=Math.abs(ip.Pout[i]-cr.val);if(d<bestDiff){bestDiff=d;best=i;}}
       idx=best;
     }
     else if(cr.by==='eff')idx=ip.eff.reduce((b,v,i)=>Math.abs(v-cr.val)<Math.abs(ip.eff[b]-cr.val)?i:b,0);
