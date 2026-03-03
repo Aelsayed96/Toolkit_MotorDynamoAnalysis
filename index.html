@@ -1453,7 +1453,12 @@ function apCR(data,cr){
   const ip=data.ip,Sp=data.speed,mdf=data.mdf;let idx=0;
   if(cr.by==='speed')idx=Sp.reduce((b,s,i)=>Math.abs(s-cr.val)<Math.abs(Sp[b]-cr.val)?i:b,0);
   else if(cr.by==='torque')idx=ip.Torque.reduce((b,v,i)=>Math.abs(v-cr.val)<Math.abs(ip.Torque[b]-cr.val)?i:b,0);
-  else if(cr.by==='pout')idx=ip.Pout.reduce((b,v,i)=>Math.abs(v-cr.val)<Math.abs(ip.Pout[b]-cr.val)?i:b,0);
+  else if(cr.by==='pout'){
+    // Scan from max speed (high index) downward → always picks rated region, not the rising part of the Pout curve
+    let best=ip.Pout.length-1,bestDiff=Infinity;
+    for(let i=ip.Pout.length-1;i>=0;i--){const d=Math.abs(ip.Pout[i]-cr.val);if(d<bestDiff){bestDiff=d;best=i;}else if(bestDiff<1e-9)break;}
+    idx=best;
+  }
   else if(cr.by==='eff')idx=ip.eff.reduce((b,v,i)=>Math.abs(v-cr.val)<Math.abs(ip.eff[b]-cr.val)?i:b,0);
   const reg=mkR(cr.name,idx,Sp,ip,mdf);reg.isC=true;reg._id=cr.id;
   data.cRegs=data.cRegs.filter(r=>r._id!==cr.id);data.cRegs.push(reg);
@@ -2505,7 +2510,12 @@ function applyKs(data){
     let idx=0;
     if(cr.by==='speed')idx=Sp.reduce((b,s,i)=>Math.abs(s-cr.val)<Math.abs(Sp[b]-cr.val)?i:b,0);
     else if(cr.by==='torque')idx=ip.Torque.reduce((b,v,i)=>Math.abs(v-cr.val)<Math.abs(ip.Torque[b]-cr.val)?i:b,0);
-    else if(cr.by==='pout')idx=ip.Pout.reduce((b,v,i)=>Math.abs(v-cr.val)<Math.abs(ip.Pout[b]-cr.val)?i:b,0);
+    else if(cr.by==='pout'){
+      // Scan from max speed (high index) downward → always picks rated region, not the rising part of the Pout curve
+      let best=ip.Pout.length-1,bestDiff=Infinity;
+      for(let i=ip.Pout.length-1;i>=0;i--){const d=Math.abs(ip.Pout[i]-cr.val);if(d<bestDiff){bestDiff=d;best=i;}else if(bestDiff<1e-9)break;}
+      idx=best;
+    }
     else if(cr.by==='eff')idx=ip.eff.reduce((b,v,i)=>Math.abs(v-cr.val)<Math.abs(ip.eff[b]-cr.val)?i:b,0);
     const reg=mkR(cr.name,idx,Sp,ip,mdf);reg.isC=true;return reg;
   });
