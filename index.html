@@ -469,8 +469,16 @@ tbody td{padding:4px 8px;color:var(--text);white-space:nowrap;}
     <div class="panel" id="p-upl">
       <div class="ph" onclick="tp('upl')"><div class="phi"></div>Data Upload<span class="pha" id="a-upl">▾</span></div>
       <div class="pb" id="b-upl">
-        <p class="help">Columns: <strong>Speed, Torque, Pin, Pout, Efficiency, PF, It</strong>. SPIM: <strong>Im, Ia</strong>.</p>
-        <div class="dz" id="dz"><div class="dzi">⬆</div><p><strong>Drop CSV / Excel here</strong><br>or click to browse</p></div>
+        <div style="display:flex;flex-direction:column;gap:3px;">
+          <label class="fl">File Type</label>
+          <div class="rg">
+            <label class="ro"><input type="radio" name="ftype" value="standard" checked><span>Magtrol / CSV / XLSX</span></label>
+            <label class="ro"><input type="radio" name="ftype" value="core"><span>Core Dynamo XLS</span></label>
+            <label class="ro"><input type="radio" name="ftype" value="interp"><span>Interpolated XLSX</span></label>
+          </div>
+        </div>
+        <p class="help" id="upl-hint">Columns: <strong>Speed, Torque, Pin, Pout, Efficiency, PF, It</strong>. SPIM: <strong>Im, Ia</strong>.</p>
+        <div class="dz" id="dz"><div class="dzi">⬆</div><p id="dz-label"><strong>Drop CSV / Excel / MDF here</strong><br>or click to browse</p></div>
         <input type="file" id="fi" multiple accept=".mdf,.csv,.xlsx,.xls" style="display:none;">
         <div class="flist" id="fl2"></div>
       </div>
@@ -629,8 +637,16 @@ tbody td{padding:4px 8px;color:var(--text);white-space:nowrap;}
       <div class="ph"><div class="phi"></div>Motor A — Upload</div>
       <div class="pb">
         <div><label class="fl">Custom Name</label><input type="text" id="mtrLblA" value="Motor A" placeholder="e.g. Midea 18&quot;"/></div>
-        <div class="dz" id="mtrDzA"><div class="dzi">⬆</div><p><strong>Drop CSV / XLSX here</strong><br>or click to browse</p></div>
-        <input type="file" id="mtrFiA" accept=".csv,.xlsx,.xls" style="display:none;">
+        <div style="display:flex;flex-direction:column;gap:3px;">
+          <label class="fl">File Type</label>
+          <div class="rg">
+            <label class="ro"><input type="radio" name="ftypeA" value="standard" checked><span>Magtrol</span></label>
+            <label class="ro"><input type="radio" name="ftypeA" value="core"><span>Core XLS</span></label>
+            <label class="ro"><input type="radio" name="ftypeA" value="interp"><span>Interp XLSX</span></label>
+          </div>
+        </div>
+        <div class="dz" id="mtrDzA"><div class="dzi">⬆</div><p><strong>Drop CSV / XLSX / XLS here</strong><br>or click to browse</p></div>
+        <input type="file" id="mtrFiA" accept=".csv,.xlsx,.xls,.mdf" style="display:none;">
         <div id="mtrFlA" style="font-family:var(--mono);font-size:.63rem;color:var(--ok);margin-top:3px;"></div>
       </div>
     </div>
@@ -640,8 +656,16 @@ tbody td{padding:4px 8px;color:var(--text);white-space:nowrap;}
       <div class="ph"><div class="phi"></div>Motor B — Upload</div>
       <div class="pb">
         <div><label class="fl">Custom Name</label><input type="text" id="mtrLblB" value="Motor B" placeholder="e.g. ELARABY 18&quot;"/></div>
-        <div class="dz" id="mtrDzB"><div class="dzi">⬆</div><p><strong>Drop CSV / XLSX here</strong><br>or click to browse</p></div>
-        <input type="file" id="mtrFiB" accept=".csv,.xlsx,.xls" style="display:none;">
+        <div style="display:flex;flex-direction:column;gap:3px;">
+          <label class="fl">File Type</label>
+          <div class="rg">
+            <label class="ro"><input type="radio" name="ftypeB" value="standard" checked><span>Magtrol</span></label>
+            <label class="ro"><input type="radio" name="ftypeB" value="core"><span>Core XLS</span></label>
+            <label class="ro"><input type="radio" name="ftypeB" value="interp"><span>Interp XLSX</span></label>
+          </div>
+        </div>
+        <div class="dz" id="mtrDzB"><div class="dzi">⬆</div><p><strong>Drop CSV / XLSX / XLS here</strong><br>or click to browse</p></div>
+        <input type="file" id="mtrFiB" accept=".csv,.xlsx,.xls,.mdf" style="display:none;">
         <div id="mtrFlB" style="font-family:var(--mono);font-size:.63rem;color:var(--accent2);margin-top:3px;"></div>
       </div>
     </div>
@@ -822,7 +846,15 @@ tbody td{padding:4px 8px;color:var(--text);white-space:nowrap;}
     <div class="dz" id="sdz" style="padding:4px 10px;display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;border-width:1px;">
       <span>⬆</span><span style="font-size:.66rem;font-family:var(--mono);">Batch files</span>
     </div>
-    <input type="file" id="sfi" multiple accept=".csv,.xlsx,.xls" style="display:none;">
+    <input type="file" id="sfi" multiple accept=".csv,.xlsx,.xls,.mdf" style="display:none;">
+    <div style="display:inline-flex;align-items:center;gap:4px;flex-shrink:0;">
+      <label style="font-family:var(--mono);font-size:.62rem;color:var(--dim);">Type:</label>
+      <div class="rg" style="flex-wrap:nowrap;">
+        <label class="ro"><input type="radio" name="sftype" value="standard" checked><span>Magtrol</span></label>
+        <label class="ro"><input type="radio" name="sftype" value="core"><span>Core XLS</span></label>
+        <label class="ro"><input type="radio" name="sftype" value="interp"><span>Interp</span></label>
+      </div>
+    </div>
     <button class="btn bp" id="rsts">↻ Compute</button>
     <button class="btn bo" id="expSts">⬇ Export Stats</button>
     <button class="btn bg2" id="expAvgCurve">⬇ Avg Motor Curve</button>
@@ -1380,18 +1412,131 @@ $('sdz').addEventListener('dragleave',()=>$('sdz').classList.remove('over'));
 $('sdz').addEventListener('drop',e=>{e.preventDefault();$('sdz').classList.remove('over');af(e.dataTransfer.files,true);});
 $('sfi').addEventListener('change',e=>af(e.target.files,true));
 
+// ── Update hint & accept on file type change ──
+const FTYPE_HINTS={
+  standard:'Columns: <strong>Speed, Torque, Pin, Pout, Efficiency, PF, It</strong>. SPIM: <strong>Im, Ia</strong>.',
+  core:'Core Dynamo XLS — Columns: <strong>U, I, P1, T, n, P2, EFF, P.F, I1, I2</strong>. Skip 2 header rows.',
+  interp:'Interpolated XLSX — exported by this tool. Columns already mapped to standard format.'
+};
+const FTYPE_LABELS={
+  standard:'<strong>Drop CSV / Excel / MDF here</strong><br>or click to browse',
+  core:'<strong>Drop Core Dynamo .xls / .xlsx here</strong><br>or click to browse',
+  interp:'<strong>Drop Interpolated XLSX here</strong><br>or click to browse'
+};
+function updateFtypeUI(){
+  const v=document.querySelector('input[name="ftype"]:checked')?.value||'standard';
+  $('upl-hint').innerHTML=FTYPE_HINTS[v]||FTYPE_HINTS.standard;
+  $('dz-label').innerHTML=FTYPE_LABELS[v]||FTYPE_LABELS.standard;
+  $('fi').accept=v==='core'?'.xls,.xlsx':'.mdf,.csv,.xlsx,.xls';
+}
+document.querySelectorAll('input[name="ftype"]').forEach(r=>r.addEventListener('change',updateFtypeUI));
+
 function af(files,isSts){for(const f of files){if(isSts)stsFiles.push(f);else uplFiles.push(f);}if(!isSts)rfl();}
 function rfl(){const l=$('fl2');l.innerHTML='';uplFiles.forEach(f=>{const c=document.createElement('div');c.className='fc';c.innerHTML=`<span class="fcd"></span>${f.name}<span style="margin-left:auto;color:var(--dim)">${(f.size/1024).toFixed(1)}KB</span>`;l.appendChild(c);});}
 
 // ════════════════════════════
 //  PARSE
 // ════════════════════════════
-function parseF(file){
+
+// ── Core Dynamo XLS column map ──
+// Columns: U, I, P1, T, n, P2, EFF, P.F, I1, I2, Uc
+// Maps to: Volt(U), It(I), Pin(P1), Torque(T), Speed(n), Pout(P2), eff(EFF), PF(P.F), Im(I1), Ia(I2)
+function parseCoreXLS(file){
+  return new Promise((res,rej)=>{
+    const base=file.name.replace(/\.[^.]+$/,'');
+    const r=new FileReader();
+    r.onload=e=>{
+      try{
+        const wb=XLSX.read(e.target.result,{type:'array'});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        // skiprows=2: read raw array then skip first 2 rows
+        const raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+        const CORE_COLS=['U','I','P1','T','n','P2','EFF','P.F','I1','I2','Uc'];
+        // Find header row (row containing 'n' or 'T')
+        let hdrIdx=0;
+        for(let i=0;i<Math.min(raw.length,8);i++){
+          const row=raw[i].map(c=>String(c).trim());
+          if(row.includes('n')&&row.includes('T')){hdrIdx=i;break;}
+          if(i>=2&&!hdrIdx)hdrIdx=2; // fallback: row 2 (0-indexed)
+        }
+        const headers=raw[hdrIdx].map(c=>String(c).trim());
+        const dataRows=raw.slice(hdrIdx+1).filter(r=>r.some(v=>v!==''));
+        // Map rows to objects using CORE_COLS header
+        const rows=dataRows.map(r2=>{
+          const obj={};
+          headers.forEach((h,i)=>{obj[h]=r2[i];});
+          return obj;
+        }).filter(r2=>parseFloat(r2['n'])>=0&&!isNaN(parseFloat(r2['n'])));
+        // Remap to standard column names expected by procData
+        const mapped=rows.map(r2=>({
+          'Speed': parseFloat(r2['n'])||0,
+          'Torque': parseFloat(r2['T'])||0,
+          'Pin':    parseFloat(r2['P1'])||0,
+          'Pout':   parseFloat(r2['P2'])||0,
+          'Efficiency': parseFloat(r2['EFF'])||0,
+          'PF':     parseFloat(r2['P.F'])||0,
+          'It':     parseFloat(r2['I'])||0,
+          'Im':     parseFloat(r2['I1'])||0,
+          'Ia':     parseFloat(r2['I2'])||0,
+          'Volts':  parseFloat(r2['U'])||0,
+        }));
+        res({name:base,rows:mapped,isCoreXLS:true});
+      }catch(err){rej(err);}
+    };
+    r.readAsArrayBuffer(file);
+  });
+}
+
+// -- Interpolated XLSX: read from sheet named "Interpolated" (fallback to first sheet) --
+function parseInterpXLSX(file){
+  return new Promise((res,rej)=>{
+    const base=file.name.replace(/\.[^.]+$/,'');
+    const r=new FileReader();
+    r.onload=e=>{
+      try{
+        const wb=XLSX.read(e.target.result,{type:'array'});
+        const sheetName=wb.SheetNames.find(n=>n.toLowerCase().includes('interp'))||wb.SheetNames[0];
+        const ws=wb.Sheets[sheetName];
+        const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+        res({name:base,rows,isInterp:true});
+      }catch(err){rej(err);}
+    };
+    r.readAsArrayBuffer(file);
+  });
+}
+
+// ── Standard Magtrol / CSV / MDF parser (unchanged) ──
+function parseStandard(file){
   return new Promise((res,rej)=>{
     const nm=file.name.toLowerCase(),base=file.name.replace(/\.[^.]+$/,'');
     if(nm.endsWith('.csv')){const r=new FileReader();r.onload=e=>{try{const p=Papa.parse(e.target.result,{header:true,dynamicTyping:true,skipEmptyLines:true});res({name:base,rows:p.data});}catch(err){rej(err);}};r.readAsText(file);}
     else{const r=new FileReader();r.onload=e=>{try{const wb=XLSX.read(e.target.result,{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];res({name:base,rows:XLSX.utils.sheet_to_json(ws,{defval:''})});}catch(err){rej(err);}};r.readAsArrayBuffer(file);}
   });
+}
+
+// ── Master parse router — uses selected file type ──
+function parseF(file, ftypeOverride){
+  const ftype=ftypeOverride||document.querySelector('input[name="ftype"]:checked')?.value||'standard';
+  if(ftype==='core') return parseCoreXLS(file);
+  if(ftype==='interp') return parseInterpXLSX(file);
+  return parseStandard(file);
+}
+
+// ── Same for motors tab ──
+function mtrParseRouted(file, slot){
+  const name=slot==='A'?'ftypeA':'ftypeB';
+  const ftype=document.querySelector(`input[name="${name}"]:checked`)?.value||'standard';
+  if(ftype==='core') return parseCoreXLS(file);
+  if(ftype==='interp') return parseInterpXLSX(file);
+  return parseStandard(file);
+}
+
+// ── Same for stats tab ──
+function parseStats(file){
+  const ftype=document.querySelector('input[name="sftype"]:checked')?.value||'standard';
+  if(ftype==='core') return parseCoreXLS(file);
+  if(ftype==='interp') return parseInterpXLSX(file);
+  return parseStandard(file);
 }
 function fc(h,aliases){for(const a of aliases){const f=h.find(x=>x&&x.toString().toLowerCase().includes(a.toLowerCase()));if(f)return f;}return null;}
 
@@ -2123,7 +2268,7 @@ async function renderSts(){
     setst('LOADING\u2026');setpb(10);
     for(let i=0;i<stsFiles.length;i++){
       const f=stsFiles[i];
-      try{setpb(10+70*(i/stsFiles.length));const p=await parseF(f);const r=procData(p);stsAllD[r.key]=r;log(`Stats: ${r.key}`,'ok');}
+      try{setpb(10+70*(i/stsFiles.length));const p=await parseStats(f);const r=procData(p);stsAllD[r.key]=r;log(`Stats: ${r.key}`,'ok');}
       catch(err){log(`Err: ${f.name}: ${err.message}`,'err');}
     }
     setpb(100);setst('READY');setTimeout(()=>setpb(0),700);
@@ -2433,20 +2578,9 @@ function setMtrFile(file,fl,slot,dz){
 wireDZ('mtrDzA','mtrFiA','mtrFlA','A');
 wireDZ('mtrDzB','mtrFiB','mtrFlB','B');
 
-// ── parse a file → rows ──
-function mtrParse(file){
-  return new Promise((res,rej)=>{
-    const nm=file.name.toLowerCase();
-    if(nm.endsWith('.csv')){
-      const r=new FileReader();
-      r.onload=e=>{try{res(Papa.parse(e.target.result,{header:true,dynamicTyping:true,skipEmptyLines:true}).data);}catch(err){rej(err);}};
-      r.readAsText(file);
-    }else{
-      const r=new FileReader();
-      r.onload=e=>{try{const wb=XLSX.read(e.target.result,{type:'array'});res(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''}));}catch(err){rej(err);}};
-      r.readAsArrayBuffer(file);
-    }
-  });
+// ── parse a file → rows (routed by file type selection) ──
+function mtrParse(file, slot){
+  return mtrParseRouted(file, slot).then(parsed=>parsed.rows);
 }
 
 // ── process rows → data object ──
@@ -2602,10 +2736,10 @@ document.getElementById('mtrRun').addEventListener('click',async()=>{
   const lB=document.getElementById('mtrLblB').value.trim()||'Motor B';
   setst('COMPARING…');setpb(20);
   try{
-    if(mtrFileA){const rows=await mtrParse(mtrFileA);mtrDataA=mtrProc(rows,lA);}
+    if(mtrFileA){const rows=await mtrParse(mtrFileA,'A');mtrDataA=mtrProc(rows,lA);}
     else mtrDataA.name=lA;
     setpb(55);
-    if(mtrFileB){const rows=await mtrParse(mtrFileB);mtrDataB=mtrProc(rows,lB);}
+    if(mtrFileB){const rows=await mtrParse(mtrFileB,'B');mtrDataB=mtrProc(rows,lB);}
     else mtrDataB.name=lB;
     setpb(85);
     renderMtrResult();
