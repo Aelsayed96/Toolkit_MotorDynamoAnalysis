@@ -1033,14 +1033,9 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
 
     <!-- Comparison table -->
     <div style="flex-shrink:0;height:248px;border-top:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;">
-      <div class="rh" style="flex-shrink:0;flex-wrap:wrap;gap:4px;">
-        <span>⊡</span> SIDE-BY-SIDE · ALL REGIONS
-        <div style="margin-left:auto;display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
-          <button class="btn bgh" id="mtrDeltaBtn" onclick="window.toggleMtrDelta()" style="padding:2px 7px;font-size:.59rem;" title="Toggle Δ mode: Value or %">Δ: Value</button>
-          <button class="btn bgh" id="mtrBestBtn"  onclick="window.toggleMtrBest()"  style="padding:2px 7px;font-size:.59rem;" title="Toggle Best column">Best: On</button>
-          <button class="btn bgh" id="mtrTblPng"   style="padding:2px 7px;font-size:.59rem;">⬇ Table PNG</button>
-          <button class="btn bgh" id="mtrTblPdf"   style="padding:2px 7px;font-size:.59rem;">⬇ Regions PDF</button>
-        </div>
+      <div class="rh" style="flex-shrink:0;">
+        <span>⊡</span> SIDE-BY-SIDE · WINNER PER PARAMETER · ALL REGIONS
+        <button class="btn bgh" id="mtrTblPng" style="margin-left:auto;padding:2px 7px;font-size:.59rem;">⬇ Table PNG</button>
       </div>
       <div class="tw">
         <table style="min-width:820px;">
@@ -2051,27 +2046,57 @@ $('acr').addEventListener('click',()=>{
   toast(`Region "${n}" added`,'ok');
 });
 function _crSearchIdx(arr,val,fromHigh){
-  // Search from high index (high speed = rated side)
+  // For bell-shaped curves (Torque, Eff) find the closest match on the requested side.
+  // Array is ascending by speed: index 0 = low speed, last = high speed.
   if(fromHigh){
-    let best=arr.length-1,bd=Infinity;
-    for(let i=arr.length-1;i>=0;i--){const d=Math.abs(arr[i]-val);if(d<bd){bd=d;best=i;}}
+    // High-speed side: search from last index down — stops at midpoint so we
+    // never accidentally land on the low-speed rising side.
+    const mid=Math.floor(arr.length/2);
+    let best=arr.length-1, bd=Infinity;
+    for(let i=arr.length-1;i>=mid;i--){
+      const d=Math.abs(arr[i]-val);
+      if(d<bd){bd=d;best=i;}
+    }
     return best;
   }
-  // Search from low index (low speed side)
-  return arr.reduce((b,v,i)=>Math.abs(v-val)<Math.abs(arr[b]-val)?i:b,0);
+  // Low-speed side: search from index 0 up to midpoint
+  const mid=Math.floor(arr.length/2);
+  let best=0, bd=Infinity;
+  for(let i=0;i<=mid;i++){
+    const d=Math.abs(arr[i]-val);
+    if(d<bd){bd=d;best=i;}
+  }
+  return best;
 }
 function _crPoutIdx(Pout,val,fromHigh){
-  // Pout rises to a peak then falls — search only one side of the peak
-  const peakIdx=Pout.indexOf(Math.max(...Pout));
+  // Pout curve shape: starts near 0 at low speed, rises to a peak, then falls back
+  // toward high speed (lightly-loaded / no-load side).
+  // The array is always sorted ascending by speed:
+  //   index 0 = lowest speed (locked rotor side)  → Pout ≈ 0
+  //   peakIdx  = max Pout
+  //   last     = highest speed (no-load side)      → Pout small
+  //
+  // "High speed ↓" means: start from the high-speed end (last index) and
+  //   scan DOWN toward the peak — this gives the rated / high-speed side
+  //   where Pout descends from peak toward no-load.
+  // "Low speed ↑" means: start from index 0 and scan UP toward the peak —
+  //   this gives the starting / low-speed side.
+  const peakIdx=_safeMaxIdx(Pout);
   if(fromHigh){
-    // High-speed / rated side: peak → end (Pout descending)
-    let best=peakIdx,bd=Infinity;
-    for(let i=peakIdx;i<Pout.length;i++){const d=Math.abs(Pout[i]-val);if(d<bd){bd=d;best=i;}}
+    // High-speed side: search from arr.length-1 → peakIdx (Pout ascending as we go toward peak)
+    let best=Pout.length-1, bd=Infinity;
+    for(let i=Pout.length-1;i>=peakIdx;i--){
+      const d=Math.abs(Pout[i]-val);
+      if(d<bd){bd=d;best=i;}
+    }
     return best;
   } else {
-    // Low-speed side: start → peak (Pout ascending)
-    let best=0,bd=Infinity;
-    for(let i=0;i<=peakIdx;i++){const d=Math.abs(Pout[i]-val);if(d<bd){bd=d;best=i;}}
+    // Low-speed side: search from 0 → peakIdx (Pout rising toward peak)
+    let best=0, bd=Infinity;
+    for(let i=0;i<=peakIdx;i++){
+      const d=Math.abs(Pout[i]-val);
+      if(d<bd){bd=d;best=i;}
+    }
     return best;
   }
 }
@@ -3580,29 +3605,6 @@ function buildMtrChart(kA,kB,lA,lB,tab){
 }
 
 // ── Table ──
-// ── Regions-table toggle state ──
-let mtrDeltaMode='value'; // 'value' | 'pct'
-let mtrShowBest=true;
-
-window.toggleMtrDelta=function(){
-  mtrDeltaMode=mtrDeltaMode==='value'?'pct':'value';
-  const btn=document.getElementById('mtrDeltaBtn');
-  if(btn)btn.textContent='Δ: '+(mtrDeltaMode==='value'?'Value':'%');
-  if(mtrDataA&&mtrDataB){
-    const kA=applyKs(mtrDataA),kB=applyKs(mtrDataB);
-    buildMtrTable([...mtrDataA.regs,...kA.ekRegs,...kA.crRegs],[...mtrDataB.regs,...kB.ekRegs,...kB.crRegs],mtrDataA.name,mtrDataB.name);
-  }
-};
-window.toggleMtrBest=function(){
-  mtrShowBest=!mtrShowBest;
-  const btn=document.getElementById('mtrBestBtn');
-  if(btn)btn.textContent='Best: '+(mtrShowBest?'On':'Off');
-  if(mtrDataA&&mtrDataB){
-    const kA=applyKs(mtrDataA),kB=applyKs(mtrDataB);
-    buildMtrTable([...mtrDataA.regs,...kA.ekRegs,...kA.crRegs],[...mtrDataB.regs,...kB.ekRegs,...kB.crRegs],mtrDataA.name,mtrDataB.name);
-  }
-};
-
 function buildMtrTable(allRA,allRB,lA,lB){
   const rN=[];
   [...allRA,...allRB].forEach(r=>{if(!rN.includes(r.Region))rN.push(r.Region);});
@@ -3611,15 +3613,12 @@ function buildMtrTable(allRA,allRB,lA,lB){
   const th=document.getElementById('mtrTh'),tb=document.getElementById('mtrTb');
   th.innerHTML='';tb.innerHTML='';
 
-  const deltaHdr=mtrDeltaMode==='pct'?'Δ % (A−B)':'Δ (A−B)';
-  const colCount=mtrShowBest?6:5;
   const hr=document.createElement('tr');
-  hr.innerHTML=`<th style="background:var(--surface2)">Region</th>
-    <th style="background:var(--surface2)">Parameter</th>
+  hr.innerHTML=`<th style="background:var(--surface2)">Region</th><th style="background:var(--surface2)">Parameter</th>
     <th style="background:var(--surface2);color:${CA}">${lA}</th>
     <th style="background:var(--surface2);color:${CB}">${lB}</th>
-    <th style="background:var(--surface2)">${deltaHdr}</th>
-    ${mtrShowBest?`<th style="background:var(--surface2)">Best</th>`:''}`;
+    <th style="background:var(--surface2)">Δ (A−B)</th>
+    <th style="background:var(--surface2)">Best</th>`;
   th.appendChild(hr);
 
   let totalA=0,totalB=0,totalTie=0;
@@ -3647,16 +3646,15 @@ function buildMtrTable(allRA,allRB,lA,lB){
       const vA=rA&&rA[f]!=null?rA[f]:null;
       const vB=rB&&rB[f]!=null?rB[f]:null;
       const delta=vA!=null&&vB!=null?vA-vB:null;
-      const deltaPct=delta!=null&&vB!=null&&Math.abs(vB)>1e-9
-        ?(delta/Math.abs(vB))*100
-        :delta!=null&&vA!=null&&Math.abs(vA)>1e-9?(delta/Math.abs(vA))*100:null;
       const hib=HIB[f];
       let winner=null;
       if(vA!=null&&vB!=null&&hib!==null){
         if(Math.abs(vA-vB)<1e-9)winner='tie';
         else winner=(hib?vA>vB:vA<vB)?'A':'B';
       }
-      if(winner==='A')totalA++;else if(winner==='B')totalB++;else if(winner==='tie')totalTie++;
+      if(fi===0||(fi>0&&rA&&rB)){// count wins only once per region (at fi===0 equivalent: count for every param)
+        if(winner==='A')totalA++;else if(winner==='B')totalB++;else if(winner==='tie')totalTie++;
+      }
 
       // A cell
       const tdA=document.createElement('td');
@@ -3668,27 +3666,17 @@ function buildMtrTable(allRA,allRB,lA,lB){
       tdB.style.cssText=winner==='B'?`font-weight:700;color:${CB};`:'';
       tdB.textContent=vB!=null?(winner==='B'?'★ ':'')+vB.toFixed(3):'—';
       tr.appendChild(tdB);
-      // Delta — value or %
-      const tdD=document.createElement('td');
-      if(mtrDeltaMode==='pct'){
-        if(deltaPct!=null){
-          tdD.textContent=(deltaPct>=0?'+':'')+deltaPct.toFixed(1)+'%';
-          tdD.style.cssText=`font-size:.64rem;font-weight:600;color:${deltaPct>0.001?'var(--ok)':deltaPct<-0.001?'var(--err)':'var(--dim)'};`;
-        }else{tdD.textContent='—';tdD.style.cssText='font-size:.64rem;color:var(--dim);';}
-      }else{
-        tdD.textContent=delta!=null?(delta>=0?'+':'')+delta.toFixed(3):'—';
-        tdD.style.cssText=`font-size:.64rem;font-weight:600;color:${delta!=null&&delta>0.0001?'var(--ok)':delta!=null&&delta<-0.0001?'var(--err)':'var(--dim)'};`;
-      }
+      // Delta
+      const tdD=document.createElement('td');tdD.style.cssText='font-size:.64rem;color:var(--dim);';
+      tdD.textContent=delta!=null?(delta>=0?'+':'')+delta.toFixed(3):'—';
       tr.appendChild(tdD);
-      // Best (conditional)
-      if(mtrShowBest){
-        const tdW=document.createElement('td');
-        if(winner==='A'){tdW.style.cssText=`color:${CA};font-weight:700;`;tdW.textContent='🏆 '+lA;}
-        else if(winner==='B'){tdW.style.cssText=`color:${CB};font-weight:700;`;tdW.textContent='🏆 '+lB;}
-        else if(winner==='tie'){tdW.style.cssText='color:var(--warn);font-weight:600;';tdW.textContent='Tied';}
-        else tdW.textContent='—';
-        tr.appendChild(tdW);
-      }
+      // Best
+      const tdW=document.createElement('td');
+      if(winner==='A'){tdW.style.cssText=`color:${CA};font-weight:700;`;tdW.textContent='🏆 '+lA;}
+      else if(winner==='B'){tdW.style.cssText=`color:${CB};font-weight:700;`;tdW.textContent='🏆 '+lB;}
+      else if(winner==='tie'){tdW.style.cssText='color:var(--warn);font-weight:600;';tdW.textContent='Tied';}
+      else tdW.textContent='—';
+      tr.appendChild(tdW);
       tb.appendChild(tr);
     });
 
@@ -3702,7 +3690,7 @@ function buildMtrTable(allRA,allRB,lA,lB){
     });
     const rWin=wA2>wB2?'A':wB2>wA2?'B':'tie';
     const starTr=document.createElement('tr');starTr.style.background='rgba(46,112,0,.06)';
-    const starTd=document.createElement('td');starTd.colSpan=colCount;
+    const starTd=document.createElement('td');starTd.colSpan=6;
     starTd.style.cssText='padding:2px 10px;font-family:var(--mono);font-size:.61rem;color:var(--accent3);border-bottom:2px solid var(--border);';
     starTd.innerHTML=rWin==='A'?`★ <em>Region winner: <strong style="color:${CA}">${lA}</strong></em>`:
                      rWin==='B'?`★ <em>Region winner: <strong style="color:${CB}">${lB}</strong></em>`:
@@ -3712,7 +3700,7 @@ function buildMtrTable(allRA,allRB,lA,lB){
 
   // Footer score row
   const ftTr=document.createElement('tr');ftTr.style.background='var(--surface2)';
-  const ftTd=document.createElement('td');ftTd.colSpan=colCount;
+  const ftTd=document.createElement('td');ftTd.colSpan=6;
   ftTd.style.cssText='padding:4px 10px;font-family:var(--mono);font-size:.65rem;border-top:2px solid var(--border);';
   ftTd.innerHTML=`<strong>TOTAL:</strong> <span style="color:${CA}">${lA}: ${totalA} wins</span> &nbsp;·&nbsp; <span style="color:${CB}">${lB}: ${totalB} wins</span> &nbsp;·&nbsp; Tied: ${totalTie}`;
   ftTr.appendChild(ftTd);tb.appendChild(ftTr);
@@ -3799,153 +3787,7 @@ document.getElementById('mtrTblPng').addEventListener('click',()=>{
   toast('Table PNG saved','ok');
 });
 
-// ── Regions PDF (themed — matches HTML table exactly) ──
-document.getElementById('mtrTblPdf').addEventListener('click',()=>{
-  if(!mtrDataA||!mtrDataB){toast('Run comparison first','err');return;}
-  savePdfSettings();
-  const accent='#'+PDF_SET.accent;
-  const lA=mtrDataA.name,lB=mtrDataB.name;
-  const kA=applyKs(mtrDataA),kB=applyKs(mtrDataB);
-  const allRA=[...mtrDataA.regs,...kA.ekRegs,...kA.crRegs];
-  const allRB=[...mtrDataB.regs,...kB.ekRegs,...kB.crRegs];
-  const rN=[];[...allRA,...allRB].forEach(r=>{if(!rN.includes(r.Region))rN.push(r.Region);});
-  const flds=['Speed','Torque','Pin','Po','Eff','pf','It'];
-  const fLbl=['Speed (RPM)','Torque (N·m)','Pin (W)','Pout (W)','Eff (%)','PF','It (A)'];
-  const colCount=mtrShowBest?6:5;
-  const deltaHdr=mtrDeltaMode==='pct'?'Δ % (A−B)':'Δ (A−B)';
-
-  // Badge colours matching HTML .rb classes
-  const BADGE={
-    'No-Load':  {bg:'rgba(217,119,6,.13)',  color:'#b45309', border:'rgba(217,119,6,.4)'},
-    'Rated':    {bg:'rgba(37,99,235,.10)',  color:'#2563eb', border:'rgba(37,99,235,.35)'},
-    'Max Eff.': {bg:'rgba(22,163,74,.10)',  color:'#16a34a', border:'rgba(22,163,74,.35)'},
-    'Max Torque':{bg:'rgba(220,38,38,.12)', color:'#dc2626', border:'rgba(220,38,38,.35)'},
-    'Locked':   {bg:'rgba(100,116,139,.12)',color:'#64748b', border:'rgba(100,116,139,.35)'},
-    'MaxPout':  {bg:'rgba(37,99,235,.10)',  color:'#2563eb', border:'rgba(37,99,235,.25)'},
-  };
-  const getBadge=(nm,isEK,isCR)=>{
-    if(isEK) return{bg:'rgba(220,38,38,.10)',color:'#dc2626',border:'rgba(220,38,38,.3)'};
-    if(isCR) return{bg:'rgba(124,58,237,.10)',color:'#7c3aed',border:'rgba(124,58,237,.3)'};
-    return BADGE[nm]||{bg:'rgba(37,99,235,.08)',color:'#2563eb',border:'rgba(37,99,235,.2)'};
-  };
-
-  let totalA=0,totalB=0,totalTie=0;
-  let tbody='';
-
-  rN.forEach((rNm,ri)=>{
-    const rA=allRA.find(x=>x.Region===rNm),rB=allRB.find(x=>x.Region===rNm);
-    const isEK=rNm.includes('=')&&(rNm.startsWith('Rated K')||rNm.startsWith('K'));
-    const isCR=mtrCRs.some(c=>c.name===rNm);
-    const bdg=getBadge(rNm,isEK,isCR);
-    const rowBg=isEK?'rgba(180,80,0,.04)':isCR?'rgba(119,0,187,.04)':(ri%2===0?'#fff':'#f8fafd');
-
-    // region winner (Eff, Po, pf)
-    const f2=['Eff','Po','pf'];let wA2=0,wB2=0;
-    f2.forEach(f=>{
-      const vA=rA?rA[f]:null,vB=rB?rB[f]:null;
-      if(vA!=null&&vB!=null&&HIB[f]!==null&&Math.abs(vA-vB)>1e-9)
-        {if(HIB[f]?vA>vB:vA<vB)wA2++;else wB2++;}
-    });
-    const rWin=wA2>wB2?'A':wB2>wA2?'B':'tie';
-
-    flds.forEach((f,fi)=>{
-      const vA=rA&&rA[f]!=null?rA[f]:null,vB=rB&&rB[f]!=null?rB[f]:null;
-      const delta=vA!=null&&vB!=null?vA-vB:null;
-      const deltaPct=delta!=null&&vB!=null&&Math.abs(vB)>1e-9
-        ?(delta/Math.abs(vB))*100
-        :delta!=null&&vA!=null&&Math.abs(vA)>1e-9?(delta/Math.abs(vA))*100:null;
-      const hib=HIB[f]; let winner=null;
-      if(vA!=null&&vB!=null&&hib!==null){
-        if(Math.abs(vA-vB)<1e-9)winner='tie';
-        else winner=(hib?vA>vB:vA<vB)?'A':'B';
-      }
-      if(winner==='A')totalA++;else if(winner==='B')totalB++;else if(winner==='tie')totalTie++;
-
-      const winSA=winner==='A'?`color:${CA};font-weight:700;`:'';
-      const winSB=winner==='B'?`color:${CB};font-weight:700;`:'';
-
-      // Δ cell
-      let dTxt='—',dColor='#94a3b8';
-      if(mtrDeltaMode==='pct'){
-        if(deltaPct!=null){
-          dTxt=(deltaPct>=0?'+':'')+deltaPct.toFixed(1)+'%';
-          dColor=deltaPct>0.001?'#16a34a':deltaPct<-0.001?'#dc2626':'#94a3b8';
-        }
-      }else{
-        if(delta!=null){
-          dTxt=(delta>=0?'+':'')+delta.toFixed(3);
-          dColor=delta>0.0001?'#16a34a':delta<-0.0001?'#dc2626':'#94a3b8';
-        }
-      }
-
-      // Best cell
-      let bestCell='';
-      if(mtrShowBest){
-        if(winner==='A')      bestCell=`<span style="color:${CA};font-weight:700;">🏆 ${lA}</span>`;
-        else if(winner==='B') bestCell=`<span style="color:${CB};font-weight:700;">🏆 ${lB}</span>`;
-        else if(winner==='tie')bestCell=`<span style="color:#d97706;font-weight:600;">Tied</span>`;
-        else                   bestCell='—';
-      }
-
-      tbody+=`<tr style="background:${rowBg};">`;
-      if(fi===0){
-        tbody+=`<td rowspan="${flds.length}" style="vertical-align:middle;border-right:2px solid #e2e8f0;padding:5px 9px;">
-          <span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700;
-            letter-spacing:.04em;text-transform:uppercase;
-            background:${bdg.bg};color:${bdg.color};border:1px solid ${bdg.border};">${rNm}</span></td>`;
-      }
-      tbody+=`<td style="color:#64748b;font-size:.8rem;padding:3px 7px;">${fLbl[fi]}</td>`;
-      tbody+=`<td style="${winSA}padding:3px 7px;font-family:'JetBrains Mono',monospace;font-size:.8rem;">${vA!=null?(winner==='A'?'★ ':'')+vA.toFixed(3):'—'}</td>`;
-      tbody+=`<td style="${winSB}padding:3px 7px;font-family:'JetBrains Mono',monospace;font-size:.8rem;">${vB!=null?(winner==='B'?'★ ':'')+vB.toFixed(3):'—'}</td>`;
-      tbody+=`<td style="font-weight:600;color:${dColor};padding:3px 7px;font-family:'JetBrains Mono',monospace;font-size:.8rem;">${dTxt}</td>`;
-      if(mtrShowBest)tbody+=`<td style="padding:3px 7px;font-size:.8rem;">${bestCell}</td>`;
-      tbody+=`</tr>`;
-    });
-
-    // star row
-    const starCol=rWin==='A'?CA:rWin==='B'?CB:'#d97706';
-    const starName=rWin==='A'?lA:rWin==='B'?lB:'Tied';
-    tbody+=`<tr style="background:rgba(22,163,74,.05);">
-      <td colspan="${colCount}" style="padding:2px 11px;font-size:.75rem;color:#16a34a;border-bottom:2px solid #e2e8f0;">
-        ★ <em>Region winner: <strong style="color:${starCol}">${starName}</strong></em></td></tr>`;
-  });
-
-  // footer score row
-  tbody+=`<tr style="background:#f0f4ff;">
-    <td colspan="${colCount}" style="padding:5px 11px;font-size:.8rem;border-top:2px solid #e2e8f0;">
-      <strong>TOTAL:</strong>
-      <span style="color:${CA};margin-left:8px;">${lA}: ${totalA} wins</span>
-      <span style="color:#94a3b8;margin:0 6px;">·</span>
-      <span style="color:${CB};">${lB}: ${totalB} wins</span>
-      <span style="color:#94a3b8;margin:0 6px;">·</span>
-      Tied: ${totalTie}
-    </td></tr>`;
-
-  const bestTh=mtrShowBest?`<th style="background:${accent};color:#fff;padding:5px 8px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:.78rem;">Best</th>`:'';
-
-  const html=`
-<p class="meta"><strong>Motor A:</strong> ${lA} &nbsp;·&nbsp; <strong>Motor B:</strong> ${lB}
-  &nbsp;·&nbsp; Δ mode: <strong>${mtrDeltaMode==='pct'?'Percentage':'Value'}</strong>
-  &nbsp;·&nbsp; Best column: <strong>${mtrShowBest?'Shown':'Hidden'}</strong></p>
-<table style="width:100%;border-collapse:collapse;font-size:8.5pt;">
-  <thead><tr>
-    <th style="background:${accent};color:#fff;padding:5px 8px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:.78rem;">Region</th>
-    <th style="background:${accent};color:#fff;padding:5px 8px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:.78rem;">Parameter</th>
-    <th style="background:${accent};color:#fff;padding:5px 8px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:.78rem;">${lA}</th>
-    <th style="background:${accent};color:#fff;padding:5px 8px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:.78rem;">${lB}</th>
-    <th style="background:${accent};color:#fff;padding:5px 8px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:.78rem;">${deltaHdr}</th>
-    ${bestTh}
-  </tr></thead>
-  <tbody>${tbody}</tbody>
-</table>
-<p style="font-size:8pt;color:#94a3b8;margin-top:8px;">
-  Δ = A − B${mtrDeltaMode==='pct'?' (% relative to B)':''}. ★ = parameter winner.
-  Region winner by majority of Pout, Eff, PF.
-</p>`;
-
-  openPdfWindowEx(`Regions Table — ${lA} vs ${lB}`, html);
-  toast('Regions PDF opened','ok');
-});
+// ── Export PNG ──
 document.getElementById('mtrExpPng').addEventListener('click',()=>{
   if(!mtrMainChart){toast('No chart','err');return;}
   const src=document.getElementById('mtrMainChart');
@@ -4192,98 +4034,34 @@ Difference = ${lAe} $-$ ${lBe}.\\
 
   tex+=`\\end{document}\n`;
 
-  // ── HTML report (same rich style as mtrTblPdf) ──
-  savePdfSettings();
-  const _acc='#'+PDF_SET.accent;
+  // Build HTML table from the already-computed tex data
   const allRA2=[...mtrDataA.regs,...kA.ekRegs,...kA.crRegs];
   const allRB2=[...mtrDataB.regs,...kB.ekRegs,...kB.crRegs];
   const rNm2=[];[...allRA2,...allRB2].forEach(r=>{if(!rNm2.includes(r.Region))rNm2.push(r.Region);});
   const flds2=['Speed','Torque','Pin','Po','Eff','pf','It'];
   const fLb2=['Speed (RPM)','Torque (N·m)','Pin (W)','Pout (W)','Eff (%)','PF','It (A)'];
-  const dMode=mtrDeltaMode||'value';
-  const showB=typeof mtrShowBest==='undefined'?true:mtrShowBest;
-  const dHdr2=dMode==='pct'?'Δ % (A−B)':'Δ (A−B)';
-  const colCnt2=showB?6:5;
-
-  const BADGE2={
-    'No-Load':  {bg:'rgba(217,119,6,.13)',color:'#b45309',border:'rgba(217,119,6,.4)'},
-    'Rated':    {bg:'rgba(37,99,235,.10)',color:'#2563eb',border:'rgba(37,99,235,.35)'},
-    'Max Eff.': {bg:'rgba(22,163,74,.10)',color:'#16a34a',border:'rgba(22,163,74,.35)'},
-    'Max Torque':{bg:'rgba(220,38,38,.12)',color:'#dc2626',border:'rgba(220,38,38,.35)'},
-    'Locked':   {bg:'rgba(100,116,139,.12)',color:'#64748b',border:'rgba(100,116,139,.35)'},
-    'MaxPout':  {bg:'rgba(37,99,235,.10)',color:'#2563eb',border:'rgba(37,99,235,.25)'},
-  };
-  const getBdg2=(nm,isEK,isCR)=>{
-    if(isEK)return{bg:'rgba(220,38,38,.10)',color:'#dc2626',border:'rgba(220,38,38,.3)'};
-    if(isCR)return{bg:'rgba(124,58,237,.10)',color:'#7c3aed',border:'rgba(124,58,237,.3)'};
-    return BADGE2[nm]||{bg:'rgba(37,99,235,.08)',color:'#2563eb',border:'rgba(37,99,235,.2)'};
-  };
-
-  let tot2A=0,tot2B=0,tot2Tie=0;
-  let tbody2='';
-  rNm2.forEach((rn,ri)=>{
-    const rA2=allRA2.find(x=>x.Region===rn),rB2=allRB2.find(x=>x.Region===rn);
-    const isEK2=rn.includes('=')&&(rn.startsWith('Rated K')||rn.startsWith('K'));
-    const isCR2=mtrCRs.some(c=>c.name===rn);
-    const bdg2=getBdg2(rn,isEK2,isCR2);
-    const rowBg2=isEK2?'rgba(180,80,0,.04)':isCR2?'rgba(119,0,187,.04)':(ri%2===0?'#fff':'#f8fafd');
-    const f2w=['Eff','Po','pf'];let wA2w=0,wB2w=0;
-    f2w.forEach(f=>{const vA=rA2?rA2[f]:null,vB=rB2?rB2[f]:null;if(vA!=null&&vB!=null&&HIB[f]!==null&&Math.abs(vA-vB)>1e-9){if(HIB[f]?vA>vB:vA<vB)wA2w++;else wB2w++;}});
-    const rWin2=wA2w>wB2w?'A':wB2w>wA2w?'B':'tie';
-    flds2.forEach((f,fi)=>{
-      const vA=rA2&&rA2[f]!=null?rA2[f]:null,vB=rB2&&rB2[f]!=null?rB2[f]:null;
-      const delta2=vA!=null&&vB!=null?vA-vB:null;
-      const deltaPct2=delta2!=null&&vB!=null&&Math.abs(vB)>1e-9?(delta2/Math.abs(vB))*100:delta2!=null&&vA!=null&&Math.abs(vA)>1e-9?(delta2/Math.abs(vA))*100:null;
-      const hib2=HIB[f];let win2=null;
-      if(vA!=null&&vB!=null&&hib2!==null){if(Math.abs(vA-vB)<1e-9)win2='tie';else win2=(hib2?vA>vB:vA<vB)?'A':'B';}
-      if(win2==='A')tot2A++;else if(win2==='B')tot2B++;else if(win2==='tie')tot2Tie++;
-      let dTxt2='—',dCol2='#94a3b8';
-      if(dMode==='pct'){if(deltaPct2!=null){dTxt2=(deltaPct2>=0?'+':'')+deltaPct2.toFixed(1)+'%';dCol2=deltaPct2>0.001?'#16a34a':deltaPct2<-0.001?'#dc2626':'#94a3b8';}}
-      else{if(delta2!=null){dTxt2=(delta2>=0?'+':'')+delta2.toFixed(3);dCol2=delta2>0.0001?'#16a34a':delta2<-0.0001?'#dc2626':'#94a3b8';}}
-      let bCell2='';
-      if(showB){if(win2==='A')bCell2=`<span style="color:${CA};font-weight:700;">🏆 ${lA}</span>`;else if(win2==='B')bCell2=`<span style="color:${CB};font-weight:700;">🏆 ${lB}</span>`;else if(win2==='tie')bCell2=`<span style="color:#d97706;font-weight:600;">Tied</span>`;else bCell2='—';}
-      tbody2+=`<tr style="background:${rowBg2};">`;
-      if(fi===0){tbody2+=`<td rowspan="${flds2.length}" style="vertical-align:middle;border-right:2px solid #e2e8f0;padding:5px 9px;"><span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:${bdg2.bg};color:${bdg2.color};border:1px solid ${bdg2.border};">${rn}</span></td>`;}
-      tbody2+=`<td style="color:#64748b;font-size:.8rem;padding:3px 7px;">${fLb2[fi]}</td>`;
-      tbody2+=`<td style="${win2==='A'?`color:${CA};font-weight:700;`:''}padding:3px 7px;font-family:'JetBrains Mono',monospace;font-size:.8rem;">${vA!=null?(win2==='A'?'★ ':'')+vA.toFixed(3):'—'}</td>`;
-      tbody2+=`<td style="${win2==='B'?`color:${CB};font-weight:700;`:''}padding:3px 7px;font-family:'JetBrains Mono',monospace;font-size:.8rem;">${vB!=null?(win2==='B'?'★ ':'')+vB.toFixed(3):'—'}</td>`;
-      tbody2+=`<td style="font-weight:600;color:${dCol2};padding:3px 7px;font-family:'JetBrains Mono',monospace;font-size:.8rem;">${dTxt2}</td>`;
-      if(showB)tbody2+=`<td style="padding:3px 7px;font-size:.8rem;">${bCell2}</td>`;
-      tbody2+=`</tr>`;
-    });
-    const sc2=rWin2==='A'?CA:rWin2==='B'?CB:'#d97706';
-    const sn2=rWin2==='A'?lA:rWin2==='B'?lB:'Tied';
-    tbody2+=`<tr style="background:rgba(22,163,74,.05);"><td colspan="${colCnt2}" style="padding:2px 11px;font-size:.75rem;color:#16a34a;border-bottom:2px solid #e2e8f0;">★ <em>Region winner: <strong style="color:${sc2}">${sn2}</strong></em></td></tr>`;
-  });
-  tbody2+=`<tr style="background:#f0f4ff;"><td colspan="${colCnt2}" style="padding:5px 11px;font-size:.8rem;border-top:2px solid #e2e8f0;"><strong>TOTAL:</strong> <span style="color:${CA};margin-left:8px;">${lA}: ${tot2A} wins</span> <span style="color:#94a3b8;margin:0 6px;">·</span> <span style="color:${CB};">${lB}: ${tot2B} wins</span> <span style="color:#94a3b8;margin:0 6px;">·</span> Tied: ${tot2Tie}</td></tr>`;
-
-  const bTh2=showB?`<th style="background:${_acc};color:#fff;padding:5px 8px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:.78rem;">Best</th>`:'';
-  let html=`<p class="meta"><strong>Motor A:</strong> ${lA} &nbsp;·&nbsp; <strong>Motor B:</strong> ${lB} &nbsp;·&nbsp; Δ: <strong>${dMode==='pct'?'Percentage':'Value'}</strong> &nbsp;·&nbsp; Best: <strong>${showB?'Shown':'Hidden'}</strong></p>`;
-
-  // embed chart
+  let html=`<p class="meta"><strong>Motor A:</strong> ${lA} &nbsp;|&nbsp; <strong>Motor B:</strong> ${lB}</p>`;
+  // Include the motors comparison chart
   const mtrCanvas=document.getElementById('mtrMainChart');
   if(mtrCanvas&&mtrMainChart){
     try{
-      const off2=document.createElement('canvas');off2.width=mtrCanvas.width;off2.height=mtrCanvas.height;
-      const oc2=off2.getContext('2d');oc2.fillStyle='#fff';oc2.fillRect(0,0,off2.width,off2.height);oc2.drawImage(mtrCanvas,0,0);
-      html+=`<h2>Performance Overlay Chart</h2><img src="${off2.toDataURL('image/png')}" style="max-width:100%;border:1px solid #e2e8f0;border-radius:6px;margin-bottom:14px;display:block;">`;
+      const imgData=mtrCanvas.toDataURL('image/png');
+      html+=`<h3>Performance Overlay Chart</h3><img src="${imgData}" style="max-width:100%;border:1px solid #ddd;border-radius:6px;margin-bottom:12px;" alt="Motor Comparison Chart">`;
     }catch(e){}
   }
-
-  html+=`<h2>Side-by-Side Regions — All Parameters</h2>
-<table style="width:100%;border-collapse:collapse;font-size:8.5pt;">
-  <thead><tr>
-    <th style="background:${_acc};color:#fff;padding:5px 8px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:.78rem;">Region</th>
-    <th style="background:${_acc};color:#fff;padding:5px 8px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:.78rem;">Parameter</th>
-    <th style="background:${_acc};color:#fff;padding:5px 8px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:.78rem;">${lA}</th>
-    <th style="background:${_acc};color:#fff;padding:5px 8px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:.78rem;">${lB}</th>
-    <th style="background:${_acc};color:#fff;padding:5px 8px;text-align:left;font-family:'JetBrains Mono',monospace;font-size:.78rem;">${dHdr2}</th>
-    ${bTh2}
-  </tr></thead>
-  <tbody>${tbody2}</tbody>
-</table>
-<p style="font-size:8pt;color:#94a3b8;margin-top:8px;">Δ = A − B${dMode==='pct'?' (% relative to B)':''}. ★ = parameter winner. Region winner by majority of Pout, Eff, PF.</p>`;
-
+  html+=`<table><thead><tr><th>Region</th><th>Field</th><th>${lA}</th><th>${lB}</th><th>Δ (A−B)</th><th>Better</th></tr></thead><tbody>`;
+  rNm2.forEach(rn=>{
+    const rA2=allRA2.find(x=>x.Region===rn),rB2=allRB2.find(x=>x.Region===rn);
+    flds2.forEach((f,fi)=>{
+      const vA=rA2&&rA2[f]!=null?rA2[f]:null,vB=rB2&&rB2[f]!=null?rB2[f]:null;
+      const diff=(vA!=null&&vB!=null)?_fmt(vA-vB,3):'—';
+      const hib=HIB[f];
+      let win='—';
+      if(vA!=null&&vB!=null&&hib!==null){win=Math.abs(vA-vB)<1e-9?'Tied':(hib?vA>vB:vA<vB)?`<span class="win">▲ ${lA}</span>`:`<span class="win">▲ ${lB}</span>`;}
+      html+=`<tr><td>${fi===0?rn:''}</td><td>${fLb2[fi]}</td><td>${vA!=null?_fmt(vA,3):'—'}</td><td>${vB!=null?_fmt(vB,3):'—'}</td><td>${diff}</td><td>${win}</td></tr>`;
+    });
+  });
+  html+='</tbody></table>';
   openPdfWindowEx(`Motor Comparison — ${lA} vs ${lB}`, html);
   toast('PDF report opened','ok');
 });
