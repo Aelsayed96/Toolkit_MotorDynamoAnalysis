@@ -39,7 +39,9 @@ The **Dynamometer Analysis Toolkit** is a single-file, self-contained web applic
 
 ## Screenshots
 
-> *(Add screenshots of each major page here — Analyze, Compare Motors, Statistics)*
+<img width="1857" height="968" alt="image" src="https://github.com/user-attachments/assets/17853df8-9eae-42fc-a3fa-54e248eccb5c" />
+<img width="1223" height="1995" alt="image" src="https://github.com/user-attachments/assets/1f173068-bafd-4057-a284-f614871a0a22" />
+
 
 ---
 
