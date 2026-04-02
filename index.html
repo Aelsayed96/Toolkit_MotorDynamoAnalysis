@@ -536,7 +536,7 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
       onerror="this.style.display='none';this.parentElement.innerHTML='<div style=\'background:var(--accent);color:#fff;padding:4px 9px;border-radius:5px;font-family:var(--mono);font-size:.7rem;font-weight:bold\'>EA</div>';">
   </a>
   <div class="ht">
-    <h1>Dynamometer Analysis Tool — V 9.0</h1>
+    <h1>Dynamometer Analysis Tool — V 9.1</h1>
     <span>Motor Performance Analyzer · El Araby Group</span>
   </div>
   <div class="hr">
@@ -610,6 +610,115 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
         </div>
         <div><label class="fl">Speed Region Start (RPM)</label><input type="number" id="srs" value="0" step="1"/></div>
         <div><label class="fl">Hide Axis (e.g. pf)</label><input type="text" id="da" placeholder="e.g. pf"/></div>
+
+        <!-- ══ INTERPOLATION SETTINGS (inline quick-access) ══ -->
+        <div style="border-top:1px solid var(--border);padding-top:7px;display:flex;flex-direction:column;gap:6px;">
+          <div style="font-family:var(--mono);font-size:.58rem;color:var(--accent);letter-spacing:.07em;text-transform:uppercase;font-weight:600;">⚙ Interpolation Settings</div>
+
+          <!-- Speed step -->
+          <div style="display:flex;gap:6px;align-items:flex-end;">
+            <div style="flex:1;">
+              <label class="fl">Speed Step (RPM)</label>
+              <input type="number" id="sb-interp-step" value="1" min="1" max="200" step="1" title="RPM grid resolution. 1=max detail, higher=fewer points"/>
+            </div>
+            <button class="btn bg2" onclick="sbApplyInterpStep()" style="padding:4px 8px;font-size:.6rem;white-space:nowrap;flex-shrink:0;" title="Apply step to Config">✓ Apply</button>
+          </div>
+
+          <!-- Fitting method -->
+          <div>
+            <label class="fl">Fitting Method</label>
+            <select id="sb-fit-method" onchange="sbFitMethodChanged()">
+              <option value="linear">Linear (default)</option>
+              <option value="spline">Cubic Spline</option>
+              <option value="pchip">PCHIP (monotone)</option>
+              <option value="nearest">Nearest Neighbour</option>
+            </select>
+            <div style="font-family:var(--mono);font-size:.55rem;color:var(--dim);margin-top:2px;" id="sb-fit-hint">Piecewise linear between measured points.</div>
+          </div>
+
+          <!-- Smoothing -->
+          <div>
+            <label class="fl">Smoothing</label>
+            <div style="display:flex;gap:5px;align-items:center;">
+              <select id="sb-smooth-type" style="flex:1;" onchange="sbSmoothTypeChanged()">
+                <option value="none">None</option>
+                <option value="moving">Moving Average</option>
+                <option value="gaussian">Gaussian</option>
+              </select>
+              <input type="number" id="sb-smooth-win" value="5" min="3" max="99" step="2" style="width:54px;" title="Window size (odd number, raw-data points)" placeholder="Win"/>
+            </div>
+            <div id="sb-smooth-hint" style="display:none;font-family:var(--mono);font-size:.55rem;color:var(--dim);margin-top:2px;">Smoothing is applied to raw data before interpolation.</div>
+          </div>
+
+          <!-- Data-point exclusion — MANUAL CONFIRM workflow -->
+          <div style="display:flex;flex-direction:column;gap:5px;">
+            <label class="fl">Exclude Data Points</label>
+
+            <!-- Mode selector -->
+            <select id="sb-excl-mode" onchange="sbExclModeChanged()">
+              <option value="none">None</option>
+              <option value="iqr">IQR Outlier Detection</option>
+              <option value="range">Speed Range</option>
+              <option value="manual">Manual Point List</option>
+            </select>
+
+            <!-- ── IQR sub-controls ── -->
+            <div id="sb-excl-iqr-row" style="display:none;flex-direction:column;gap:4px;">
+              <div style="display:flex;gap:5px;align-items:center;">
+                <label class="fl" style="white-space:nowrap;margin-bottom:0;width:auto;">Fence ×</label>
+                <input type="number" id="sb-iqr-fence" value="1.5" min="0.5" max="5" step="0.1" style="flex:1;" title="Tukey fence: 1.5=standard outliers, 3=extreme only"/>
+                <select id="sb-iqr-channel" style="flex:1.4;" title="Channel to detect outliers on">
+                  <option value="T">Torque</option>
+                  <option value="P">Pin</option>
+                  <option value="Po">Pout</option>
+                  <option value="ef">Efficiency</option>
+                </select>
+              </div>
+              <button class="btn bgh" onclick="exclPreviewIQR()" style="font-size:.6rem;padding:4px 0;width:100%;">🔍 Preview Outliers</button>
+            </div>
+
+            <!-- ── Range sub-controls ── -->
+            <div id="sb-excl-range-row" style="display:none;flex-direction:column;gap:4px;">
+              <div style="display:flex;gap:4px;">
+                <div style="flex:1;"><label class="fl" style="font-size:.55rem;">From RPM</label><input type="number" id="sb-excl-from" value="0" step="1" min="0"/></div>
+                <div style="flex:1;"><label class="fl" style="font-size:.55rem;">To RPM</label><input type="number" id="sb-excl-to" value="0" step="1" min="0"/></div>
+              </div>
+              <button class="btn bgh" onclick="exclPreviewRange()" style="font-size:.6rem;padding:4px 0;width:100%;">🔍 Preview Range Points</button>
+            </div>
+
+            <!-- ── Manual list sub-controls ── -->
+            <div id="sb-excl-manual-row" style="display:none;flex-direction:column;gap:4px;">
+              <div style="font-family:var(--mono);font-size:.55rem;color:var(--dim);">Enter speed values to exclude (comma-separated or one per line).</div>
+              <textarea id="sb-excl-manual-txt" rows="3" placeholder="e.g. 850, 1020, 1350" style="font-size:.63rem;resize:vertical;"></textarea>
+              <button class="btn bgh" onclick="exclPreviewManual()" style="font-size:.6rem;padding:4px 0;width:100%;">🔍 Preview Manual Points</button>
+            </div>
+
+            <!-- ── Preview panel (shared, shown after any Preview click) ── -->
+            <div id="sb-excl-preview" style="display:none;flex-direction:column;gap:4px;border:1px solid var(--border);border-radius:6px;padding:6px;background:var(--surface2);">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+                <span id="sb-excl-preview-title" style="font-family:var(--mono);font-size:.58rem;color:var(--accent);font-weight:600;"></span>
+                <button onclick="exclClosePreview()" style="background:none;border:none;cursor:pointer;color:var(--dim);font-size:.75rem;padding:0 2px;" title="Dismiss">✕</button>
+              </div>
+              <div id="sb-excl-preview-table-wrap" style="max-height:130px;overflow-y:auto;border:1px solid var(--border);border-radius:4px;">
+                <table id="sb-excl-preview-table" style="width:100%;font-size:.58rem;min-width:0;font-family:var(--mono);border-collapse:collapse;"></table>
+              </div>
+              <div style="display:flex;gap:5px;">
+                <button class="btn bg2" onclick="exclApplyPending()" style="flex:1;font-size:.6rem;padding:4px 0;">✓ Apply Exclusion</button>
+                <button class="btn bs"  onclick="exclClosePreview()" style="font-size:.6rem;padding:4px 8px;">Cancel</button>
+              </div>
+            </div>
+
+            <!-- ── Active exclusion status badge ── -->
+            <div id="sb-excl-status" style="display:none;flex-direction:column;gap:3px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;">
+                <span id="sb-excl-status-label" style="font-family:var(--mono);font-size:.58rem;color:var(--ok);font-weight:600;"></span>
+                <button class="btn bs" onclick="exclClearAll()" style="font-size:.58rem;padding:2px 7px;" title="Remove all exclusions and reprocess">✕ Clear</button>
+              </div>
+              <div id="sb-excl-chips" style="display:flex;flex-wrap:wrap;gap:3px;max-height:60px;overflow-y:auto;"></div>
+            </div>
+          </div>
+
+        </div>
       </div>
 
       <!-- Upload pane -->
@@ -627,6 +736,27 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
         <input type="file" id="fi" multiple accept=".mdf,.csv,.xlsx,.xls" style="display:none;">
         <div class="flist" id="fl2"></div>
         <button id="upl-clear-all" class="btn bs" onclick="uplFiles=[];rfl();" style="display:none;font-size:.61rem;padding:3px 8px;margin-top:2px;">✕ Clear All Files</button>
+        <button id="upl-preview" class="btn bgh" style="font-size:.62rem;padding:4px 9px;margin-top:3px;width:100%;">👁 Preview Raw File…</button>
+        <!-- Preview panel -->
+        <div id="upl-preview-panel" style="display:none;flex-direction:column;gap:5px;margin-top:4px;">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            <label class="fl" style="display:inline;margin:0;">File:</label>
+            <select id="prev-file-sel" style="flex:1;font-size:.63rem;padding:3px 5px;"></select>
+            <button id="prev-close" class="btn bs" style="padding:2px 7px;font-size:.6rem;">✕</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            <label class="fl" style="display:inline;margin:0;white-space:nowrap;">Start Row:</label>
+            <input type="number" id="prev-startrow" value="0" min="0" step="1" style="width:55px;font-size:.63rem;padding:3px 5px;">
+            <label class="fl" style="display:inline;margin:0;white-space:nowrap;">Show rows:</label>
+            <input type="number" id="prev-maxrows" value="20" min="5" max="200" step="5" style="width:55px;font-size:.63rem;padding:3px 5px;">
+            <button id="prev-refresh" class="btn bp" style="padding:3px 9px;font-size:.62rem;">↻ Refresh</button>
+            <button id="prev-apply-startrow" class="btn bg2" style="padding:3px 9px;font-size:.62rem;" title="Apply this start row to Config">✓ Apply to Config</button>
+          </div>
+          <div id="prev-info" style="font-family:var(--mono);font-size:.57rem;color:var(--dim);line-height:1.5;"></div>
+          <div id="prev-table-wrap" style="overflow:auto;max-height:220px;border:1px solid var(--border);border-radius:5px;">
+            <table id="prev-table" style="min-width:600px;font-size:.6rem;"></table>
+          </div>
+        </div>
       </div>
 
       <!-- Regions pane -->
@@ -996,6 +1126,12 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
       <button class="btn bgh" id="mtrExpPng">🖼 PNG</button>
     </div>
     <button class="btn bw bfu" id="mtrExpLatex">⬇ Export PDF</button>
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;background:var(--surface2);border-radius:5px;padding:4px 6px;margin:1px 0;">
+      <span style="font-size:.6rem;color:var(--dim);font-family:var(--mono);letter-spacing:.06em;">.TEX OPTIONS</span>
+      <label class="co" title="Include Δ column in .tex"><input type="checkbox" id="texIncDelta" checked><span class="cb"></span><span style="font-size:.63rem;">Δ col</span></label>
+      <label class="co" title="Use % for Δ"><input type="checkbox" id="texDeltaPct"><span class="cb"></span><span style="font-size:.63rem;">Δ%</span></label>
+      <label class="co" title="Include Best column in .tex"><input type="checkbox" id="texIncBest" checked><span class="cb"></span><span style="font-size:.63rem;">Best col</span></label>
+    </div>
     <button class="btn bgh bfu" id="mtrExpLatexTex" title="Export raw .tex file">⬇ Export .tex</button>
   </div>
 </div><!-- /sidebar -->
@@ -1221,6 +1357,88 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
         <span id="cfg-arr-interp" style="margin-left:auto;font-size:.7rem;transition:transform .2s;">▾</span>
       </div>
       <div id="cfg-body-interp" style="padding:12px 14px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      </div>
+    </div>
+
+    <!-- ═══ FILE READER SETTINGS ═══ -->
+    <div class="cc2" id="cfg-block-reader">
+      <div class="cc2h" style="cursor:pointer;" onclick="cfgToggle('reader')">
+        <span>⚙ FILE READER SETTINGS — Start Row, Interpolation, MDF Default</span>
+        <span id="cfg-arr-reader" style="margin-left:auto;font-size:.7rem;transition:transform .2s;">▾</span>
+      </div>
+      <div id="cfg-body-reader" style="padding:14px 16px;display:flex;flex-direction:column;gap:16px;">
+
+        <!-- Help -->
+        <div style="background:rgba(37,99,235,.05);border:1px solid rgba(37,99,235,.18);border-radius:6px;padding:9px 13px;font-family:var(--mono);font-size:.62rem;color:var(--dim);line-height:1.7;">
+          <strong style="color:var(--accent);">Start Row:</strong> First data row (0-indexed). 0 = auto-detect. Core XLS default = auto (finds header row). &nbsp;
+          <strong style="color:var(--accent);">Interp Step:</strong> RPM step for interpolation grid (default 1). Higher = fewer points, faster. &nbsp;
+          <strong style="color:var(--accent);">MDF Default:</strong> Default motor type selected when Analyze/Motors pages load.
+        </div>
+
+        <!-- Row 1: Start rows per type -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+          <div>
+            <label class="fl">Magtrol / CSV Start Row</label>
+            <input type="number" id="cfg-startrow-magtrol" value="0" min="0" step="1" placeholder="0 = auto">
+            <div style="font-family:var(--mono);font-size:.57rem;color:var(--dim);margin-top:3px;">0 = use all rows (PapaParse handles headers)</div>
+          </div>
+          <div>
+            <label class="fl">Core XLS Start Row</label>
+            <input type="number" id="cfg-startrow-core" value="0" min="0" step="1" placeholder="0 = auto-detect">
+            <div style="font-family:var(--mono);font-size:.57rem;color:var(--dim);margin-top:3px;">0 = auto-detect header row (finds n+T). Override if detection fails.</div>
+          </div>
+          <div>
+            <label class="fl">Interp XLSX Start Row</label>
+            <input type="number" id="cfg-startrow-interp" value="0" min="0" step="1" placeholder="0 = auto">
+            <div style="font-family:var(--mono);font-size:.57rem;color:var(--dim);margin-top:3px;">0 = sheet_to_json auto. Set >0 to skip extra header rows.</div>
+          </div>
+        </div>
+
+        <!-- Row 2: Interpolation step + MDF default -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div>
+            <label class="fl">Interpolation Step (RPM)</label>
+            <input type="number" id="cfg-interp-step" value="1" min="1" max="50" step="1">
+            <div style="font-family:var(--mono);font-size:.57rem;color:var(--dim);margin-top:3px;">1 RPM = full resolution. 5 = faster with slight smoothing. Applied to all parsers.</div>
+          </div>
+          <div>
+            <label class="fl">Default MDF Config</label>
+            <div class="rg" style="margin-top:5px;">
+              <label class="ro"><input type="radio" name="cfg-mdf-default" value="0" checked><span>SPIM</span></label>
+              <label class="ro"><input type="radio" name="cfg-mdf-default" value="1"><span>1-Phase</span></label>
+              <label class="ro"><input type="radio" name="cfg-mdf-default" value="2"><span>3-Phase</span></label>
+            </div>
+            <div style="font-family:var(--mono);font-size:.57rem;color:var(--dim);margin-top:3px;">Sets default MDF selection on Analyze &amp; Motors pages.</div>
+          </div>
+        </div>
+
+        <!-- Row 3: Core XLS column order editor -->
+        <div>
+          <label class="fl">Core XLS — Expected Column Order</label>
+          <div style="font-family:var(--mono);font-size:.6rem;color:var(--dim);margin:4px 0 7px;">Drag or edit the order of columns as they appear in the Core Dynamo XLS file. The parser maps these in order to the data header row found.</div>
+          <div id="cfg-core-cols" style="display:flex;flex-wrap:wrap;gap:5px;"></div>
+          <div style="display:flex;gap:5px;margin-top:8px;flex-wrap:wrap;align-items:center;">
+            <input type="text" id="cfg-core-col-inp" placeholder="e.g. Uc" style="width:90px;font-size:.65rem;padding:3px 7px;">
+            <button onclick="cfgAddCoreCol()" class="btn bgh" style="padding:3px 8px;font-size:.62rem;">+ Add Col</button>
+            <button onclick="cfgResetCoreColsToDefault()" class="btn bs" style="padding:3px 8px;font-size:.62rem;">↺ Reset</button>
+            <span style="font-family:var(--mono);font-size:.58rem;color:var(--dim);">Default: U I P1 T n P2 EFF P.F I1 I2 Uc</span>
+          </div>
+        </div>
+
+        <!-- Row 4: Sheet name for interp -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div>
+            <label class="fl">Interp XLSX — Sheet Name Pattern</label>
+            <input type="text" id="cfg-interp-sheet" value="interp" placeholder="e.g. interp">
+            <div style="font-family:var(--mono);font-size:.57rem;color:var(--dim);margin-top:3px;">Substring match (case-insensitive). Falls back to first sheet if not found.</div>
+          </div>
+          <div>
+            <label class="fl">Core XLS — Header Search Limit (rows)</label>
+            <input type="number" id="cfg-core-hdrlimit" value="8" min="1" max="30" step="1">
+            <div style="font-family:var(--mono);font-size:.57rem;color:var(--dim);margin-top:3px;">Scans first N rows to find the header row containing speed+torque columns.</div>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -1915,8 +2133,10 @@ function parseCoreXLS(file){
     r.readAsArrayBuffer(file);
   });
 }
+// Register on window so CFG_READER patch can override it later
+window.parseCoreXLS = parseCoreXLS;
 
-// -- Interpolated XLSX: read from sheet named "Interpolated" (fallback to first sheet) --
+// ── Interpolated XLSX: read from sheet named "Interpolated" (fallback to first sheet) --
 function parseInterpXLSX(file){
   return new Promise((res,rej)=>{
     const base=file.name.replace(/\.[^.]+$/,'');
@@ -1933,6 +2153,8 @@ function parseInterpXLSX(file){
     r.readAsArrayBuffer(file);
   });
 }
+// Register originals on window so routers can override them later via CFG_READER patch
+window.parseInterpXLSX = parseInterpXLSX;
 
 // ── Standard Magtrol / CSV / MDF parser (unchanged) ──
 function parseStandard(file){
@@ -1944,10 +2166,12 @@ function parseStandard(file){
 }
 
 // ── Master parse router — uses selected file type ──
+// Note: parseCoreXLS / parseInterpXLSX are overridden on window by CFG_READER patch below.
+// Routers always call window.* so the CFG-aware versions are used.
 function parseF(file, ftypeOverride){
   const ftype=ftypeOverride||document.querySelector('input[name="ftype"]:checked')?.value||'standard';
-  if(ftype==='core') return parseCoreXLS(file);
-  if(ftype==='interp') return parseInterpXLSX(file);
+  if(ftype==='core') return window.parseCoreXLS(file);
+  if(ftype==='interp') return window.parseInterpXLSX(file);
   return parseStandard(file);
 }
 
@@ -1955,16 +2179,16 @@ function parseF(file, ftypeOverride){
 function mtrParseRouted(file, slot){
   const name=slot==='A'?'ftypeA':'ftypeB';
   const ftype=document.querySelector(`input[name="${name}"]:checked`)?.value||'standard';
-  if(ftype==='core') return parseCoreXLS(file);
-  if(ftype==='interp') return parseInterpXLSX(file);
+  if(ftype==='core') return window.parseCoreXLS(file);
+  if(ftype==='interp') return window.parseInterpXLSX(file);
   return parseStandard(file);
 }
 
 // ── Same for stats tab ──
 function parseStats(file){
   const ftype=document.querySelector('input[name="sftype"]:checked')?.value||'standard';
-  if(ftype==='core') return parseCoreXLS(file);
-  if(ftype==='interp') return parseInterpXLSX(file);
+  if(ftype==='core') return window.parseCoreXLS(file);
+  if(ftype==='interp') return window.parseInterpXLSX(file);
   return parseStandard(file);
 }
 function fc(h,aliases){for(const a of aliases){const f=h.find(x=>x&&x.toString().toLowerCase().includes(a.toLowerCase()));if(f)return f;}return null;}
@@ -3064,9 +3288,14 @@ document.getElementById('expAvgCurve').addEventListener('click',async()=>{
   const a1=document.createElement('a');a1.href=URL.createObjectURL(xb);a1.download=`AvgMotorCurve_${ts}.xlsx`;a1.click();
   await new Promise(r=>setTimeout(r,300));
   // PNG chart
-  setEO('Rendering PNG\u2026',70);
-  const W=1280,H=600;
+  setEO('Rendering PNG…',70);
+  const W=2400,H=680;
+  const hiddenDivPng=document.createElement('div');
+  hiddenDivPng.style.cssText=`position:fixed;left:-9999px;top:-9999px;width:2400px;height:680px;visibility:hidden;pointer-events:none;`;
+  document.body.appendChild(hiddenDivPng);
   const oc=document.createElement('canvas');oc.width=W;oc.height=H;
+  oc.style.width=W+'px';oc.style.height=H+'px';
+  hiddenDivPng.appendChild(oc);
   const mn_e=gridded.eff.mean,sd_e=gridded.eff.std;
   const mn_T=gridded.Torque.mean,sd_T=gridded.Torque.std;
   const mn_Pi=gridded.Pin.mean,mn_Po=gridded.Pout.mean;
@@ -3095,6 +3324,7 @@ document.getElementById('expAvgCurve').addEventListener('click',async()=>{
         data:avgSpd.map((s,i)=>({x:s,y:mn_It[i]}))},
     ]},
     options:{responsive:false,maintainAspectRatio:false,animation:{duration:0},
+      layout:{padding:{left:8,right:480,top:24,bottom:8}},
       plugins:{
         legend:{labels:{color:'#5a6890',font:{family:STS_MONO,size:10},boxWidth:14,padding:7,
           filter:i=>!i.text.includes('band')}},
@@ -3111,20 +3341,24 @@ document.getElementById('expAvgCurve').addEventListener('click',async()=>{
           ticks:{color:'#005faa',font:{family:STS_MONO,size:9}},grid:{color:'rgba(100,120,180,.10)'}},
         y1:{type:'linear',position:'right',
           title:{display:true,text:'Power (W)',color:'#c04000',font:{family:STS_MONO,size:10}},
-          ticks:{color:'#c04000',font:{family:STS_MONO,size:9}},grid:{display:false}},
+          ticks:{color:'#c04000',font:{family:STS_MONO,size:9}},grid:{display:false},
+          afterFit(axis){axis.width=90;}},
         y2:{type:'linear',position:'right',offset:true,
           title:{display:true,text:'Eff (%) / PF',color:'#8a6000',font:{family:STS_MONO,size:10}},
-          ticks:{color:'#8a6000',font:{family:STS_MONO,size:9}},grid:{display:false}},
+          ticks:{color:'#8a6000',font:{family:STS_MONO,size:9}},grid:{display:false},
+          afterFit(axis){axis.width=90;}},
         y3:{type:'linear',position:'right',offset:true,
           title:{display:true,text:'It (A)',color:'#aa0033',font:{family:STS_MONO,size:10}},
-          ticks:{color:'#aa0033',font:{family:STS_MONO,size:9}},grid:{display:false}},
+          ticks:{color:'#aa0033',font:{family:STS_MONO,size:9}},grid:{display:false},
+          afterFit(axis){axis.width=80;}},
       }
     }
   });
-  await new Promise(r=>setTimeout(r,270));
+  await new Promise(r=>setTimeout(r,700));
   const out=document.createElement('canvas');out.width=W;out.height=H;
   const octx=out.getContext('2d');octx.fillStyle='#fff';octx.fillRect(0,0,W,H);octx.drawImage(oc,0,0);
   tc.destroy();
+  document.body.removeChild(hiddenDivPng);
   const a2=document.createElement('a');a2.href=out.toDataURL('image/png');a2.download=`AvgMotorCurve_${ts}.png`;a2.click();
   await new Promise(r=>setTimeout(r,300));
   hideEO();toast('Average Motor Curve exported!','ok');log('=== Avg Curve XLSX+PNG downloaded ===','ok');
@@ -3158,7 +3392,7 @@ document.getElementById('expAvgCurvePdf').addEventListener('click', async () => 
     };
   });
 
-  const W = Math.max(PDF_SET.chartW, 900), H = Math.max(PDF_SET.chartH, 420);
+  const W = Math.max(PDF_SET.chartW, 1200), H = Math.max(PDF_SET.chartH, 480);
   const dpi = PDF_SET.dpi;
 
   const hiddenDiv = document.createElement('div');
@@ -3194,7 +3428,7 @@ document.getElementById('expAvgCurvePdf').addEventListener('click', async () => 
     ]},
     options: {
       responsive: false, maintainAspectRatio: false, animation: { duration: 0 },
-      layout: { padding: { left: 8, right: Math.round(W*dpi*0.09), top: 16, bottom: 8 } },
+      layout: { padding: { left: 8, right: 320, top: 20, bottom: 8 } },
       plugins: {
         legend: { labels: { color: '#5a6890', font: { family: STS_MONO, size: 10 }, boxWidth: 14, padding: 7, filter: i => !i.text.includes('band') } },
         title: { display: true, text: `Production Average Motor Curve  ·  n = ${keys.length} units  ·  Shaded = ±1σ`, color: '#1a2040', font: { family: STS_MONO, size: 13, weight: 'bold' } }
@@ -3209,7 +3443,7 @@ document.getElementById('expAvgCurvePdf').addEventListener('click', async () => 
     }
   });
 
-  await new Promise(r => setTimeout(r, 120));
+  await new Promise(r => setTimeout(r, 400));
 
   const bg = document.createElement('canvas'); bg.width = W * dpi; bg.height = H * dpi;
   const bgCtx = bg.getContext('2d');
@@ -3934,183 +4168,182 @@ document.getElementById('mtrExpLatex').addEventListener('click',()=>{
   const lAe=esc(lA),lBe=esc(lB);
   const nPts=40;
 
-  let tex=`% ================================================================
-% Motor Performance Comparison — ${lAe} vs.\\ ${lBe}
-% Generated: ${new Date().toLocaleString()}
-% ================================================================
-\\documentclass[a4paper,11pt]{article}
-\\usepackage[margin=2cm]{geometry}
-\\usepackage{booktabs,longtable,multirow,xcolor,colortbl,graphicx,float}
-\\usepackage{pgfplots}
-\\pgfplotsset{compat=1.18}
+  // Smart Y-axis range helper — same as in .tex export
+  function niceRangeP(rawMin,rawMax,forceZeroMin){
+    const span=rawMax-rawMin||Math.abs(rawMax)||1;
+    const margin=span*0.10;
+    let lo=rawMin-margin, hi=rawMax+margin;
+    if(forceZeroMin&&lo>0)lo=0;
+    const rough=(hi-lo)/6;
+    const mag=Math.pow(10,Math.floor(Math.log10(rough)));
+    const step=[1,2,2.5,5,10].map(m=>m*mag).find(ss=>ss>=rough)||mag*10;
+    lo=Math.floor(lo/step)*step;
+    hi=Math.ceil(hi/step)*step;
+    return{yMin:+lo.toFixed(6),yMax:+hi.toFixed(6),yStep:+step.toFixed(6)};
+  }
+  let tex='';
+  tex+=`% ================================================================\n`;
+  tex+=`% Motor Performance Comparison — ${lAe} vs.\\ ${lBe}\n`;
+  tex+=`% Generated: ${new Date().toLocaleString()}\n`;
+  tex+=`% ================================================================\n`;
+  tex+=`\\documentclass[a4paper,11pt]{article}\n`;
+  tex+=`\\usepackage[margin=2cm]{geometry}\n`;
+  tex+=`\\usepackage[table,dvipsnames]{xcolor}\n`;
+  tex+=`\\usepackage{booktabs,longtable,multirow,colortbl,graphicx,float,amsmath}\n`;
+  tex+=`\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\n`;
+  // Color definitions
+  tex+=`\\definecolor{hdr}{HTML}{1A2040}\n`;
+  tex+=`\\definecolor{hdrtext}{HTML}{FFFFFF}\n`;
+  tex+=`\\definecolor{rowA}{HTML}{EEF3FF}\n`;
+  tex+=`\\definecolor{rowB}{HTML}{FFFFFF}\n`;
+  tex+=`\\definecolor{rated}{HTML}{FFF9C4}\n`;
+  tex+=`\\definecolor{wingreen}{HTML}{D6F0DD}\n`;
+  tex+=`\\definecolor{wincell}{HTML}{1A7A40}\n`;
+  tex+=`\\definecolor{better}{HTML}{1D4ED8}\n`;
+  tex+=`\\definecolor{worse}{HTML}{B91C1C}\n`;
+  tex+=`\\definecolor{neutral}{HTML}{5A6890}\n`;
+  tex+=`\\definecolor{deltapos}{HTML}{15803D}\n`;
+  tex+=`\\definecolor{deltaneg}{HTML}{B91C1C}\n`;
+  tex+=`\\definecolor{NavyBlue}{HTML}{003366}\n`;
+  tex+=`\\definecolor{MidBlue}{HTML}{005FAA}\n`;
+  tex+=`\\definecolor{BurntOrange}{HTML}{C04000}\n`;
+  tex+=`\\definecolor{ForestGreen}{HTML}{2E7000}\n`;
+  tex+=`\\definecolor{GoldBrown}{HTML}{8A6000}\n\n`;
+  tex+=`\\newcommand{\\win}[1]{\\textcolor{wincell}{\\textbf{#1}}}\n`;
+  tex+=`\\newcommand{\\MotA}{\\textcolor{better}{\\textbf{${lAe}}}}\n`;
+  tex+=`\\newcommand{\\MotB}{\\textcolor{worse}{\\textbf{${lBe}}}}\n`;
+  tex+=`\\newcommand{\\Tied}{\\textcolor{neutral}{Tied}}\n\n`;
+  tex+=`\\begin{document}\n\n`;
+  tex+=`\\title{\\textbf{Motor Performance Comparison}\\\\[6pt]{\\large ${lAe} vs.\\ ${lBe}}}\n`;
+  tex+=`\\author{El Araby Group $\\cdot$ Dynamometer Lab}\n`;
+  tex+=`\\date{\\today}\n\\maketitle\n\n`;
 
-\\definecolor{hdr}{HTML}{1A2040}
-\\definecolor{hdrtext}{HTML}{FFFFFF}
-\\definecolor{rowA}{HTML}{EAF4FB}
-\\definecolor{rowB}{HTML}{FFFFFF}
-\\definecolor{rated}{HTML}{FFF9C4}
-\\definecolor{wingreen}{HTML}{D6F0DD}
-\\definecolor{wincell}{HTML}{1A7A40}
-\\definecolor{better}{HTML}{1A7A40}
-\\definecolor{worse}{HTML}{BB2233}
-\\definecolor{neutral}{HTML}{5A6890}
-\\definecolor{NavyBlue}{HTML}{003366}
-\\definecolor{MidBlue}{HTML}{005FAA}
-\\definecolor{BurntOrange}{HTML}{C04000}
-\\definecolor{ForestGreen}{HTML}{2E7000}
-\\definecolor{GoldBrown}{HTML}{8A6000}
+  // ── TABLE (longtable, respects mtrDeltaMode + mtrShowBest) ──
+  const dMode2=mtrDeltaMode||'value';
+  const showB2=typeof mtrShowBest==='undefined'?true:mtrShowBest;
+  const deltaHdr2=dMode2==='pct'?'$\\Delta$ (\\%)':'$\\Delta$ (A$-$B)';
+  const colCnt=showB2?6:5;
+  tex+=`\\section{Operating Regions Comparison}\n\n`;
+  // Motor A/B definition block before table
+  tex+=`\\noindent\\textbf{Motor A:} ${lAe}\\quad\\textbf{Motor B:} ${lBe}\\\\[4pt]\n`;
+  tex+=`\\setlength{\\tabcolsep}{5pt}\n\\renewcommand{\\arraystretch}{1.3}\n`;
+  let colSpec2=`>{\\bfseries}l l r r r`;
+  if(showB2)colSpec2+=` l`;
+  const numColsTex=showB2?6:5;
+  tex+=`\\begin{longtable}{${colSpec2}}\n`;
+  // Header — \\cellcolor per cell avoids rowcolor+textcolor conflict in longtable
+  const hcell=(t)=>`\\cellcolor{hdr}\\textcolor{hdrtext}{\\textbf{${t}}}`;
+  let hdrRow2=hcell('Region')+' & '+hcell('Parameter')+' & '+hcell('Motor~A')+' & '+hcell('Motor~B')+' & '+hcell(deltaHdr2);
+  if(showB2)hdrRow2+=` & ${hcell('Best')}`;
+  hdrRow2+=` \\\\\n`;
+  tex+=`\\toprule\n${hdrRow2}\\midrule\n\\endfirsthead\n\\toprule\n${hdrRow2}\\midrule\n\\endhead\n\\midrule\n\\multicolumn{${numColsTex}}{r}{\\footnotesize\\textit{continued\\ldots}}\\\\\n\\endfoot\n\\bottomrule\n\\endlastfoot\n`;
 
-\\newcommand{\\win}[1]{\\textcolor{wincell}{\\textbf{#1}}}
-\\newcommand{\\MotA}{\\textbf{\\textcolor{better}{${lAe}}}}
-\\newcommand{\\MotB}{\\textbf{\\textcolor{worse}{${lBe}}}}
-\\newcommand{\\Tied}{\\textbf{\\textcolor{neutral}{Tied}}}
-
-\\begin{document}
-\\section*{Motor Performance Comparison --- ${lAe} vs.\\ ${lBe}}
-
-`;
-
-  // ── TABLE ──
-  tex+=`\\begin{table}[H]
-\\centering
-\\caption{Motor Performance Comparison --- ${lAe} vs.\\ ${lBe} with Difference \\& Best}
-\\scriptsize
-\\setlength{\\tabcolsep}{5pt}
-\\renewcommand{\\arraystretch}{1.3}
-\\begin{tabular}{>{\\bfseries}l l r r r l}
-\\toprule
-\\rowcolor{hdr}
-\\multicolumn{1}{l}{\\textcolor{hdrtext}{\\textbf{Region}}} &
-\\textcolor{hdrtext}{\\textbf{Parameter}} &
-\\textcolor{hdrtext}{\\textbf{${lAe}}} &
-\\textcolor{hdrtext}{\\textbf{${lBe}}} &
-\\textcolor{hdrtext}{\\textbf{Difference}} &
-\\textcolor{hdrtext}{\\textbf{Best}} \\\\
-\\midrule
-`;
+  const higherBetterP={Speed:null,Torque:null,Pin:false,Po:true,Eff:true,pf:true,It:false};
+  const fldFmtP={Speed:1,Torque:3,Pin:1,Po:1,Eff:2,pf:4,It:3};
+  const fldsP=['Speed','Torque','Pin','Po','Eff','pf','It'];
+  const fLblP=['Speed (RPM)','Torque ($N\\cdot m$)','$P_{\\mathrm{in}}$ (W)','$P_{\\mathrm{out}}$ (W)','Eff (\\%)','Power Factor','$I_t$ (A)'];
+  const escP=s=>String(s).replace(/_/g,'\\_').replace(/%/g,'\\%').replace(/&/g,'\\&').replace(/\$/g,'\\$').replace(/#/g,'\\#').replace(/"/g,"''");
 
   rN.forEach((rNm,ri)=>{
     const rA=allRA.find(x=>x.Region===rNm),rB=allRB.find(x=>x.Region===rNm);
-    const rowCol=ri%2===0?'rowA':'rowB';
+    const rc2=ri%2===0?'rowA':'rowB';
     const isEK=rNm.includes('=')&&rNm.startsWith('Rated');
     const isCR=mtrCRs.some(c=>c.name===rNm);
-    const useCol=isEK||isCR?'rated':rowCol;
-
-    // Determine region winner
+    const useCol=isEK||isCR?'rated':rc2;
     const f2=['Eff','Po','pf'];let wA2=0,wB2=0;
-    f2.forEach(f=>{
-      const vA=rA?rA[f]:null,vB=rB?rB[f]:null;
-      if(vA!=null&&vB!=null&&HIB[f]!==null&&Math.abs(vA-vB)>1e-9){if(HIB[f]?vA>vB:vA<vB)wA2++;else wB2++;}
-    });
+    f2.forEach(f=>{const vA=rA?rA[f]:null,vB=rB?rB[f]:null;if(vA!=null&&vB!=null&&HIB[f]!==null&&Math.abs(vA-vB)>1e-9){if(HIB[f]?vA>vB:vA<vB)wA2++;else wB2++;}});
     const rWin=wA2>wB2?'A':wB2>wA2?'B':'tie';
-
-    flds.forEach((f,fi)=>{
-      const vA=rA&&rA[f]!=null?rA[f]:null,vB=rB&&rB[f]!=null?rB[f]:null;
-      const delta=vA!=null&&vB!=null?vA-vB:null;
-      const hib=HIB[f];
-      let winnerSide=null;
-      if(vA!=null&&vB!=null&&hib!==null&&Math.abs(vA-vB)>1e-9)winnerSide=hib?vA>vB?'A':'B':vA<vB?'A':'B';
-
+    fldsP.forEach((f,fi)=>{
       tex+=`\\rowcolor{${useCol}}\n`;
-      if(fi===0)tex+=`\\multirow{${flds.length}}{*}{${esc(rNm)}}\n`;
-      tex+=`  & ${fLbl[fi]}`;
-      tex+=` & ${vA!=null?(winnerSide==='A'?`\\win{${vA.toFixed(3)}}`:`${vA.toFixed(3)}`):'---'}`;
-      tex+=` & ${vB!=null?(winnerSide==='B'?`\\win{${vB.toFixed(3)}}`:`${vB.toFixed(3)}`):'---'}`;
-      // Difference
-      if(delta!=null){tex+=` & $${delta>=0?'+':''}${delta.toFixed(3)}$`;}else tex+=' & ---';
-      // Best
-      if(winnerSide==='A')tex+=` & \\MotA`;
-      else if(winnerSide==='B')tex+=` & \\MotB`;
-      else if(vA!=null&&vB!=null&&Math.abs(vA-vB)<1e-9)tex+=` & \\Tied`;
-      else tex+=` & ---`;
-      tex+=` \\\\\n`;
+      // NO multirow — print region name only on fi===0, empty on rest
+      // Avoids multirow+rowcolor conflict that swallows the cell content
+      const regionCell=fi===0?`\\textbf{${escP(rNm)}}`:'';
+      const vA=rA&&rA[f]!=null?rA[f]:null,vB=rB&&rB[f]!=null?rB[f]:null;
+      const dp=fldFmtP[f]||3;
+      const hb=higherBetterP[f];
+      let winner=null;
+      if(vA!=null&&vB!=null&&hb!==null){if(Math.abs(vA-vB)<1e-9)winner='tie';else winner=(hb?vA>vB:vA<vB)?'A':'B';}
+      const sA=vA!=null?(winner==='A'?`\\win{${vA.toFixed(dp)}}`:vA.toFixed(dp)):'---';
+      const sB=vB!=null?(winner==='B'?`\\win{${vB.toFixed(dp)}}`:vB.toFixed(dp)):'---';
+      let sDelta='---';
+      if(vA!=null&&vB!=null){
+        if(dMode2==='pct'){
+          const denom=Math.abs(vB)>1e-9?vB:vA;
+          if(Math.abs(denom)>1e-9){const pct=((vA-vB)/Math.abs(denom))*100;sDelta=(pct>=0?`\\textcolor{deltapos}{$+$${pct.toFixed(1)}\\%}`:`\\textcolor{deltaneg}{${pct.toFixed(1)}\\%}`);}
+        } else {
+          const delta=vA-vB;
+          sDelta=delta>=0?`\\textcolor{deltapos}{$+$${delta.toFixed(dp)}}`:`\\textcolor{deltaneg}{${delta.toFixed(dp)}}`;
+        }
+      }
+      let row=`${regionCell} & ${fLblP[fi]} & ${sA} & ${sB} & ${sDelta}`;
+      if(showB2){
+        let sBest='---';
+        if(hb===null)sBest='\\textcolor{neutral}{---}';
+        else if(winner==='tie')sBest='\\Tied';
+        else if(winner==='A')sBest='\\MotA';
+        else if(winner==='B')sBest='\\MotB';
+        row+=` & ${sBest}`;
+      }
+      tex+=row+` \\\\\n`;
+      if(fi<fldsP.length-1)tex+=`\\cline{2-${numColsTex}}\n`;
     });
-
-    // Star winner row
     const starTex=rWin==='A'?'\\MotA':rWin==='B'?'\\MotB':'\\Tied';
-    tex+=`\\rowcolor{wingreen}\n\\multicolumn{5}{l}{\\hspace{2em}$\\star$ \\textit{Overall Winner --- ${esc(rNm)} Region}} &\n  ${starTex} \\\\\n`;
-    tex+=ri<rN.length-1?`\\midrule\n`:`\\bottomrule\n`;
-    tex+=`\n`;
+    tex+=`\\rowcolor{wingreen}\\multicolumn{${numColsTex}}{l}{\\hspace{1em}$\\star$ \\textit{Region winner:} ${starTex}}\\\\\n`;
+    tex+=`\\midrule\n\n`;
   });
-
-  tex+=`\\end{tabular}
-
-\\bigskip
-\\noindent
-\\footnotesize
-\\textbf{Notes:}
-Difference = ${lAe} $-$ ${lBe}.\\
-\\textcolor{better}{$\\blacksquare$}\\ Higher is better for Speed, Torque, Pout, Eff, PF.\\
-\\textcolor{worse}{$\\blacksquare$}\\ Lower is better for Pin.\\
-\\win{Bold green value} = winner for that parameter.\\ Region winner by majority of Pout, Eff, PF.
-
-\\end{table}
-
-`;
-
+  const dnote=dMode2==='pct'?'$\\Delta\\% = (A-B)/|B|\\times100$':'$\\Delta = A - B$';
+  tex+=`\\caption{Operating regions comparison: ${lAe} vs.\\ ${lBe}}\n\\label{tab:regions_cmp}\n\\end{longtable}\n`;
+  tex+=`{\\footnotesize ${dnote}. \\win{Bold green} = parameter winner. Region winner by majority of $P_{\\mathrm{out}}$, Eff, PF.}\n\n`;
   // ── FIGURES ──
+  tex+=`\\section{Performance Curves}\n\n`;
   const metFigs=[
-    {ip:'Torque',lbl:'Torque',yl:'Torque ($N\\cdot m$)',cA:'MidBlue',cB:'BurntOrange'},
-    {ip:'eff',lbl:'Efficiency',yl:'Efficiency (\\%)',cA:'GoldBrown',cB:'BurntOrange'},
-    {ip:'Pin',lbl:'Input Power',yl:'$P_{in}$ (W)',cA:'BurntOrange',cB:'MidBlue'},
-    {ip:'Pout',lbl:'Output Power',yl:'$P_{out}$ (W)',cA:'ForestGreen',cB:'BurntOrange'},
-    {ip:'PF',lbl:'Power Factor',yl:'Power Factor',cA:'GoldBrown',cB:'BurntOrange'},
-    {ip:'It',lbl:'Total Current',yl:'$I_t$ (A)',cA:'MidBlue',cB:'BurntOrange'},
+    {ip:'Torque',lbl:'Torque',      yl:'Torque ($N\\\\cdot m$)',          cA:'MidBlue',   cB:'BurntOrange', forceZero:true},
+    {ip:'eff',   lbl:'Efficiency',  yl:'Efficiency (\\\\%)',              cA:'GoldBrown', cB:'BurntOrange', forceZero:true},
+    {ip:'Pin',   lbl:'Input Power', yl:'$P_{\\\\mathrm{in}}$ (W)',        cA:'BurntOrange',cB:'MidBlue',    forceZero:true},
+    {ip:'Pout',  lbl:'Output Power',yl:'$P_{\\\\mathrm{out}}$ (W)',       cA:'ForestGreen',cB:'BurntOrange',forceZero:true},
+    {ip:'PF',    lbl:'Power Factor',yl:'Power Factor',                    cA:'GoldBrown', cB:'BurntOrange', forceZero:false},
+    {ip:'It',    lbl:'Total Current',yl:'$I_t$ (A)',                      cA:'MidBlue',   cB:'BurntOrange', forceZero:true},
   ];
-
+  const allSpds=[...mtrDataA.speed,...mtrDataB.speed];
+  const xMinAll=Math.floor(Math.min(...allSpds)/50)*50;
+  const xMaxAll=Math.ceil(Math.max(...allSpds)/50)*50;
+  const xTickDistAll=Math.ceil((xMaxAll-xMinAll)/6/100)*100||200;
   metFigs.forEach(m=>{
     const arrA=mtrDataA.ip[m.ip],arrB=mtrDataB.ip[m.ip];
     if(!arrA&&!arrB)return;
-    const allVals=[...(arrA||[]),...(arrB||[])].filter(v=>!isNaN(v)&&v!=null);
+    const allVals=[...(arrA||[]),...(arrB||[])].filter(v=>v!=null&&!isNaN(v)&&v!==0);
     if(!allVals.length)return;
-    const allSpds=[...mtrDataA.speed,...mtrDataB.speed];
-    const xMin=Math.floor(Math.min(...allSpds)/10)*10;
-    const xMax=Math.ceil(Math.max(...allSpds)/10)*10;
-    const rawYMinM=Math.min(...allVals);
-    const rawYMaxM=Math.max(...allVals);
-    const ySpanM=rawYMaxM-rawYMinM||rawYMaxM||1;
-    const yMinM=rawYMinM>0?Math.max(0,Math.floor((rawYMinM-ySpanM*0.08)/5)*5):Math.floor((rawYMinM-ySpanM*0.08)/5)*5;
-    const yMax2=Math.ceil((rawYMaxM+ySpanM*0.12)/5)*5||10;
-    const stepA=Math.max(1,Math.floor(mtrDataA.speed.length/nPts));
-    const stepB=Math.max(1,Math.floor(mtrDataB.speed.length/nPts));
-    const ptsA=arrA?mtrDataA.speed.filter((_,i)=>i%stepA===0).map((s,j)=>`(${s.toFixed(0)},${(arrA[j*stepA]||0).toFixed(4)})`).join(''):'';
-    const ptsB=arrB?mtrDataB.speed.filter((_,i)=>i%stepB===0).map((s,j)=>`(${s.toFixed(0)},${(arrB[j*stepB]||0).toFixed(4)})`).join(''):'';
-
-    tex+=`\\begin{figure}[H]
-\\centering
-\\begin{tikzpicture}
-\\begin{axis}[
-  width=0.85\\linewidth, height=6cm,
-  xlabel={Speed (RPM)},
-  ylabel={${m.yl}},
-  xmin=${xMin}, xmax=${xMax},
-  ymin=${yMinM}, ymax=${yMax2},
-  grid=both, grid style={line width=0.3pt, draw=gray!30},
-  legend pos=south east,
-  title={${m.lbl} vs.\\ Speed --- ${lAe} vs.\\ ${lBe}},
-  title style={color=NavyBlue, font=\\bfseries},
-  axis line style={color=NavyBlue},
-  tick style={color=NavyBlue},
-]\n`;
-    if(ptsA)tex+=`\\addplot[color=${m.cA}, thick] coordinates {${ptsA}};\n\\addlegendentry{${lAe}}\n`;
+    const {yMin:yMinP,yMax:yMaxP,yStep:yStepP}=niceRangeP(Math.min(...allVals),Math.max(...allVals),m.forceZero);
+    const stepA=Math.max(1,Math.floor(mtrDataA.speed.length/60));
+    const stepB=Math.max(1,Math.floor(mtrDataB.speed.length/60));
+    const ptsA=arrA?mtrDataA.speed.reduce((acc,s,i)=>{if(i%stepA!==0)return acc;const v=arrA[i];if(v==null||isNaN(v)||v===0)return acc;return acc+`(${s.toFixed(0)},${v.toFixed(4)})`;},''):'';
+    const ptsB=arrB?mtrDataB.speed.reduce((acc,s,i)=>{if(i%stepB!==0)return acc;const v=arrB[i];if(v==null||isNaN(v)||v===0)return acc;return acc+`(${s.toFixed(0)},${v.toFixed(4)})`;},''):'';
+    tex+=`\\begin{figure}[H]\n\\centering\n\\begin{tikzpicture}\n\\begin{axis}[\n`;
+    tex+=`  width=0.88\\linewidth, height=5.8cm,\n`;
+    tex+=`  xlabel={Speed (RPM)}, ylabel={${m.yl}},\n`;
+    tex+=`  xmin=${xMinAll}, xmax=${xMaxAll}, ymin=${yMinP}, ymax=${yMaxP},\n`;
+    tex+=`  ytick distance=${yStepP},\n`;
+    tex+=`  xtick distance=${xTickDistAll},\n`;
+    tex+=`  scaled x ticks=false,\n`;
+    tex+=`  x tick label style={/pgf/number format/fixed, /pgf/number format/set thousands separator={}},\n`;
+    tex+=`  y tick label style={/pgf/number format/fixed, /pgf/number format/precision=3},\n`;
+    tex+=`  grid=both, minor grid style={line width=0.15pt,draw=gray!15}, major grid style={line width=0.3pt,draw=gray!30},\n`;
+    tex+=`  minor x tick num=1, minor y tick num=1,\n`;
+    tex+=`  legend pos=south east, legend style={font=\\small},\n`;
+    tex+=`  title={\\textbf{${m.lbl}} vs.\\ Speed},\n`;
+    tex+=`  title style={color=NavyBlue, font=\\bfseries\\small},\n`;
+    tex+=`  axis line style={color=NavyBlue}, tick style={color=NavyBlue},\n`;
+    tex+=`]\n`;
+    if(ptsA)tex+=`\\addplot[color=${m.cA}, thick, solid] coordinates {${ptsA}};\n\\addlegendentry{${lAe}}\n`;
     if(ptsB)tex+=`\\addplot[color=${m.cB}, thick, dashed] coordinates {${ptsB}};\n\\addlegendentry{${lBe}}\n`;
-    // K curves on Torque figure
     if(m.ip==='Torque'&&kA.K1>0){
-      const stepR=Math.max(1,Math.floor(mtrDataA.speed.length/nPts));
+      const stepR=Math.max(1,Math.floor(mtrDataA.speed.length/60));
       const lcPts=mtrDataA.speed.filter((_,i)=>i%stepR===0).map(s=>`(${s.toFixed(0)},${(kA.K1*Math.pow(2*Math.PI*s/60,2)).toFixed(4)})`).join('');
-      tex+=`\\addplot[color=ForestGreen, thick, dashed] coordinates {${lcPts}};\n\\addlegendentry{$T_L$ ($K_1=${kA.K1.toFixed(5)}$)}\n`;
+      tex+=`\\addplot[color=ForestGreen, thick, dotted] coordinates {${lcPts}};\n\\addlegendentry{$T_L$ ($K_1=${kA.K1.toFixed(5)}$)}\n`;
     }
-    tex+=`\\end{axis}
-\\end{tikzpicture}
-\\caption{${m.lbl} vs.\\ Speed comparison: ${lAe} vs.\\ ${lBe}}
-\\label{fig:${m.ip}_speed}
-\\end{figure}
-
-`;
+    tex+=`\\end{axis}\n\\end{tikzpicture}\n\\caption{${m.lbl} vs.\\ Speed: ${lAe} vs.\\ ${lBe}}\n\\label{fig:${m.ip}_speed}\n\\end{figure}\n\n`;
   });
-
-  tex+=`\\end{document}\n`;
-
+  tex+=`\\end{document}\n`
   // ── HTML report — rich themed table matching Regions PDF ──
   savePdfSettings();
   const _acc='#'+PDF_SET.accent;
@@ -4177,43 +4410,274 @@ Difference = ${lAe} $-$ ${lBe}.\\
   ${bTh2}</tr></thead><tbody>${tbody2}</tbody></table>
 <p style="font-size:8pt;color:#94a3b8;margin-top:8px;">Δ = A − B${dMode==='pct'?' (% relative to B)':''}. ★ = parameter winner. Region winner by majority of Pout, Eff, PF.</p>`;
   openPdfWindowEx(`Motor Comparison — ${lA} vs ${lB}`,html);
-  toast('PDF report opened','ok');
+  // Also auto-download .tex file
+  const ts2=latexTs();
+  const blobTex=new Blob([tex],{type:'text/plain'});
+  const aTex=document.createElement('a');aTex.href=URL.createObjectURL(blobTex);aTex.download=`CompareMotors_${lAe}_vs_${lBe}_${ts2}.tex`;aTex.click();
+  toast('PDF opened + .tex downloaded','ok');
 });
 
 // ─── Motors .tex export ───────────────────────────────────────────────────────
 document.getElementById('mtrExpLatexTex').addEventListener('click',()=>{
   if(!mtrDataA||!mtrDataB){toast('Run comparison first','err');return;}
+  const texInclDelta=document.getElementById('texIncDelta')?.checked!==false;
+  const texInclBest=document.getElementById('texIncBest')?.checked!==false;
+  const texUsePct=document.getElementById('texDeltaPct')?.checked===true;
   const lA=mtrDataA.name,lB=mtrDataB.name;
   const kA=applyKs(mtrDataA),kB=applyKs(mtrDataB);
   const allRA=[...mtrDataA.regs,...kA.ekRegs,...kA.crRegs];
   const allRB=[...mtrDataB.regs,...kB.ekRegs,...kB.crRegs];
   const rN=[];[...allRA,...allRB].forEach(r=>{if(!rN.includes(r.Region))rN.push(r.Region);});
   const flds=['Speed','Torque','Pin','Po','Eff','pf','It'];
-  const fLbl=['Speed (RPM)','Torque (N\\textperiodcentered m)','Pin (W)','Pout (W)','Eff (\\%)','PF','It (A)'];
-  const esc=s=>String(s).replace(/_/g,'\\_').replace(/%/g,'\\%').replace(/&/g,'\\&').replace(/\$/g,'\\$').replace(/#/g,'\\#').replace(/"/g,"''");
+  const fLbl=['Speed (RPM)','Torque ($N\\cdot m$)','$P_{in}$ (W)','$P_{out}$ (W)','Eff (\\%)','Power Factor','$I_t$ (A)'];
+  // Escape special LaTeX chars in motor names
+  const esc=s=>String(s).replace(/\\/g,'\\textbackslash{}').replace(/_/g,'\\_').replace(/%/g,'\\%').replace(/&/g,'\\&').replace(/\$/g,'\\$').replace(/#/g,'\\#').replace(/\^/g,'\\^{}').replace(/~/g,'\\~{}').replace(/\{/g,'\\{').replace(/\}/g,'\\}');
   const lAe=esc(lA),lBe=esc(lB);
-  const nPts=40;
-  let tex=`% ================================================================\n% Motor Performance Comparison — ${lAe} vs.\\ ${lBe}\n% Generated: ${new Date().toLocaleString()}\n% ================================================================\n\\documentclass[a4paper,11pt]{article}\n\\usepackage[margin=2cm]{geometry}\n\\usepackage{booktabs,longtable,multirow,xcolor,colortbl,graphicx,float}\n\\usepackage{pgfplots}\n\\pgfplotsset{compat=1.18}\n\n\\definecolor{hdr}{HTML}{1A2040}\n\\definecolor{hdrtext}{HTML}{FFFFFF}\n\\definecolor{rowA}{HTML}{F5F8FF}\n\\definecolor{rowB}{HTML}{FFFFFF}\n\\definecolor{motorA}{HTML}{005FAA}\n\\definecolor{motorB}{HTML}{C04000}\n\n\\begin{document}\n\n\\title{Motor Performance Comparison\\\\\\\\ ${lAe} vs.\\ ${lBe}}\n\\author{El Araby Group \\textperiodcentered\\ Dynamometer Lab}\n\\date{\\today}\n\\maketitle\n\n\\section{Performance Curve Overlay}\n`;
-  const ipKeys=[{ip:'Torque',lbl:'Torque',yl:'Torque ($N\\\\cdot m$)'},{ip:'eff',lbl:'Efficiency',yl:'Efficiency (\\\\%)'},{ip:'Pin',lbl:'Input Power',yl:'$P_{in}$ (W)'},{ip:'Pout',lbl:'Output Power',yl:'$P_{out}$ (W)'},{ip:'PF',lbl:'Power Factor',yl:'Power Factor'},{ip:'It',lbl:'Current',yl:'$I_t$ (A)'}];
+  const nPts=60;
+  // Smart Y-axis — never collapse tight ranges to 0-5
+  function niceRange(rawMin,rawMax,forceZeroMin){
+    const span=rawMax-rawMin||Math.abs(rawMax)||1;
+    const margin=span*0.10;
+    let lo=rawMin-margin, hi=rawMax+margin;
+    if(forceZeroMin&&lo>0)lo=0;
+    const rough=(hi-lo)/6;
+    const mag=Math.pow(10,Math.floor(Math.log10(Math.max(rough,1e-10))));
+    const step=[1,2,2.5,5,10].map(m=>m*mag).find(s=>s>=rough)||mag*10;
+    lo=Math.floor(lo/step)*step;
+    hi=Math.ceil(hi/step)*step;
+    if(hi<=lo)hi=lo+step;
+    return{yMin:parseFloat(lo.toFixed(8)),yMax:parseFloat(hi.toFixed(8)),yStep:parseFloat(step.toFixed(8))};
+  }
+  // Build preamble
+  let L=[];
+  L.push('% ================================================================');
+  L.push('% Motor Performance Comparison — '+lAe+' vs. '+lBe);
+  L.push('% Generated: '+new Date().toLocaleString());
+  L.push('% ================================================================');
+  L.push('\\documentclass[a4paper,11pt]{article}');
+  L.push('\\usepackage[margin=2cm]{geometry}');
+  L.push('\\usepackage[table,dvipsnames]{xcolor}');
+  L.push('\\usepackage{booktabs,longtable,multirow,graphicx,float,amsmath,colortbl}');
+  L.push('\\usepackage{pgfplots}');
+  L.push('\\pgfplotsset{compat=1.18}');
+  L.push('');
+  L.push('% --- Color definitions ---');
+  L.push('\\definecolor{HdrBg}{HTML}{1A2040}');
+  L.push('\\definecolor{HdrFg}{HTML}{FFFFFF}');
+  L.push('\\definecolor{RowA}{HTML}{EEF3FF}');
+  L.push('\\definecolor{RowB}{HTML}{FFFFFF}');
+  L.push('\\definecolor{MotA}{HTML}{005FAA}');
+  L.push('\\definecolor{MotB}{HTML}{C04000}');
+  L.push('\\definecolor{WinA}{HTML}{1D4ED8}');
+  L.push('\\definecolor{WinB}{HTML}{B91C1C}');
+  L.push('\\definecolor{DPos}{HTML}{15803D}');
+  L.push('\\definecolor{DNeg}{HTML}{DC2626}');
+  L.push('\\definecolor{DNeu}{HTML}{64748B}');
+  L.push('');
+  L.push('% --- pgfplots axis style ---');
+  L.push('\\pgfplotsset{');
+  L.push('  mtraxis/.style={');
+  L.push('    width=0.88\\linewidth, height=6cm,');
+  L.push('    grid=both,');
+  L.push('    major grid style={line width=0.35pt, draw=gray!30},');
+  L.push('    minor grid style={line width=0.15pt, draw=gray!15},');
+  L.push('    minor x tick num=1, minor y tick num=1,');
+  L.push('    scaled x ticks=false,');
+  L.push('    x tick label style={/pgf/number format/fixed,');
+  L.push('                        /pgf/number format/set thousands separator={}},');
+  L.push('    y tick label style={/pgf/number format/fixed,');
+  L.push('                        /pgf/number format/precision=3},');
+  L.push('    legend pos=south east,');
+  L.push('    legend style={font=\\small, draw=gray!50},');
+  L.push('    title style={color=MotA, font=\\bfseries\\small},');
+  L.push('  }');
+  L.push('}');
+  L.push('');
+  L.push('\\begin{document}');
+  L.push('');
+  L.push('\\title{\\textbf{Motor Performance Comparison}\\\\');
+  L.push('       {\\large '+lAe+' vs.\\ '+lBe+'}}');
+  L.push('\\author{El Araby Group $\\cdot$ Dynamometer Lab}');
+  L.push('\\date{\\today}');
+  L.push('\\maketitle');
+  L.push('\\tableofcontents');
+  L.push('\\newpage');
+  L.push('');
+  L.push('\\section{Performance Curve Overlay}');
+  // --- Plots ---
+  const ipKeys=[
+    {ip:'Torque', lbl:'Torque',       yl:'Torque ($N\\cdot m$)',     forceZero:true},
+    {ip:'eff',    lbl:'Efficiency',   yl:'Efficiency (\\%)',          forceZero:true},
+    {ip:'Pin',    lbl:'Input Power',  yl:'$P_{\\mathrm{in}}$ (W)',    forceZero:true},
+    {ip:'Pout',   lbl:'Output Power', yl:'$P_{\\mathrm{out}}$ (W)',   forceZero:true},
+    {ip:'PF',     lbl:'Power Factor', yl:'Power Factor',              forceZero:false},
+    {ip:'It',     lbl:'Current',      yl:'$I_t$ (A)',                 forceZero:true}
+  ];
+  const SA=mtrDataA.speed, SB=mtrDataB.speed;
+  // Skip speed=0 for x range
+  const validSA=SA.filter(v=>v>0), validSB=SB.filter(v=>v>0);
+  const xMinAll=Math.floor(Math.min(...validSA,...validSB)/50)*50;
+  const xMaxAll=Math.ceil(Math.max(...validSA,...validSB)/50)*50;
+  const xTickDist=Math.ceil((xMaxAll-xMinAll)/6/100)*100||200;
   ipKeys.forEach(m=>{
-    const aA=mtrDataA.ip[m.ip],aB=mtrDataB.ip[m.ip];
-    if(!aA||!aA.length||!aB||!aB.length)return;
-    const SA=mtrDataA.speed,SB=mtrDataB.speed;
-    const allY=[...aA,...aB].filter(v=>v!=null&&!isNaN(v));
+    const aA=mtrDataA.ip[m.ip]||[], aB=mtrDataB.ip[m.ip]||[];
+    // Only valid non-zero values for range
+    const allY=[...aA,...aB].filter(v=>v!=null&&!isNaN(v)&&v!==0&&isFinite(v));
     if(!allY.length)return;
     const rawYMin=Math.min(...allY),rawYMax=Math.max(...allY);
-    const ySpan=rawYMax-rawYMin||rawYMax||1;
-    const yMin=rawYMin>0?Math.max(0,Math.floor((rawYMin-ySpan*0.1)/5)*5):Math.floor((rawYMin-ySpan*0.1)/5)*5;
-    const yMax=Math.ceil((rawYMax+ySpan*0.12)/5)*5||10;
-    const xMin=Math.floor(Math.min(...SA,...SB)/10)*10;
-    const xMax=Math.ceil(Math.max(...SA,...SB)/10)*10;
+    const {yMin,yMax,yStep}=niceRange(rawYMin,rawYMax,m.forceZero);
     const stepA=Math.max(1,Math.floor(SA.length/nPts));
     const stepB=Math.max(1,Math.floor(SB.length/nPts));
-    const ptsA=SA.filter((_,i)=>i%stepA===0).map((s,j)=>`(${s.toFixed(0)},${(aA[j*stepA]||0).toFixed(4)})`).join('');
-    const ptsB=SB.filter((_,i)=>i%stepB===0).map((s,j)=>`(${s.toFixed(0)},${(aB[j*stepB]||0).toFixed(4)})`).join('');
-    tex+=`\\begin{figure}[H]\n\\centering\n\\begin{tikzpicture}\n\\begin{axis}[\n  width=0.85\\linewidth, height=5.5cm,\n  xlabel={Speed (RPM)}, ylabel={${m.yl}},\n  xmin=${xMin}, xmax=${xMax}, ymin=${yMin}, ymax=${yMax},\n  grid=both, grid style={line width=0.3pt, draw=gray!25},\n  legend pos=south east,\n  title={${m.lbl} vs.\\ Speed: ${lAe} vs.\\ ${lBe}},\n  title style={color=motorA, font=\\bfseries},\n]\n\\addplot[color=motorA, thick] coordinates {${ptsA}};\n\\addlegendentry{${lAe}}\n\\addplot[color=motorB, thick, dashed] coordinates {${ptsB}};\n\\addlegendentry{${lBe}}\n\\end{axis}\n\\end{tikzpicture}\n\\caption{${m.lbl} vs.\\ Speed comparison}\n\\label{fig:${m.ip}_cmp}\n\\end{figure}\n\n`;
+    // coords: skip if speed=0 or value null/NaN/0
+    const ptsA=SA.reduce((acc,s,i)=>{
+      if(i%stepA!==0||s===0)return acc;
+      const v=aA[i];if(v==null||isNaN(v)||!isFinite(v))return acc;
+      return acc+'('+s.toFixed(0)+','+v.toFixed(4)+')';
+    },'');
+    const ptsB=SB.reduce((acc,s,i)=>{
+      if(i%stepB!==0||s===0)return acc;
+      const v=aB[i];if(v==null||isNaN(v)||!isFinite(v))return acc;
+      return acc+'('+s.toFixed(0)+','+v.toFixed(4)+')';
+    },'');
+    if(!ptsA||!ptsB)return;
+    L.push('\\begin{figure}[H]');
+    L.push('\\centering');
+    L.push('\\begin{tikzpicture}');
+    L.push('\\begin{axis}[mtraxis,');
+    L.push('  xlabel={Speed (RPM)}, ylabel={'+m.yl+'},');
+    L.push('  xmin='+xMinAll+', xmax='+xMaxAll+',');
+    L.push('  ymin='+yMin+', ymax='+yMax+',');
+    L.push('  ytick distance='+yStep+',');
+    L.push('  xtick distance='+xTickDist+',');
+    L.push('  title={\\textbf{'+m.lbl+'} vs.\\ Speed},');
+    L.push(']');
+    L.push('\\addplot[color=MotA, thick, solid] coordinates {'+ptsA+'};');
+    L.push('\\addlegendentry{'+lAe+'}');
+    L.push('\\addplot[color=MotB, thick, dashed] coordinates {'+ptsB+'};');
+    L.push('\\addlegendentry{'+lBe+'}');
+    L.push('\\end{axis}');
+    L.push('\\end{tikzpicture}');
+    L.push('\\caption{'+m.lbl+' vs.\\ Speed: '+lAe+' vs.\\ '+lBe+'}');
+    L.push('\\label{fig:cmp_'+m.ip+'}');
+    L.push('\\end{figure}');
+    L.push('');
   });
-  tex+=`\\end{document}\n`;
+  // --- Region Comparison Table ---
+  const numCols=4+(texInclDelta?1:0)+(texInclBest?1:0);
+  const HIB={Speed:null,Torque:null,Pin:false,Po:true,Eff:true,pf:true,It:false};
+  const FMT={Speed:1,Torque:3,Pin:1,Po:1,Eff:2,pf:4,It:3};
+  // \cellcolor per header cell — avoids rowcolor+textcolor conflict in longtable
+  const hCell=(txt)=>'\\cellcolor{HdrBg}\\textcolor{HdrFg}{\\textbf{'+txt+'}}';
+  const mkHdrRow=()=>{
+    let cells=[hCell('Region'),hCell('Parameter'),hCell('Motor~A'),hCell('Motor~B')];
+    if(texInclDelta)cells.push(hCell('$\\Delta$'+(texUsePct?'\\;(\\%)':' (A$-$B)')));
+    if(texInclBest)cells.push(hCell('Best'));
+    return cells.join(' & ')+' \\\\';
+  };
+  let colSpec='l l r r';
+  if(texInclDelta)colSpec+=' r';
+  if(texInclBest)colSpec+=' l';
+  L.push('\\section{Operating Regions Comparison}');
+  L.push('');
+  // Motor A/B definition line immediately before the table
+  L.push('\\noindent\\textbf{Motor~A:} '+lAe+'\\quad\\textbf{Motor~B:} '+lBe+'\\\\[4pt]');
+  L.push('\\setlength{\\tabcolsep}{6pt}');
+  L.push('\\renewcommand{\\arraystretch}{1.3}');
+  L.push('\\begin{longtable}{'+colSpec+'}');
+  L.push('\\toprule');
+  L.push(mkHdrRow());
+  L.push('\\midrule');
+  L.push('\\endfirsthead');
+  L.push('\\toprule');
+  L.push(mkHdrRow());
+  L.push('\\midrule');
+  L.push('\\endhead');
+  L.push('\\midrule');
+  L.push('\\multicolumn{'+numCols+'}{r}{\\footnotesize\\textit{continued on next page\\ldots}}\\\\');
+  L.push('\\endfoot');
+  L.push('\\bottomrule');
+  L.push('\\endlastfoot');
+  rN.forEach((rNm,ri)=>{
+    const rc=ri%2===0?'RowA':'RowB';
+    const rA=allRA.find(x=>x.Region===rNm);
+    const rB=allRB.find(x=>x.Region===rNm);
+    let wA=0,wB=0;
+    ['Eff','Po','pf'].forEach(f=>{
+      const vA2=rA?rA[f]:null,vB2=rB?rB[f]:null;
+      if(vA2!=null&&vB2!=null&&Math.abs(vA2-vB2)>1e-9){if(vA2>vB2)wA++;else wB++;}
+    });
+    const regionWin=wA>wB?'A':wB>wA?'B':'tie';
+    flds.forEach((f,fi)=>{
+      const vA=rA!=null&&rA[f]!=null?rA[f]:null;
+      const vB=rB!=null&&rB[f]!=null?rB[f]:null;
+      const dp=FMT[f]||3;
+      const hb=HIB[f];
+      let winner=null;
+      if(vA!=null&&vB!=null&&hb!==null){
+        if(Math.abs(vA-vB)<1e-9)winner='tie';
+        else winner=(hb?vA>vB:vA<vB)?'A':'B';
+      }
+      const fmtV=(v,side)=>{
+        if(v==null)return '\\textcolor{DNeu}{---}';
+        const str=v.toFixed(dp);
+        if(winner===side)return '\\textcolor{'+(side==='A'?'WinA':'WinB')+'}{\\textbf{'+str+'}}';
+        return str;
+      };
+      // NO \multirow — print region name on fi===0 only, empty cell on rest
+      // \multirow+\rowcolor conflict causes the region name to vanish in PDF
+      const rnCol=regionWin==='A'?'WinA':regionWin==='B'?'WinB':'DNeu';
+      const regionCell=fi===0?'\\textbf{\\textcolor{'+rnCol+'}{'+esc(rNm)+'}}':'';
+      let row='\\rowcolor{'+rc+'}';
+      row+=regionCell+' & \\textit{'+fLbl[fi]+'} & '+fmtV(vA,'A')+' & '+fmtV(vB,'B');
+      if(texInclDelta){
+        let sd='\\textcolor{DNeu}{---}';
+        if(vA!=null&&vB!=null){
+          if(texUsePct){
+            const denom=Math.abs(vB)>1e-9?vB:(Math.abs(vA)>1e-9?vA:null);
+            if(denom!=null){
+              const pct=((vA-vB)/Math.abs(denom))*100;
+              const col=Math.abs(pct)<0.01?'DNeu':pct>0?'DPos':'DNeg';
+              sd='\\textcolor{'+col+'}{'+(pct>=0?'$+$':'')+pct.toFixed(1)+'\\%}';
+            }
+          } else {
+            const delta=vA-vB;
+            const col=Math.abs(delta)<1e-9?'DNeu':delta>0?'DPos':'DNeg';
+            sd='\\textcolor{'+col+'}{'+(delta>0?'$+$':'')+delta.toFixed(dp)+'}';
+          }
+        }
+        row+=' & '+sd;
+      }
+      if(texInclBest){
+        let sb='\\textcolor{DNeu}{---}';
+        if(hb===null)sb='\\textcolor{DNeu}{---}';
+        else if(winner==='tie')sb='\\textcolor{DNeu}{Tied}';
+        else if(winner==='A')sb='\\textcolor{WinA}{\\textbf{Motor~A}}';
+        else if(winner==='B')sb='\\textcolor{WinB}{\\textbf{Motor~B}}';
+        row+=' & '+sb;
+      }
+      row+=' \\\\';
+      L.push(row);
+      // Light cline between parameter rows (skip last one)
+      if(fi<flds.length-1)L.push('\\cline{2-'+numCols+'}');
+    });
+    // Region winner row — single multicolumn, winner as Motor A / Motor B
+    const rwCol=regionWin==='A'?'WinA':regionWin==='B'?'WinB':'DNeu';
+    const rwShort=regionWin==='A'?'Motor~A':regionWin==='B'?'Motor~B':'Tied';
+    L.push('\\rowcolor{'+rc+'}\\multicolumn{'+numCols+'}{l}{\\quad\\footnotesize\\textit{$\\star$~Region winner: \\textcolor{'+rwCol+'}{\\textbf{'+rwShort+'}}}}\\\\');
+    L.push('\\midrule');
+  });
+  L.push('\\caption{Operating regions comparison: '+lAe+' vs.\\ '+lBe+'}');
+  L.push('\\label{tab:regions_cmp}');
+  L.push('\\end{longtable}');
+  L.push('');
+  const deltaNote=texUsePct?'$\\Delta\\,\\% = (A-B)/|B|\\times100$':'$\\Delta = A - B$';
+  let footLine='\\noindent{\\small '+deltaNote+'.';
+  if(texInclBest)footLine+=' \\textbf{Best}: higher Eff/PF/$P_{\\mathrm{out}}$ preferred; lower $P_{\\mathrm{in}}$/$I_t$ preferred. Speed \\& Torque: no winner.';
+  footLine+='}';
+  L.push(footLine);
+  L.push('');
+  L.push('\\end{document}');
+  const tex=L.join('\n');
   const ts=latexTs();
   const blob=new Blob([tex],{type:'text/plain'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`CompareMotors_${lAe}_vs_${lBe}_${ts}.tex`;a.click();
@@ -4750,10 +5214,11 @@ document.getElementById('expAnalyzeLatexTex').addEventListener('click',()=>{
         const xMin=Math.floor(Math.min(...S)/10)*10;
         const xMax=Math.ceil(Math.max(...S)/10)*10;
         const step=Math.max(1,Math.floor(S.length/nPts));
-        const pts=S.filter((_,i)=>i%step===0).map((s,j)=>`(${s.toFixed(0)},${(arr[j*step]||0).toFixed(4)})`).join('');
-        body+=`\\begin{figure}[H]\n\\centering\n\\begin{tikzpicture}\n\\begin{axis}[\n  width=${fw}\\linewidth, height=5.5cm,\n  xlabel={Speed (RPM)}, ylabel={${m.yl}},\n  xmin=${xMin}, xmax=${xMax}, ymin=${yMin}, ymax=${yMax},\n  grid=both, grid style={line width=0.3pt, draw=gray!25},\n  legend pos=south east,\n  title={${m.lbl} vs.\\ Speed --- ${texEsc(data.name)}},\n  title style={color=accent, font=\\bfseries},\n  axis line style={color=accent}, tick style={color=accent},\n]\n\\addplot[color=motorA, thick] coordinates {${pts}};\n\\addlegendentry{${texEsc(data.name)}}\n`;
+        const pts=S.reduce((acc,s,i)=>{if(i%step!==0)return acc;const v=arr[i];if(v==null||isNaN(v))return acc;acc+=`(${s.toFixed(0)},${v.toFixed(4)})`;return acc;},'');
+        const xTickDistA=Math.ceil((xMax-xMin)/6/100)*100||200;
+        body+=`\\begin{figure}[H]\n\\centering\n\\begin{tikzpicture}\n\\begin{axis}[\n  width=${fw}\\linewidth, height=5.5cm,\n  xlabel={Speed (RPM)}, ylabel={${m.yl}},\n  xmin=${xMin}, xmax=${xMax}, ymin=${yMin}, ymax=${yMax},\n  xtick distance=${xTickDistA},\n  scaled x ticks=false,\n  x tick label style={/pgf/number format/fixed, /pgf/number format/set thousands separator={}},\n  y tick label style={/pgf/number format/fixed, /pgf/number format/precision=2},\n  grid=both, grid style={line width=0.3pt, draw=gray!25},\n  legend pos=south east,\n  title={${m.lbl} vs.\\ Speed --- ${texEsc(data.name)}},\n  title style={color=accent, font=\\bfseries},\n  axis line style={color=accent}, tick style={color=accent},\n]\n\\addplot[color=motorA, thick] coordinates {${pts}};\n\\addlegendentry{${texEsc(data.name)}}\n`;
         if(m.key==='Torque'&&data.lc&&data.lcK>0){
-          const lcPts=S.filter((_,i)=>i%step===0).map((s,j)=>`(${s.toFixed(0)},${(data.lc[j*step]||0).toFixed(4)})`).join('');
+          const lcPts=S.reduce((acc,s,i)=>{if(i%step!==0)return acc;const v=data.lc[i];if(v==null||isNaN(v))return acc;acc+=`(${s.toFixed(0)},${v.toFixed(4)})`;return acc;},'');
           body+=`\\addplot[color=better, thick, dashed] coordinates {${lcPts}};\n\\addlegendentry{$T_L$, $K=${data.lcK.toFixed(5)}$}\n`;
         }
         body+=`\\end{axis}\n\\end{tikzpicture}\n\\caption{${m.lbl} vs.\\ Speed: ${texEsc(data.name)}}\n\\label{fig:${k}_${m.key}}\n\\end{figure}\n\n`;
@@ -4839,8 +5304,6 @@ document.getElementById('expCmpLatexTex').addEventListener('click',()=>{
   if(keys.length<2){toast('Need 2+ files.','err');return;}
   saveSettingsFromUI();
   const ts=latexTs();
-  const metric=$('cm').value;
-  const metLabel={Torque:'Torque (N·m)',eff:'Efficiency (%)',Pin:'Pin (W)',Pout:'Pout (W)',PF:'Power Factor',It:'It (A)'}[metric]||metric;
   const title=`${texEsc(SET.titlePrefix||'Report')} --- Multi-File Comparison`;
   const fs=SET.tblFontSize||'\\normalsize';
   const fw=SET.figWidth||'0.85';
@@ -4848,27 +5311,57 @@ document.getElementById('expCmpLatexTex').addEventListener('click',()=>{
   const flds=['Speed','Torque','Pin','Po','Eff','pf','It'];
   const fLbl=['Speed (RPM)','Torque (N·m)','Pin (W)','Pout (W)','Eff (%)','PF','It (A)'];
   const rN=[];keys.forEach(k=>{allR(PF[k]).forEach(r=>{if(!rN.includes(r.Region))rN.push(r.Region);});});
+  // Standardized per-motor line styles: each motor always uses the same dash style across all metrics
+  // Motor 0 → solid, Motor 1 → dashed, Motor 2 → dotted, Motor 3 → dashdotted, etc.
+  const MOTOR_DASH=['solid','dashed','dotted','dashdotted','loosely dashed','loosely dotted'];
+  const MOTOR_COL=['motorA','motorB','accent','better','worse','gray'];
+  // All metrics to export (not just selected one)
+  const ALL_METRICS=[
+    {key:'Torque',label:'Torque (N\\cdot m)',  ipKey:'Torque'},
+    {key:'eff',   label:'Efficiency (\\%)',     ipKey:'eff'},
+    {key:'Pin',   label:'Input Power (W)',      ipKey:'Pin'},
+    {key:'Pout',  label:'Output Power (W)',     ipKey:'Pout'},
+    {key:'PF',    label:'Power Factor',         ipKey:'PF'},
+    {key:'It',    label:'Total Current (A)',    ipKey:'It'}
+  ];
   let body='';
-  if(SET.secIntro){body+=`\\section{Overview}\n\nThis report compares dynamometer performance curves across ${keys.length} motor files. Active metric: \\textbf{${texEsc(metLabel)}}.\n\n`;}
+  if(SET.secIntro){
+    body+=`\\section{Overview}\n\nThis report compares dynamometer performance curves across ${keys.length} motor files.\n\n`;
+    body+=`\\noindent\\textbf{Motors compared:}\n\\begin{itemize}\n`;
+    keys.forEach((k,ki)=>{
+      const d=keys.length;
+      body+=`\\item Motor ${ki+1}: \\texttt{${texEsc(PF[k].name)}} --- line style: \\textit{${MOTOR_DASH[ki%MOTOR_DASH.length]}}\n`;
+    });
+    body+=`\\end{itemize}\n\n`;
+  }
   if(SET.secFigures){
-    body+=`\\section{Curve Comparison: ${texEsc(metLabel)}}\n\n`;
     const xMin=Math.floor(Math.min(...keys.map(k=>Math.min(...PF[k].speed)))/10)*10;
     const xMax=Math.ceil(Math.max(...keys.map(k=>Math.max(...PF[k].speed)))/10)*10;
-    const allY=keys.flatMap(k=>PF[k].ip[metric]||PF[k].ip.eff||[]).filter(v=>v!=null&&!isNaN(v));
-    const rawYMin=allY.length?Math.min(...allY):0,rawYMax=allY.length?Math.max(...allY):10;
-    const ySpan=rawYMax-rawYMin||rawYMax||1;
-    const yCmpMin=rawYMin>0?Math.max(0,Math.floor((rawYMin-ySpan*0.08)/5)*5):Math.floor((rawYMin-ySpan*0.08)/5)*5;
-    const yMax=Math.ceil((rawYMax+ySpan*0.12)/5)*5||10;
-    const COLS=['motorA','motorB','accent','better','worse','gray'];
-    const DASHES=['solid','dashed','dotted','dashdotted','densely dashed','loosely dashed'];
-    body+=`\\begin{figure}[H]\n\\centering\n\\begin{tikzpicture}\n\\begin{axis}[\n  width=${fw}\\linewidth, height=6cm,\n  xlabel={Speed (RPM)}, ylabel={${texEsc(metLabel)}},\n  xmin=${xMin}, xmax=${xMax}, ymin=${yCmpMin}, ymax=${yMax},\n  grid=both, grid style={line width=0.3pt, draw=gray!25},\n  legend pos=south east,\n  title={${texEsc(metLabel)} Comparison},\n  title style={color=accent, font=\\bfseries},\n]\n`;
-    keys.forEach((k,ki)=>{
-      const data=PF[k];const S=data.speed;const arr=data.ip[metric]||data.ip.eff||[];
-      const step=Math.max(1,Math.floor(S.length/nPts));
-      const pts=S.filter((_,i)=>i%step===0).map((s,j)=>`(${s.toFixed(0)},${(arr[j*step]||0).toFixed(4)})`).join('');
-      body+=`\\addplot[color=${COLS[ki%COLS.length]}, thick, ${DASHES[ki%DASHES.length]}] coordinates {${pts}};\n\\addlegendentry{${texEsc(data.name)}}\n`;
+    body+=`\\section{Performance Curve Comparisons}\n\n`;
+    ALL_METRICS.forEach(m=>{
+      const hasData=keys.some(k=>{const a=PF[k].ip[m.ipKey];return a&&a.some(v=>v!=null&&!isNaN(v)&&v!==0);});
+      if(!hasData)return;
+      const allY=keys.flatMap(k=>(PF[k].ip[m.ipKey]||[]).filter(v=>v!=null&&!isNaN(v)));
+      if(!allY.length)return;
+      const rawYMin=Math.min(...allY),rawYMax=Math.max(...allY);
+      const ySpan=rawYMax-rawYMin||rawYMax||1;
+      const yCmpMin=rawYMin>0?Math.max(0,Math.floor((rawYMin-ySpan*0.08)/5)*5):Math.floor((rawYMin-ySpan*0.08)/5)*5;
+      const yMax=Math.ceil((rawYMax+ySpan*0.12)/5)*5||10;
+      const xTickDistM=Math.ceil((xMax-xMin)/6/100)*100||200;
+      body+=`\\begin{figure}[H]\n\\centering\n\\begin{tikzpicture}\n\\begin{axis}[\n  width=${fw}\\linewidth, height=6cm,\n  xlabel={Speed (RPM)}, ylabel={$${m.label}$},\n  xmin=${xMin}, xmax=${xMax}, ymin=${yCmpMin}, ymax=${yMax},\n  xtick distance=${xTickDistM},\n  scaled x ticks=false,\n  x tick label style={/pgf/number format/fixed, /pgf/number format/set thousands separator={}},\n  y tick label style={/pgf/number format/fixed, /pgf/number format/precision=2},\n  grid=both, grid style={line width=0.3pt, draw=gray!25},\n  legend pos=south east,\n  title={$${m.label}$ vs.\\ Speed Comparison},\n  title style={color=accent, font=\\bfseries},\n]\n`;
+      keys.forEach((k,ki)=>{
+        const data=PF[k];const S=data.speed;const arr=data.ip[m.ipKey]||[];
+        const step=Math.max(1,Math.floor(S.length/nPts));
+        // Skip null/NaN values — do NOT replace with 0
+        const pts=S.reduce((acc,s,i)=>{if(i%step!==0)return acc;const v=arr[i];if(v==null||isNaN(v))return acc;acc+=`(${s.toFixed(0)},${v.toFixed(4)})`;return acc;},'');
+        if(!pts)return;
+        const dashStyle=MOTOR_DASH[ki%MOTOR_DASH.length];
+        const colName=MOTOR_COL[ki%MOTOR_COL.length];
+        // Standardized: solid line for 1st motor in this comparison, dashed for 2nd, etc.
+        body+=`\\addplot[color=${colName}, thick, ${dashStyle}] coordinates {${pts}};\n\\addlegendentry{${texEsc(data.name)}}\n`;
+      });
+      body+=`\\end{axis}\n\\end{tikzpicture}\n\\caption{$${m.label}$ comparison across ${keys.length} motors}\n\\end{figure}\n\n`;
     });
-    body+=`\\end{axis}\n\\end{tikzpicture}\n\\caption{${texEsc(metLabel)} comparison across ${keys.length} motors}\n\\end{figure}\n\n`;
   }
   if(SET.secRegions){
     body+=`\\section{Side-by-Side Regions}\n\n${fs}\n\\setlength{\\tabcolsep}{4pt}\n\\renewcommand{\\arraystretch}{1.25}\n\\begin{longtable}{>{\\bfseries}l l ${keys.map(()=>'r').join(' ')}}\n\\toprule\n\\rowcolor{hdr}\n\\textcolor{hdrtext}{\\textbf{Region}} & \\textcolor{hdrtext}{\\textbf{Parameter}} ${keys.map(k=>`& \\textcolor{hdrtext}{\\textbf{${texEsc(PF[k].name)}}}`).join(' ')} \\\\\n\\midrule\n\\endfirsthead\n\\toprule\n\\rowcolor{hdr}\n\\textcolor{hdrtext}{\\textbf{Region}} & \\textcolor{hdrtext}{\\textbf{Parameter}} ${keys.map(k=>`& \\textcolor{hdrtext}{\\textbf{${texEsc(PF[k].name)}}}`).join(' ')} \\\\\n\\midrule\n\\endhead\n\\bottomrule\n\\endfoot\n`;
@@ -5811,6 +6304,788 @@ function zoomScaleOpts(zoom, allS){
   if(majorStep)xTicks.stepSize=majorStep;
   return {xMin,xMax,xTicks,xGrid:{color:CP.grid}};
 }
+
+// ════════════════════════════════════════════════════════════════════
+//  INTERPOLATION ENGINE v2 — Fitting · Smoothing · Point Exclusion
+// ════════════════════════════════════════════════════════════════════
+
+// ── Fitting state (read by patched procData) ──
+window.INTERP_CFG = {
+  fitMethod : 'linear',   // 'linear' | 'spline' | 'pchip' | 'nearest'
+  smoothType: 'none',     // 'none' | 'moving' | 'gaussian'
+  smoothWin : 5,          // window size (odd, applied to raw data)
+  exclMode  : 'none',     // 'none' | 'iqr' | 'range'
+  iqrFence  : 1.5,
+  exclFrom  : 0,
+  exclTo    : 0
+};
+
+// ── UI fit-method hints ──
+const FIT_HINTS = {
+  linear : 'Piecewise linear between measured points.',
+  spline : 'Natural cubic spline — smooth curvature, may overshoot near edges.',
+  pchip  : 'PCHIP monotone — smooth without overshoots, preserves peaks/valleys.',
+  nearest: 'Nearest neighbour — staircase output, useful for debugging raw data.'
+};
+
+function sbFitMethodChanged(){
+  const m = document.getElementById('sb-fit-method').value;
+  window.INTERP_CFG.fitMethod = m;
+  const hint = document.getElementById('sb-fit-hint');
+  if(hint) hint.textContent = FIT_HINTS[m] || '';
+}
+function sbSmoothTypeChanged(){
+  const t = document.getElementById('sb-smooth-type').value;
+  window.INTERP_CFG.smoothType = t;
+  const hint = document.getElementById('sb-smooth-hint');
+  if(hint) hint.style.display = t === 'none' ? 'none' : '';
+}
+function sbApplyInterpStep(){
+  const v = parseInt(document.getElementById('sb-interp-step').value)||1;
+  const cfgEl = document.getElementById('cfg-interp-step');
+  if(cfgEl) cfgEl.value = v;
+  window.INTERP_CFG._stepOverride = v;
+  CFG_READER.interpStep = Math.max(1, v);
+  toast(`Interp step set to ${v} RPM`, 'ok');
+}
+
+// Read all live INTERP_CFG values from sidebar UI
+function syncInterpCFG(){
+  const g = id => document.getElementById(id);
+  const m = g('sb-fit-method');   if(m) window.INTERP_CFG.fitMethod  = m.value;
+  const s = g('sb-smooth-type');  if(s) window.INTERP_CFG.smoothType = s.value;
+  const w = g('sb-smooth-win');   if(w) window.INTERP_CFG.smoothWin  = Math.max(3, parseInt(w.value)||5);
+  const step = g('sb-interp-step'); if(step){ CFG_READER.interpStep = Math.max(1,parseInt(step.value)||1); }
+}
+
+// ── Smoothing: apply to (xs, ys) arrays before interpolation ──
+function applySmoothing(xs, ys, type, win){
+  if(type==='none' || !win || win < 3 || ys.length < win) return ys;
+  const half = Math.floor(win/2);
+  const n = ys.length;
+  const out = new Array(n);
+  if(type === 'moving'){
+    for(let i=0;i<n;i++){
+      let sum=0, cnt=0;
+      for(let j=Math.max(0,i-half); j<=Math.min(n-1,i+half); j++){ sum+=ys[j]; cnt++; }
+      out[i] = sum/cnt;
+    }
+  } else if(type === 'gaussian'){
+    // sigma = half/2
+    const sigma = Math.max(1, half/2);
+    const weights = [];
+    for(let k=-half; k<=half; k++) weights.push(Math.exp(-(k*k)/(2*sigma*sigma)));
+    for(let i=0;i<n;i++){
+      let wsum=0, vsum=0;
+      for(let k=-half; k<=half; k++){
+        const j=i+k;
+        if(j<0||j>=n) continue;
+        wsum+=weights[k+half]; vsum+=weights[k+half]*ys[j];
+      }
+      out[i] = vsum/wsum;
+    }
+  }
+  return out;
+}
+
+// ── Exclusion engine — MANUAL CONFIRM workflow ──
+// Pending preview candidates (set by preview functions, consumed by Apply)
+window._exclPending = [];   // [{speed, torque, reason}]
+// Committed exclusion list — actual speeds removed from raw data on procData
+window.EXCL_SPEEDS = new Set(); // Set of raw speed values (Numbers)
+
+function sbExclModeChanged(){
+  const mode = document.getElementById('sb-excl-mode').value;
+  window.INTERP_CFG.exclMode = mode;
+  document.getElementById('sb-excl-iqr-row').style.display   = mode==='iqr'    ? 'flex' : 'none';
+  document.getElementById('sb-excl-range-row').style.display = mode==='range'  ? 'flex' : 'none';
+  document.getElementById('sb-excl-manual-row').style.display= mode==='manual' ? 'flex' : 'none';
+  if(mode==='none') exclClearAll();
+  exclClosePreview();
+}
+
+// ── Helper: get last loaded raw data for preview ──
+function _getRawDataForPreview(){
+  // Pull from the most recent procData result stored in PF
+  const keys = Object.keys(PF||{});
+  if(!keys.length) return null;
+  // Use the current active file (first key, or whatever is selected)
+  const key = keys[0];
+  const d = PF[key];
+  if(!d) return null;
+  return d;
+}
+
+// ── IQR Preview ──
+function exclPreviewIQR(){
+  const fence   = parseFloat(document.getElementById('sb-iqr-fence').value)||1.5;
+  const chName  = document.getElementById('sb-iqr-channel').value; // 'T','P','Po','ef'
+  const chLabel = {T:'Torque',P:'Pin',Po:'Pout',ef:'Efficiency'}[chName]||chName;
+
+  // We need the raw uploaded file data. Use the raw rows stored on the parsed object.
+  // Since procData already consumed them, we work from PF[key].speed + PF[key].ip as proxy.
+  // For real preview we need raw data — use _rawDataCache if available, else use ip data.
+  const pf = _getRawDataForPreview();
+  if(!pf){ toast('Load a file first to preview outliers','err'); return; }
+
+  const S   = pf.speed;
+  const vals = chName==='T'?pf.ip.Torque : chName==='P'?pf.ip.Pin : chName==='Po'?pf.ip.Pout : pf.ip.eff;
+  if(!vals){ toast(`Channel ${chLabel} not available`,'err'); return; }
+
+  const sorted = [...vals].sort((a,b)=>a-b);
+  const q1 = sorted[Math.floor(sorted.length*0.25)];
+  const q3 = sorted[Math.floor(sorted.length*0.75)];
+  const iqr = q3-q1;
+  const lo  = q1-fence*iqr, hi = q3+fence*iqr;
+
+  const candidates = [];
+  for(let i=0;i<S.length;i++){
+    if(vals[i]<lo||vals[i]>hi){
+      candidates.push({speed:S[i], val:vals[i], reason: vals[i]<lo?`< low fence (${lo.toFixed(3)})` : `> high fence (${hi.toFixed(3)})`});
+    }
+  }
+  if(!candidates.length){ toast(`No outliers found (fence ×${fence} on ${chLabel})`, 'ok'); return; }
+  window._exclPending = candidates.map(c=>({speed:c.speed, label:`${c.speed.toFixed(0)} RPM — ${chLabel}=${c.val.toFixed(3)} — ${c.reason}`}));
+  _showExclPreview(
+    `IQR ×${fence} on ${chLabel} — ${candidates.length} candidate(s)`,
+    [['Speed (RPM)','Value',`Reason (fence: ${lo.toFixed(2)} – ${hi.toFixed(2)})`],
+     ...candidates.map(c=>[c.speed.toFixed(1), c.val.toFixed(4), c.reason])]
+  );
+}
+
+// ── Range Preview ──
+function exclPreviewRange(){
+  const from = parseFloat(document.getElementById('sb-excl-from').value)||0;
+  const to   = parseFloat(document.getElementById('sb-excl-to').value)||0;
+  if(to <= from){ toast('To RPM must be > From RPM','err'); return; }
+  const pf = _getRawDataForPreview();
+  if(!pf){ toast('Load a file first to preview','err'); return; }
+  const S = pf.speed;
+  const T = pf.ip.Torque;
+  const candidates = [];
+  for(let i=0;i<S.length;i++){
+    if(S[i]>=from && S[i]<=to) candidates.push({speed:S[i], torque:T[i]});
+  }
+  if(!candidates.length){ toast(`No points found in [${from}–${to}] RPM`,'info'); return; }
+  window._exclPending = candidates.map(c=>({speed:c.speed, label:`${c.speed.toFixed(0)} RPM — T=${c.torque.toFixed(3)}`}));
+  _showExclPreview(
+    `Speed range [${from} – ${to} RPM] — ${candidates.length} point(s)`,
+    [['Speed (RPM)','Torque'],
+     ...candidates.map(c=>[c.speed.toFixed(1), c.torque.toFixed(4)])]
+  );
+}
+
+// ── Manual Preview ──
+function exclPreviewManual(){
+  const raw = document.getElementById('sb-excl-manual-txt').value;
+  const nums = raw.split(/[\s,;]+/).map(s=>parseFloat(s.trim())).filter(v=>!isNaN(v));
+  if(!nums.length){ toast('No valid speed values entered','err'); return; }
+  const pf = _getRawDataForPreview();
+  const S  = pf ? pf.speed : [];
+  // For each entered value find closest actual speed point
+  const candidates = nums.map(n=>{
+    if(!S.length) return {speed:n, matched:n, delta:0};
+    let best=0, bestD=Infinity;
+    for(let i=0;i<S.length;i++){const d=Math.abs(S[i]-n);if(d<bestD){bestD=d;best=i;}}
+    return {speed:S[best], entered:n, delta:(S[best]-n).toFixed(1)};
+  });
+  window._exclPending = candidates.map(c=>({speed:c.speed, label:`${c.speed.toFixed(0)} RPM (entered: ${c.entered})`}));
+  _showExclPreview(
+    `Manual list — ${candidates.length} point(s)`,
+    [['Entered RPM','Matched Speed RPM','Δ'],
+     ...candidates.map(c=>[c.entered, c.speed.toFixed(1), c.delta])]
+  );
+}
+
+// ── Render preview table ──
+function _showExclPreview(title, rows){
+  document.getElementById('sb-excl-preview-title').textContent = title;
+  const tbody = document.getElementById('sb-excl-preview-table');
+  const [hdr, ...data] = rows;
+  let html = `<thead><tr>${hdr.map(h=>`<th style="padding:3px 6px;background:var(--surface3);border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;">${h}</th>`).join('')}</tr></thead><tbody>`;
+  data.forEach((row,ri)=>{
+    html+=`<tr style="${ri%2?'background:var(--surface2);':''}">`;
+    row.forEach((cell,ci)=>`<td style="padding:2px 6px;${ci===0?'color:var(--accent);font-weight:600;':''}">${cell}</td>`);
+    html+=row.map((cell,ci)=>`<td style="padding:2px 6px;${ci===0?'color:var(--accent);font-weight:600;':''}">${cell}</td>`).join('');
+    html+='</tr>';
+  });
+  html+='</tbody>';
+  tbody.innerHTML = html;
+  document.getElementById('sb-excl-preview').style.display = 'flex';
+}
+
+function exclClosePreview(){
+  document.getElementById('sb-excl-preview').style.display = 'none';
+  window._exclPending = [];
+}
+
+// ── Apply: move pending → committed set, refresh chart ──
+function exclApplyPending(){
+  const pending = window._exclPending||[];
+  if(!pending.length){ exclClosePreview(); return; }
+  pending.forEach(p => window.EXCL_SPEEDS.add(p.speed));
+  exclClosePreview();
+  _renderExclStatus();
+  toast(`Excluded ${pending.length} point(s) — reprocess file to apply`, 'ok');
+}
+
+// ── Clear all committed exclusions ──
+function exclClearAll(){
+  window.EXCL_SPEEDS.clear();
+  _renderExclStatus();
+  const modeEl = document.getElementById('sb-excl-mode');
+  // don't clear mode selector — user may want to add more
+}
+
+// ── Render status badge showing committed exclusions ──
+function _renderExclStatus(){
+  const status = document.getElementById('sb-excl-status');
+  const label  = document.getElementById('sb-excl-status-label');
+  const chips  = document.getElementById('sb-excl-chips');
+  const n = window.EXCL_SPEEDS.size;
+  if(!n){ status.style.display='none'; return; }
+  status.style.display = 'flex';
+  label.textContent = `✓ ${n} point(s) excluded — reprocess to apply`;
+  const sorted = [...window.EXCL_SPEEDS].sort((a,b)=>a-b);
+  chips.innerHTML = sorted.map(s=>
+    `<span style="display:inline-flex;align-items:center;gap:2px;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.25);border-radius:4px;padding:1px 5px;font-family:var(--mono);font-size:.55rem;color:var(--err);">
+      ${s.toFixed(0)} RPM
+      <button onclick="exclRemoveOne(${s})" style="background:none;border:none;cursor:pointer;color:var(--err);font-size:.65rem;padding:0 1px;line-height:1;" title="Remove this exclusion">×</button>
+    </span>`
+  ).join('');
+}
+
+function exclRemoveOne(speed){
+  window.EXCL_SPEEDS.delete(speed);
+  _renderExclStatus();
+}
+
+// ── applyExclusion used by procData — uses committed set only ──
+function applyExclusion(S, channelMap){
+  const excl = window.EXCL_SPEEDS;
+  if(!excl.size) return {S, ch: channelMap};
+  // Match by nearest speed within 0.6 RPM tolerance (handles interpolated grid vs raw)
+  const mask = S.map(s => {
+    for(const ex of excl){ if(Math.abs(s-ex) < 0.6) return 0; }
+    return 1;
+  });
+  const removed = mask.filter(v=>v===0).length;
+  if(removed>0) log(`Exclusion applied: ${removed} point(s) removed from interpolation grid`,'info');
+  const newS = S.filter((_,i)=>mask[i]);
+  const newCh = {};
+  for(const k in channelMap){
+    if(channelMap[k]) newCh[k] = channelMap[k].filter((_,i)=>mask[i]);
+  }
+  return {S: newS, ch: newCh};
+}
+
+// ── Cubic-spline natural interpolation ──
+function cubicSpline(xs, ys, xn){
+  const n = xs.length;
+  if(n < 3) return xn.map(x=>li(xs,ys,x)); // fallback
+  // Build tridiagonal system for natural spline
+  const h = [], a = ys.slice();
+  for(let i=0;i<n-1;i++) h[i]=xs[i+1]-xs[i];
+  const alpha=[], l=new Array(n).fill(1), mu=new Array(n).fill(0), z=new Array(n).fill(0);
+  for(let i=1;i<n-1;i++) alpha[i]=3/h[i]*(a[i+1]-a[i])-3/h[i-1]*(a[i]-a[i-1]);
+  for(let i=1;i<n-1;i++){
+    l[i]=2*(xs[i+1]-xs[i-1])-h[i-1]*mu[i-1];
+    mu[i]=h[i]/l[i];
+    z[i]=(alpha[i]-h[i-1]*z[i-1])/l[i];
+  }
+  const b=new Array(n).fill(0),c=new Array(n).fill(0),d=new Array(n).fill(0);
+  for(let j=n-2;j>=0;j--){
+    c[j]=z[j]-mu[j]*c[j+1];
+    b[j]=(a[j+1]-a[j])/h[j]-h[j]*(c[j+1]+2*c[j])/3;
+    d[j]=(c[j+1]-c[j])/(3*h[j]);
+  }
+  return xn.map(x=>{
+    if(x<=xs[0]) return a[0];
+    if(x>=xs[n-1]) return a[n-1];
+    let lo2=0,hi2=n-2;
+    while(lo2<hi2){ const m=(lo2+hi2+1)>>1; xs[m]<=x?lo2=m:hi2=m-1; }
+    const dx=x-xs[lo2];
+    return a[lo2]+b[lo2]*dx+c[lo2]*dx*dx+d[lo2]*dx*dx*dx;
+  });
+}
+
+// ── PCHIP monotone cubic interpolation ──
+function pchipInterp(xs, ys, xn){
+  const n = xs.length;
+  if(n < 3) return xn.map(x=>li(xs,ys,x));
+  const h=[], delta=[];
+  for(let i=0;i<n-1;i++){ h[i]=xs[i+1]-xs[i]; delta[i]=(ys[i+1]-ys[i])/h[i]; }
+  const d=new Array(n).fill(0);
+  d[0]=delta[0];
+  d[n-1]=delta[n-2];
+  for(let i=1;i<n-1;i++){
+    if(delta[i-1]*delta[i]<=0){ d[i]=0; continue; }
+    const w1=2*h[i]+h[i-1], w2=h[i]+2*h[i-1];
+    d[i]=(w1+w2)/(w1/delta[i-1]+w2/delta[i]);
+  }
+  return xn.map(x=>{
+    if(x<=xs[0]) return ys[0];
+    if(x>=xs[n-1]) return ys[n-1];
+    let lo2=0,hi2=n-2;
+    while(lo2<hi2){ const m=(lo2+hi2+1)>>1; xs[m]<=x?lo2=m:hi2=m-1; }
+    const dx=x-xs[lo2], hk=h[lo2];
+    const t=dx/hk;
+    const h00=2*t*t*t-3*t*t+1, h10=t*t*t-2*t*t+t, h01=-2*t*t*t+3*t*t, h11=t*t*t-t*t;
+    return h00*ys[lo2]+h10*hk*d[lo2]+h01*ys[lo2+1]+h11*hk*d[lo2+1];
+  });
+}
+
+// ── Nearest neighbour ──
+function nearestInterp(xs, ys, xn){
+  return xn.map(x=>{
+    if(x<=xs[0]) return ys[0];
+    if(x>=xs[xs.length-1]) return ys[xs.length-1];
+    let best=0, bestDist=Infinity;
+    for(let i=0;i<xs.length;i++){ const d=Math.abs(xs[i]-x); if(d<bestDist){bestDist=d;best=i;} }
+    return ys[best];
+  });
+}
+
+// ── Unified interpolation dispatcher ──
+function interpArr(xs, ys, xn, method){
+  if(!method||method==='linear') return iA(xs,ys,xn);
+  if(method==='spline')  return cubicSpline(xs,ys,xn);
+  if(method==='pchip')   return pchipInterp(xs,ys,xn);
+  if(method==='nearest') return nearestInterp(xs,ys,xn);
+  return iA(xs,ys,xn);
+}
+
+// ════════════════════════════════════════════════
+//  FILE READER SETTINGS — CFG_READER state + UI
+// ════════════════════════════════════════════════
+const CFG_READER_DEFAULTS = {
+  startRowMagtrol: 0,
+  startRowCore: 0,
+  startRowInterp: 0,
+  interpStep: 1,
+  mdfDefault: '0',
+  coreColOrder: ['U','I','P1','T','n','P2','EFF','P.F','I1','I2','Uc'],
+  interpSheet: 'interp',
+  coreHdrLimit: 8
+};
+let CFG_READER = {...CFG_READER_DEFAULTS};
+
+function saveCFGReader(){
+  // collect from UI
+  CFG_READER.startRowMagtrol = parseInt(document.getElementById('cfg-startrow-magtrol').value)||0;
+  CFG_READER.startRowCore    = parseInt(document.getElementById('cfg-startrow-core').value)||0;
+  CFG_READER.startRowInterp  = parseInt(document.getElementById('cfg-startrow-interp').value)||0;
+  CFG_READER.interpStep      = Math.max(1,parseInt(document.getElementById('cfg-interp-step').value)||1);
+  CFG_READER.mdfDefault      = document.querySelector('input[name="cfg-mdf-default"]:checked')?.value||'0';
+  CFG_READER.interpSheet     = document.getElementById('cfg-interp-sheet').value.trim()||'interp';
+  CFG_READER.coreHdrLimit    = Math.max(1,parseInt(document.getElementById('cfg-core-hdrlimit').value)||8);
+  // persist INTERP_CFG sidebar settings + committed exclusion list
+  syncInterpCFG();
+  try{
+    localStorage.setItem('dat_cfg_reader', JSON.stringify(CFG_READER));
+    localStorage.setItem('dat_interp_cfg', JSON.stringify(window.INTERP_CFG));
+    localStorage.setItem('dat_excl_speeds', JSON.stringify([...window.EXCL_SPEEDS]));
+  }catch(e){}
+}
+function loadCFGReader(){
+  try{
+    const s=localStorage.getItem('dat_cfg_reader');
+    if(s) CFG_READER={...CFG_READER_DEFAULTS,...JSON.parse(s)};
+  }catch(e){}
+  try{
+    const ic=localStorage.getItem('dat_interp_cfg');
+    if(ic) Object.assign(window.INTERP_CFG, JSON.parse(ic));
+  }catch(e){}
+  try{
+    const es=localStorage.getItem('dat_excl_speeds');
+    if(es){ window.EXCL_SPEEDS = new Set(JSON.parse(es)); }
+  }catch(e){}
+  applyCFGReaderToUI();
+}
+function applyCFGReaderToUI(){
+  const g=id=>document.getElementById(id);
+  g('cfg-startrow-magtrol').value = CFG_READER.startRowMagtrol;
+  g('cfg-startrow-core').value    = CFG_READER.startRowCore;
+  g('cfg-startrow-interp').value  = CFG_READER.startRowInterp;
+  g('cfg-interp-step').value      = CFG_READER.interpStep;
+  const md=document.querySelector(`input[name="cfg-mdf-default"][value="${CFG_READER.mdfDefault}"]`);
+  if(md) md.checked=true;
+  g('cfg-interp-sheet').value     = CFG_READER.interpSheet;
+  g('cfg-core-hdrlimit').value    = CFG_READER.coreHdrLimit;
+  renderCoreColOrder();
+  // Apply mdf default to analyze + motors pages
+  const mdfR=document.querySelector(`input[name="mdf"][value="${CFG_READER.mdfDefault}"]`);
+  if(mdfR) mdfR.checked=true;
+  const mmdfR=document.querySelector(`input[name="mmdf"][value="${CFG_READER.mdfDefault}"]`);
+  if(mmdfR) mmdfR.checked=true;
+  // Restore sidebar interpolation controls from INTERP_CFG
+  const ic = window.INTERP_CFG;
+  const sbStep = g('sb-interp-step'); if(sbStep) sbStep.value = CFG_READER.interpStep;
+  const sbFit  = g('sb-fit-method');  if(sbFit)  sbFit.value  = ic.fitMethod||'linear';
+  const sbSmt  = g('sb-smooth-type'); if(sbSmt)  sbSmt.value  = ic.smoothType||'none';
+  const sbWin  = g('sb-smooth-win');  if(sbWin)  sbWin.value  = ic.smoothWin||5;
+  const sbEx   = g('sb-excl-mode');   if(sbEx)   sbEx.value   = ic.exclMode||'none';
+  // trigger conditional row visibility + status badge
+  sbFitMethodChanged(); sbSmoothTypeChanged(); sbExclModeChanged(); _renderExclStatus();
+}
+
+// ── Core column order UI ──
+function renderCoreColOrder(){
+  const cont=document.getElementById('cfg-core-cols');
+  if(!cont)return;
+  cont.innerHTML='';
+  (CFG_READER.coreColOrder||[]).forEach((col,i)=>{
+    const chip=document.createElement('span');
+    chip.draggable=true;
+    chip.dataset.idx=i;
+    chip.style.cssText='display:inline-flex;align-items:center;gap:3px;background:var(--abg);border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-family:var(--mono);font-size:.65rem;color:var(--text);cursor:grab;user-select:none;';
+    chip.innerHTML=`<span style="color:var(--dim);font-size:.55rem;">${i+1}</span> ${col} <button onclick="cfgRemoveCoreCol(${i})" style="background:none;border:none;cursor:pointer;color:var(--err);font-size:.7rem;padding:0 1px;line-height:1;">×</button>`;
+    // drag events for reorder
+    chip.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/plain',i);chip.style.opacity='.4';});
+    chip.addEventListener('dragend',()=>{chip.style.opacity='1';});
+    chip.addEventListener('dragover',e=>{e.preventDefault();chip.style.background='var(--accent-dim)';});
+    chip.addEventListener('dragleave',()=>{chip.style.background='var(--abg)';});
+    chip.addEventListener('drop',e=>{
+      e.preventDefault();chip.style.background='var(--abg)';
+      const from=parseInt(e.dataTransfer.getData('text/plain'));
+      const to=i;
+      if(from===to)return;
+      const arr=CFG_READER.coreColOrder;
+      const item=arr.splice(from,1)[0];
+      arr.splice(to,0,item);
+      renderCoreColOrder();
+    });
+    cont.appendChild(chip);
+  });
+}
+window.cfgRemoveCoreCol=function(i){
+  CFG_READER.coreColOrder.splice(i,1);
+  renderCoreColOrder();
+};
+window.cfgAddCoreCol=function(){
+  const inp=document.getElementById('cfg-core-col-inp');
+  const v=(inp.value||'').trim();
+  if(!v)return;
+  CFG_READER.coreColOrder.push(v);
+  inp.value='';
+  renderCoreColOrder();
+};
+window.cfgResetCoreColsToDefault=function(){
+  CFG_READER.coreColOrder=[...CFG_READER_DEFAULTS.coreColOrder];
+  renderCoreColOrder();
+};
+
+// Hook into cfg-save to also save reader settings
+const _origCfgSave = document.getElementById('cfg-save').onclick;
+document.getElementById('cfg-save').addEventListener('click', ()=>{
+  saveCFGReader();
+  toast('File reader settings saved','ok');
+});
+document.getElementById('cfg-reset').addEventListener('click', ()=>{
+  CFG_READER={...CFG_READER_DEFAULTS};
+  applyCFGReaderToUI();
+});
+
+// Patch parseCoreXLS to use CFG_READER settings
+const _parseCoreXLSOrig = parseCoreXLS;
+window.parseCoreXLS = function(file){
+  return new Promise((res,rej)=>{
+    const base=file.name.replace(/\.[^.]+$/,'');
+    const r=new FileReader();
+    r.onload=e=>{
+      try{
+        const wb=XLSX.read(e.target.result,{type:'array'});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        const raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+        const colOrder=CFG_READER.coreColOrder||CFG_READER_DEFAULTS.coreColOrder;
+        const hdrLimit=CFG_READER.coreHdrLimit||8;
+        const manualStartRow=CFG_READER.startRowCore||0;
+        // Find header row
+        let hdrIdx=0;
+        if(manualStartRow>0){
+          hdrIdx=manualStartRow;
+        } else {
+          for(let i=0;i<Math.min(raw.length,hdrLimit);i++){
+            const row=raw[i].map(c=>String(c).trim());
+            const hasN=row.some(x=>colOrder.includes('n')?x.toLowerCase()==='n':x==='n');
+            const hasT=row.some(x=>x.toLowerCase()==='t'||x==='T');
+            if(hasN&&hasT){hdrIdx=i;break;}
+            if(row.some(x=>colOrder.some(c=>x.toLowerCase()===c.toLowerCase()))&&i>=1&&!hdrIdx)hdrIdx=i;
+          }
+          if(!hdrIdx) hdrIdx=2; // fallback
+        }
+        const headers=raw[hdrIdx].map(c=>String(c).trim());
+        const dataRows=raw.slice(hdrIdx+1).filter(r2=>r2.some(v=>v!==''));
+        const rows=dataRows.map(r2=>{
+          const obj={};
+          headers.forEach((h,i)=>{obj[h]=r2[i];});
+          return obj;
+        }).filter(r2=>parseFloat(r2['n'])>=0&&!isNaN(parseFloat(r2['n'])));
+        const mapped=rows.map(r2=>({
+          'Speed': parseFloat(r2['n'])||0,
+          'Torque': parseFloat(r2['T'])||0,
+          'Pin':    parseFloat(r2['P1'])||0,
+          'Pout':   parseFloat(r2['P2'])||0,
+          'Efficiency': parseFloat(r2['EFF'])||0,
+          'PF':     parseFloat(r2['P.F'])||0,
+          'It':     parseFloat(r2['I'])||0,
+          'Im':     parseFloat(r2['I1'])||0,
+          'Ia':     parseFloat(r2['I2'])||0,
+          'Volts':  parseFloat(r2['U'])||0,
+        }));
+        res({name:base,rows:mapped,isCoreXLS:true,fileType:'core'});
+      }catch(err){rej(err);}
+    };
+    r.readAsArrayBuffer(file);
+  });
+};
+
+// Patch parseInterpXLSX to use CFG_READER settings
+window.parseInterpXLSX = function(file){
+  return new Promise((res,rej)=>{
+    const base=file.name.replace(/\.[^.]+$/,'');
+    const r=new FileReader();
+    r.onload=e=>{
+      try{
+        const wb=XLSX.read(e.target.result,{type:'array'});
+        const sheetPattern=CFG_READER.interpSheet||'interp';
+        const sheetName=wb.SheetNames.find(n=>n.toLowerCase().includes(sheetPattern.toLowerCase()))||wb.SheetNames[0];
+        const ws=wb.Sheets[sheetName];
+        const startRow=CFG_READER.startRowInterp||0;
+        let rows;
+        if(startRow>0){
+          const raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+          const headers=raw[startRow].map(c=>String(c));
+          const dataRows=raw.slice(startRow+1).filter(r2=>r2.some(v=>v!==''));
+          rows=dataRows.map(r2=>{const obj={};headers.forEach((h,i)=>{obj[h]=r2[i];});return obj;});
+        } else {
+          rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+        }
+        res({name:base,rows,isInterp:true,fileType:'interp'});
+      }catch(err){rej(err);}
+    };
+    r.readAsArrayBuffer(file);
+  });
+};
+
+// Simpler: patch rng used inside procData via overriding the Sp computation
+// We patch it at the procData level by overriding the srs→Sp line behavior via a global interp step getter
+window._getCFGInterpStep = function(){ return Math.max(1,CFG_READER.interpStep||1); };
+
+// Re-patch procData — full interpolation engine v2
+(function(){
+  const _p = window.procData;
+  window.procData = function(parsed){
+    const {name,rows}=parsed;
+    if(!rows||!rows.length) return _p.call(this, parsed);
+    const h=Object.keys(rows[0]||{});
+    const type = parsed.isCoreXLS ? 'core' : parsed.isInterp ? 'interp' : 'magtrol';
+    const sc=fcCfg(h,type,'Speed'), tc=fcCfg(h,type,'Torque');
+    if(!sc||!tc) return _p.call(this, parsed);
+
+    // ── Sync INTERP_CFG from sidebar ──
+    syncInterpCFG();
+    const cfg = window.INTERP_CFG;
+    const step = Math.max(1, CFG_READER.interpStep||1);
+    const method = cfg.fitMethod||'linear';
+
+    // ── Extract raw columns — row-aligned: skip any row where Speed or Torque is NaN ──
+    const mdf=parseInt(document.querySelector('input[name="mdf"]:checked').value);
+    const pc=fcCfg(h,type,'Pin'), poc=fcCfg(h,type,'Pout');
+    const ec2=fcCfg(h,type,'Eff'), pfc2=fcCfg(h,type,'PF');
+    const itc=fcCfg(h,type,'It'), imc=fcCfg(h,type,'Im'), iac=fcCfg(h,type,'Ia');
+    const vc=fcCfg(h,type,'Volts'), dc=fcCfg(h,type,'Dir');
+    const gv=(r,c,def)=>{ if(!c) return def; const v=parseFloat(r[c]); return isNaN(v)?def:v; };
+    // Build aligned arrays — only keep rows where Speed AND Torque are valid numbers
+    let S=[],T=[],P=[],Po=[],ef=[],pf=[],It=[],Im=[],Ia=[];
+    rows.forEach(r=>{
+      const s=parseFloat(r[sc]), t=parseFloat(r[tc]);
+      if(isNaN(s)||isNaN(t)) return; // skip malformed rows
+      S.push(s); T.push(t);
+      P.push(gv(r,pc,0)); Po.push(gv(r,poc,0));
+      ef.push(gv(r,ec2,0)); pf.push(gv(r,pfc2,1)); It.push(gv(r,itc,0));
+      if(mdf===0&&imc) Im.push(gv(r,imc,0));
+      if(mdf===0&&iac) Ia.push(gv(r,iac,0));
+    });
+    if(mdf!==0||!imc) Im=null;
+    if(mdf!==0||!iac) Ia=null;
+    const Volt=vc?parseFloat(rows[1]?.[vc])||0:0, dir=dc?(rows[1]?.[dc]||'FWD'):'FWD';
+    // Sort ascending by speed (handles descending MDF files)
+    if(S.length>1){
+      const idx=[...S.keys()].sort((a,b)=>S[a]-S[b]);
+      [S,T,P,Po,ef,pf,It]=[S,T,P,Po,ef,pf,It].map(a=>idx.map(i=>a[i]));
+      if(Im) Im=idx.map(i=>Im[i]); if(Ia) Ia=idx.map(i=>Ia[i]);
+    }
+
+    // ── Step 1: Data-point exclusion (committed set only — user must explicitly apply) ──
+    if(window.EXCL_SPEEDS && window.EXCL_SPEEDS.size > 0){
+      const chMap={T,P,Po,ef,pf,It};
+      if(Im) chMap.Im=Im; if(Ia) chMap.Ia=Ia;
+      const res = applyExclusion(S, chMap);
+      S=res.S; T=res.ch.T; P=res.ch.P; Po=res.ch.Po;
+      ef=res.ch.ef; pf=res.ch.pf; It=res.ch.It;
+      if(Im) Im=res.ch.Im||null; if(Ia) Ia=res.ch.Ia||null;
+    }
+    if(S.length < 2) return _p.call(this, parsed); // too few points after exclusion
+
+    // ── Step 2: Smoothing (on raw data before interpolation) ──
+    if(cfg.smoothType !== 'none'){
+      const sw = Math.max(3, cfg.smoothWin||5);
+      T  = applySmoothing(S, T,  cfg.smoothType, sw);
+      P  = applySmoothing(S, P,  cfg.smoothType, sw);
+      Po = applySmoothing(S, Po, cfg.smoothType, sw);
+      ef = applySmoothing(S, ef, cfg.smoothType, sw);
+      pf = applySmoothing(S, pf, cfg.smoothType, sw);
+      It = applySmoothing(S, It, cfg.smoothType, sw);
+      if(Im) Im = applySmoothing(S, Im, cfg.smoothType, sw);
+      if(Ia) Ia = applySmoothing(S, Ia, cfg.smoothType, sw);
+    }
+
+    // ── Step 3: Interpolation grid + fitting method ──
+    const maxS=Math.max(...S);
+    const sv=parseFloat($('srs').value)||0;
+    const Sp=rng(Math.max(sv,Math.min(...S)),maxS,step);
+    const interp=(ys)=>interpArr(S,ys,Sp,method);
+    const ip={Torque:interp(T),Pin:interp(P),Pout:interp(Po),eff:interp(ef),PF:interp(pf),It:interp(It)};
+    if(Im)ip.Im=interp(Im); if(Ia)ip.Ia=interp(Ia);
+
+    // ── Step 4: Derived fallbacks ──
+    const freq=maxS>1500?60:50;
+    if(ip.Pout.every(v=>v===0))ip.Pout=Sp.map((s,i)=>Math.max(0,ip.Torque[i]*s*2*Math.PI/60));
+    if(ip.Pin.every(v=>v===0))ip.Pin=ip.Pout.map(p=>p/0.85);
+    if(ip.eff.every(v=>v===0))ip.eff=ip.Pin.map((p,i)=>p>0?Math.min(ip.Pout[i]/p*100,100):0);
+    applyDerivedParams(ip, Sp, type, rows, h);
+
+    // ── Step 5: Regions ──
+    const rpv2=parseFloat($('rpv').value)||0;
+    const rpn=parseInt(document.querySelector('input[name="rp"]:checked').value);
+    let rI=Math.floor(Sp.length*0.75);
+    if(rpn===1){rI=Sp.reduce((b,s,i)=>Math.abs(s-rpv2)<Math.abs(Sp[b]-rpv2)?i:b,0);}
+    else if(rpn===2){const r2=[...ip.Pout].reverse();const fi2=r2.findIndex(p=>p>rpv2);if(fi2>=0)rI=Sp.length-1-fi2;}
+    const regs=rpn!==0?buildStdRegs(Sp,ip,mdf,true,rI):buildStdRegs(Sp,ip,mdf,false,0);
+    const fn=`${name.toUpperCase()}_${dir.toString().toUpperCase()}`;
+    return{key:fn,name:fn,speed:Sp,ip,regs,cRegs:[],ekRegs:[],lc:null,lcK:0,rSpdV:0,volt:Volt,freq,dir,mdf,rp:rpn};
+  };
+})();
+
+// ── Init reader config on load ──
+loadCFGReader();
+
+// ════════════════════════════════════════════════
+//  RAW FILE PREVIEW TABLE
+// ════════════════════════════════════════════════
+(function(){
+  const previewBtn   = document.getElementById('upl-preview');
+  const previewPanel = document.getElementById('upl-preview-panel');
+  const prevFileSel  = document.getElementById('prev-file-sel');
+  const prevClose    = document.getElementById('prev-close');
+  const prevRefresh  = document.getElementById('prev-refresh');
+  const prevApply    = document.getElementById('prev-apply-startrow');
+  const prevInfo     = document.getElementById('prev-info');
+  const prevTable    = document.getElementById('prev-table');
+
+  previewBtn.addEventListener('click',()=>{
+    if(!uplFiles.length){toast('Upload files first','err');return;}
+    previewPanel.style.display='flex';
+    prevFileSel.innerHTML=uplFiles.map((f,i)=>`<option value="${i}">${f.name}</option>`).join('');
+    prevFileSel.value='0';
+    renderPreview();
+  });
+  prevClose.addEventListener('click',()=>{previewPanel.style.display='none';});
+  prevRefresh.addEventListener('click',()=>renderPreview());
+  prevFileSel.addEventListener('change',()=>renderPreview());
+  prevApply.addEventListener('click',()=>{
+    const sr=parseInt(document.getElementById('prev-startrow').value)||0;
+    const ftype=document.querySelector('input[name="ftype"]:checked')?.value||'standard';
+    if(ftype==='core') document.getElementById('cfg-startrow-core').value=sr;
+    else if(ftype==='interp') document.getElementById('cfg-startrow-interp').value=sr;
+    else document.getElementById('cfg-startrow-magtrol').value=sr;
+    CFG_READER['startRow'+ftype.charAt(0).toUpperCase()+ftype.slice(1)]=sr;
+    toast(`Start row ${sr} applied to ${ftype} config`,'ok');
+  });
+
+  async function renderPreview(){
+    const idx=parseInt(prevFileSel.value)||0;
+    const file=uplFiles[idx];
+    if(!file){prevInfo.textContent='No file selected.';return;}
+    const startRow=parseInt(document.getElementById('prev-startrow').value)||0;
+    const maxRows=parseInt(document.getElementById('prev-maxrows').value)||20;
+    const ftype=document.querySelector('input[name="ftype"]:checked')?.value||'standard';
+    prevInfo.textContent='Loading…';
+    prevTable.innerHTML='';
+    try{
+      let rawRows=[], headers=[], totalRows=0, detectedHeaderRow=null;
+      const nm=file.name.toLowerCase();
+      if(nm.endsWith('.csv')){
+        // CSV
+        const text=await file.text();
+        const allLines=text.split('\n').filter(l=>l.trim());
+        totalRows=allLines.length;
+        const startIdx=startRow>0?startRow:0;
+        const parsed=Papa.parse(allLines.slice(startIdx,startIdx+maxRows+1).join('\n'),{header:true,dynamicTyping:true,skipEmptyLines:true});
+        headers=parsed.meta.fields||[];
+        rawRows=parsed.data.slice(0,maxRows);
+        detectedHeaderRow=startIdx;
+      } else {
+        // XLSX/XLS/MDF
+        const buf=await file.arrayBuffer();
+        const wb=XLSX.read(buf,{type:'array'});
+        let sheetName=wb.SheetNames[0];
+        if(ftype==='interp'){
+          const pat=CFG_READER.interpSheet||'interp';
+          sheetName=wb.SheetNames.find(n=>n.toLowerCase().includes(pat.toLowerCase()))||wb.SheetNames[0];
+        }
+        const ws=wb.Sheets[sheetName];
+        const raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+        totalRows=raw.length;
+        let hdrIdx=startRow>0?startRow:0;
+        if(ftype==='core'&&startRow===0){
+          // auto-detect
+          const colOrder=CFG_READER.coreColOrder||['U','I','P1','T','n','P2','EFF','P.F','I1','I2'];
+          for(let i=0;i<Math.min(raw.length,CFG_READER.coreHdrLimit||8);i++){
+            const row=raw[i].map(c=>String(c).trim());
+            if(row.includes('n')&&row.includes('T')){hdrIdx=i;break;}
+          }
+          detectedHeaderRow=hdrIdx;
+        } else {
+          detectedHeaderRow=hdrIdx;
+        }
+        headers=raw[hdrIdx]?raw[hdrIdx].map(c=>String(c)):[];
+        const dataSlice=raw.slice(hdrIdx+1,hdrIdx+1+maxRows);
+        rawRows=dataSlice.map(r=>{const obj={};headers.forEach((h,i)=>{obj[h]=r[i]!==undefined?r[i]:'';});return obj;});
+      }
+
+      // Info bar
+      prevInfo.innerHTML=`<span style="color:var(--ok);">✓</span> <strong>${file.name}</strong> · Sheet/type: <strong>${ftype}</strong> · Header row detected at: <strong>${detectedHeaderRow}</strong> · Total rows: <strong>${totalRows}</strong> · Showing up to ${maxRows} data rows`;
+      
+      // Build table
+      if(!headers.length){prevTable.innerHTML='<tr><td style="padding:8px;color:var(--dim);">No columns detected at this start row.</td></tr>';return;}
+      let html=`<thead><tr style="background:var(--surface3);">`;
+      html+=`<th style="padding:4px 8px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:.58rem;color:var(--dim);white-space:nowrap;">#</th>`;
+      headers.forEach(h=>{
+        const isCritical=['n','T','speed','torque','Speed','Torque'].includes(h);
+        html+=`<th style="padding:4px 8px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:.6rem;color:${isCritical?'var(--accent)':'var(--text-2)'};white-space:nowrap;${isCritical?'font-weight:700;':''}">${h}</th>`;
+      });
+      html+='</tr></thead><tbody>';
+      rawRows.forEach((row,ri)=>{
+        const bg=ri%2===0?'':'background:var(--surface2);';
+        html+=`<tr style="${bg}"><td style="padding:3px 8px;font-family:var(--mono);font-size:.58rem;color:var(--dim);">${ri+1}</td>`;
+        headers.forEach(h=>{
+          const v=row[h];
+          const num=parseFloat(v);
+          const isNum=!isNaN(num)&&v!=='';
+          html+=`<td style="padding:3px 8px;font-family:var(--mono);font-size:.6rem;white-space:nowrap;${isNum?'color:var(--text);':'color:var(--text-3);'}">${v!==undefined&&v!==''?v:'<span style="color:var(--border2);">—</span>'}</td>`;
+        });
+        html+='</tr>';
+      });
+      html+='</tbody>';
+      prevTable.innerHTML=html;
+    } catch(err){
+      prevInfo.textContent=`Error: ${err.message}`;
+      prevTable.innerHTML='';
+    }
+  }
+})();
 
 // ════════════════════════════════════════════════
 //  SIDEBAR TAB SWITCHER — clean data-attribute approach
