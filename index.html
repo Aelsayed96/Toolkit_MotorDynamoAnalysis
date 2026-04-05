@@ -624,6 +624,27 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
             <button class="btn bg2" onclick="sbApplyInterpStep()" style="padding:4px 8px;font-size:.6rem;white-space:nowrap;flex-shrink:0;" title="Apply step to Config">✓ Apply</button>
           </div>
 
+          <!-- Min valid speed — skip sparse / no-load low-speed raw points before fitting -->
+          <div>
+            <label class="fl">Min Valid Speed (RPM)
+              <span style="font-weight:400;color:var(--dim);margin-left:4px;"
+                title="Raw data points below this speed are excluded from fitting. Set 0 or uncheck to disable.">ⓘ</span>
+            </label>
+            <div style="display:flex;gap:5px;align-items:center;">
+              <input type="number" id="sb-min-speed" value="200" min="0" max="2000" step="10"
+                oninput="sbMinSpeedChanged()"
+                title="Raw points below this RPM are dropped before fitting. Prevents sparse no-load rows from distorting the curve."/>
+              <label class="co" style="white-space:nowrap;flex-shrink:0;">
+                <input type="checkbox" id="sb-min-speed-en" checked onchange="sbMinSpeedChanged()">
+                <span class="cb"></span>
+                <span style="font-size:.62rem;">Enable</span>
+              </label>
+            </div>
+            <div id="sb-min-speed-hint" style="font-family:var(--mono);font-size:.55rem;color:var(--dim);margin-top:2px;">
+              Skips raw points &lt; <span id="sb-min-speed-val">200</span> RPM before fitting.
+            </div>
+          </div>
+
           <!-- Fitting method -->
           <div>
             <label class="fl">Fitting Method</label>
@@ -732,6 +753,14 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
           </div>
         </div>
         <p class="help" id="upl-hint">Columns: <strong>Speed, Torque, Pin, Pout, Efficiency, PF, It</strong>. SPIM: <strong>Im, Ia</strong>.</p>
+
+        <!-- Raw scatter overlay toggle -->
+        <label class="co" title="Overlay raw measured data points as scatter dots on the interpolated curve">
+          <input type="checkbox" id="upl-show-raw" onchange="rawScatterToggle()">
+          <span class="cb"></span>
+          <span style="font-size:.67rem;">Show Raw Data Points on Chart</span>
+        </label>
+
         <div class="dz" id="dz"><div class="dzi">⬆</div><p id="dz-label"><strong>Drop CSV / Excel / MDF here</strong><br>or click to browse</p></div>
         <input type="file" id="fi" multiple accept=".mdf,.csv,.xlsx,.xls" style="display:none;">
         <div class="flist" id="fl2"></div>
@@ -1022,6 +1051,34 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
         <input type="file" id="mtrFiB" accept=".csv,.xlsx,.xls,.mdf" style="display:none;">
         <div id="mtrFlB" style="font-family:var(--mono);font-size:.62rem;color:var(--accent2);display:flex;align-items:center;gap:5px;"><span id="mtrFlB-name"></span><button id="mtrFlB-del" onclick="mtrDelFile('B')" style="display:none;background:none;border:none;cursor:pointer;color:var(--err);font-size:.8rem;padding:0;" title="Remove">✕</button></div>
         <button class="btn bg2 bfu" id="mtrDemo" style="margin-top:4px;">▶ Load Demo</button>
+
+        <div style="height:1px;background:var(--border);margin:4px 0;"></div>
+
+        <!-- ── Avg Motor Curve reference overlay ── -->
+        <div style="font-family:var(--mono);font-size:.59rem;color:var(--accent3);letter-spacing:.07em;font-weight:700;">AVG REFERENCE CURVE</div>
+        <div style="font-family:var(--mono);font-size:.55rem;color:var(--dim);line-height:1.5;margin-bottom:3px;">
+          Load a <strong>Statistics JSON</strong> snapshot (exported from the Statistics tab).
+          The avg motor curve will be overlaid on the comparison chart.
+        </div>
+        <div class="dz" id="mtrAvgDz" style="min-height:44px;">
+          <div class="dzi" style="font-size:1rem;">📊</div>
+          <p style="font-size:.62rem;"><strong>Drop Stats JSON here</strong><br>or click to browse</p>
+        </div>
+        <input type="file" id="mtrAvgFi" accept=".json" style="display:none;">
+        <div id="mtrAvgStatus" style="font-family:var(--mono);font-size:.62rem;color:var(--ok);display:none;"></div>
+        <div style="display:flex;gap:5px;align-items:center;margin-top:3px;">
+          <label class="co" style="flex:1;" title="Show/hide avg curve overlay on chart">
+            <input type="checkbox" id="mtrAvgEn" checked onchange="mtrAvgToggle()">
+            <span class="cb"></span>
+            <span style="font-size:.62rem;">Show Avg Curve</span>
+          </label>
+          <label class="co" style="flex:1;" title="Show ±1σ shaded band around avg curve">
+            <input type="checkbox" id="mtrAvgStd" onchange="mtrAvgToggle()">
+            <span class="cb"></span>
+            <span style="font-size:.62rem;">Show ±1σ band</span>
+          </label>
+          <button class="btn bs" onclick="mtrAvgClear()" style="font-size:.58rem;padding:2px 6px;">✕ Clear</button>
+        </div>
       </div>
 
       <!-- Config pane -->
@@ -2327,7 +2384,10 @@ $('proc').addEventListener('click',async()=>{
   const step=80/uplFiles.length;
   for(let i=0;i<uplFiles.length;i++){
     const f=uplFiles[i];log(`Reading: ${f.name}`);
-    try{setpb(10+step*i);const p=await parseF(f);const r=procData(p);CRs.forEach(cr=>apCR(r,cr));PF[r.key]=r;log(`✓ ${r.key}`,'ok');}
+    try{setpb(10+step*i);const p=await parseF(f);const r=procData(p);
+      // Store the raw (pre-interpolation) speed+channel arrays for scatter overlay
+      r.raw = buildRawCache(p);
+      CRs.forEach(cr=>apCR(r,cr));PF[r.key]=r;log(`✓ ${r.key}`,'ok');}
     catch(err){log(`✗ ${f.name}: ${err.message}`,'err');toast(`Error: ${f.name}`,'err');}
   }
   setpb(100);setst('DONE');log(`=== ${Object.keys(PF).length} file(s) done ===`,'ok');toast(`${Object.keys(PF).length} processed`,'ok');updUI();setTimeout(()=>setpb(0),800);
@@ -2437,6 +2497,45 @@ function bDS(data,tab){
       ds.push({label:`Op.Pt K${ei+2} (${reg.Speed.toFixed(0)} RPM)`,yAxisID:'y0',borderColor:col,borderWidth:1.2,borderDash:[3,4],pointRadius:0,tension:0,data:[{x:reg.Speed,y:0},{x:reg.Speed,y:y0Max}]});
     });
   }
+  // ── Raw scatter overlay ──
+  // Draws measured data points as small dots on top of the interpolated curves.
+  // Enabled by the "Show Raw Data Points" checkbox in the Upload pane.
+  const showRaw = document.getElementById('upl-show-raw')?.checked;
+  if(showRaw && data.raw){
+    const raw = data.raw;
+    // Map channel → y-axis and colour (semi-transparent to not clutter)
+    const rawLayers = [
+      {key:'T',   yAxisID:'y0', color:'rgba(37,99,235,.55)',   label:'Raw Torque'},
+      {key:'Pin', yAxisID:'y1', color:'rgba(220,38,38,.45)',   label:'Raw Pin'},
+      {key:'Pout',yAxisID:'y1', color:'rgba(22,163,74,.45)',   label:'Raw Pout'},
+      {key:'eff', yAxisID:'y2', color:'rgba(217,119,6,.45)',   label:'Raw Eff'},
+      {key:'It',  yAxisID:'y3', color:'rgba(8,145,178,.45)',   label:'Raw It'},
+    ];
+    rawLayers.forEach(rl=>{
+      const arr = raw[rl.key];
+      if(!arr || !arr.length) return;
+      // Only show channels that are currently visible (same tab filter as interpolated)
+      const isVisible =
+        (rl.key==='T'||rl.key==='Pin'||rl.key==='Pout') ? (tab==='all'||tab==='power') :
+        (rl.key==='eff') ? (tab==='all'||tab==='eff') :
+        (rl.key==='It')  ? (tab==='all'||tab==='eff') : true;
+      if(!isVisible) return;
+      ds.push({
+        label: rl.label,
+        type: 'scatter',
+        yAxisID: rl.yAxisID,
+        borderColor: rl.color,
+        backgroundColor: rl.color,
+        pointRadius: 3,
+        pointStyle: 'circle',
+        showLine: false,
+        // Mark so lineWidth loop skips it
+        _keepWidth: true,
+        data: raw.S.map((s, i) => ({x: s, y: arr[i]}))
+      });
+    });
+  }
+
   return{ds,y0Max};
 }
 // ── Zoom / grid state ──
@@ -3531,6 +3630,91 @@ $('ltg').addEventListener('click',()=>{const o=$('lp').classList.toggle('open');
 // ── state ──
 let mtrFileA=null, mtrFileB=null;
 let mtrDataA=null, mtrDataB=null;
+
+// ── Avg Motor Curve reference — loaded from Statistics JSON snapshot ──
+// Stored as window.MTR_AVG_SNAP; null when no file loaded.
+window.MTR_AVG_SNAP = null;
+
+(function(){
+  const dz   = document.getElementById('mtrAvgDz');
+  const fi   = document.getElementById('mtrAvgFi');
+  const stat = document.getElementById('mtrAvgStatus');
+
+  if(!dz||!fi) return;
+
+  // Click to open file picker
+  dz.addEventListener('click', ()=>fi.click());
+
+  // Drag-and-drop
+  dz.addEventListener('dragover',  e=>{e.preventDefault(); dz.classList.add('over');});
+  dz.addEventListener('dragleave', ()=>dz.classList.remove('over'));
+  dz.addEventListener('drop', e=>{
+    e.preventDefault(); dz.classList.remove('over');
+    const f = e.dataTransfer.files[0];
+    if(f) loadMtrAvgJSON(f);
+  });
+
+  // File input change
+  fi.addEventListener('change', ()=>{
+    if(fi.files[0]) loadMtrAvgJSON(fi.files[0]);
+    fi.value='';
+  });
+})();
+
+/**
+ * loadMtrAvgJSON(file)
+ * Reads a Statistics JSON snapshot file, validates it has an avgCurve,
+ * stores it in MTR_AVG_SNAP and re-renders the comparison chart if active.
+ */
+function loadMtrAvgJSON(file){
+  const stat = document.getElementById('mtrAvgStatus');
+  const reader = new FileReader();
+  reader.onload = e=>{
+    try{
+      const snap = JSON.parse(e.target.result);
+      // Validate required structure
+      if(!snap.avgCurve || !snap.avgCurve.speed || !snap.avgCurve.gridded){
+        toast('JSON has no avgCurve data — export Statistics first (includes avg curve)', 'err');
+        return;
+      }
+      window.MTR_AVG_SNAP = snap;
+      const n    = snap.nUnits||'?';
+      const lbl  = snap.label||file.name.replace(/\.json$/i,'');
+      // Update label for display
+      snap.label = lbl;
+      if(stat){
+        stat.style.display='block';
+        stat.textContent = `✓ ${lbl} — n=${n} motors, ${snap.avgCurve.speed.length} speed pts`;
+      }
+      toast(`Avg curve loaded: ${lbl} (n=${n})`, 'ok');
+      log(`Avg Motor Curve loaded: ${lbl}  n=${n}  speed pts=${snap.avgCurve.speed.length}`, 'ok');
+      // Refresh chart if comparison is already rendered
+      mtrAvgToggle();
+    } catch(err){
+      toast('Failed to parse JSON: '+err.message, 'err');
+    }
+  };
+  reader.readAsText(file);
+}
+
+/** Re-render the comparison chart with or without the avg overlay */
+function mtrAvgToggle(){
+  if(mtrDataA && mtrDataB){
+    const kA=applyKs(mtrDataA), kB=applyKs(mtrDataB);
+    buildMtrChart(kA, kB, mtrDataA.name, mtrDataB.name, mtrCurTab||'all');
+  }
+}
+
+/** Clear the avg curve snapshot and update chart */
+function mtrAvgClear(){
+  window.MTR_AVG_SNAP = null;
+  const stat = document.getElementById('mtrAvgStatus');
+  if(stat) stat.style.display='none';
+  const dz = document.getElementById('mtrAvgDz');
+  if(dz) dz.querySelector('p').innerHTML='<strong>Drop Stats JSON here</strong><br>or click to browse';
+  mtrAvgToggle();
+  toast('Avg curve reference cleared', 'info');
+}
 let mtrKs=[], mtrKseq=0, mtrCRs=[];
 let mtrMainChart=null, mtrCurTab='all';
 
@@ -3800,6 +3984,73 @@ function buildMtrChart(kA,kB,lA,lB,tab){
     push('It (A)','y3','#aa0033','#770022',ipA.It,ipB.It);
   }
 
+  // ── Avg Motor Curve reference overlay (from Statistics JSON snapshot) ──
+  // Draws the population mean ± optional std band so A and B can be
+  // visually compared against the fleet average in one view.
+  const avgSnap   = window.MTR_AVG_SNAP;
+  const avgEn     = document.getElementById('mtrAvgEn')?.checked;
+  const avgStdEn  = document.getElementById('mtrAvgStd')?.checked;
+  if(avgSnap && avgEn){
+    const ac = avgSnap.avgCurve;
+    if(ac && ac.speed && ac.gridded){
+      const acSpd = ac.speed;
+      // Channel map: same keys used by the chart
+      const avgLayers = [
+        // Torque visible on torque / all tabs
+        {ik:'Torque', yAxisID:'y0', color:'rgba(100,100,220,.7)', label:`Avg Torque (${avgSnap.label||'Stats'})`, tab:['all','torque']},
+        {ik:'Pin',    yAxisID:'y1', color:'rgba(180,60,0,.55)',   label:`Avg Pin`,    tab:['all','power']},
+        {ik:'Pout',   yAxisID:'y1', color:'rgba(0,120,60,.55)',   label:`Avg Pout`,   tab:['all','power']},
+        {ik:'eff',    yAxisID:'y2', color:'rgba(160,100,0,.6)',   label:`Avg Eff`,    tab:['all','eff']},
+        {ik:'It',     yAxisID:'y3', color:'rgba(0,120,160,.55)',  label:`Avg It`,     tab:['all','current']},
+      ];
+      avgLayers.forEach(al=>{
+        if(!al.tab.includes(tab)) return;
+        const g = ac.gridded[al.ik];
+        if(!g||!g.mean) return;
+        // Mean line — dashed, slightly thicker
+        ds.push({
+          label: al.label,
+          yAxisID: al.yAxisID,
+          borderColor: al.color,
+          borderWidth: 2,
+          borderDash: [6,3],
+          pointRadius: 0,
+          tension: 0.3,
+          fill: false,
+          _keepWidth: true,
+          data: acSpd.map((s,i)=>({x:s, y:g.mean[i]}))
+        });
+        // ±1σ band as two thin lines (Chart.js 4 fill between datasets)
+        if(avgStdEn && g.std){
+          const bandColor = al.color.replace(/[\d.]+\)$/, '0.12)');
+          const hiIdx = ds.length; // index of the upper bound dataset
+          ds.push({
+            label:`_avg_hi_${al.ik}`,
+            yAxisID: al.yAxisID,
+            borderColor: 'transparent',
+            backgroundColor: bandColor,
+            pointRadius: 0,
+            fill: '+1',         // fill down to next dataset
+            tension: 0.3,
+            _keepWidth: true,
+            data: acSpd.map((s,i)=>({x:s, y: g.mean[i]+(g.std[i]||0)}))
+          });
+          ds.push({
+            label:`_avg_lo_${al.ik}`,
+            yAxisID: al.yAxisID,
+            borderColor: 'transparent',
+            backgroundColor: bandColor,
+            pointRadius: 0,
+            fill: false,
+            tension: 0.3,
+            _keepWidth: true,
+            data: acSpd.map((s,i)=>({x:s, y: g.mean[i]-(g.std[i]||0)}))
+          });
+        }
+      });
+    }
+  }
+
   const ax=(l,c)=>({type:'linear',title:{display:true,text:l,color:c,font:{family:MONO2,size:10}},ticks:{color:c,font:{family:MONO2,size:9}},grid:{display:false}});
   mtrMainChart=new Chart(document.getElementById('mtrMainChart').getContext('2d'),{type:'line',data:{datasets:ds},options:{
     responsive:true,maintainAspectRatio:false,animation:{duration:260},
@@ -3807,7 +4058,15 @@ function buildMtrChart(kA,kB,lA,lB,tab){
     plugins:{legend:{labels:{color:CP.dim,font:{family:MONO2,size:10},boxWidth:14,padding:6}},
       tooltip:{backgroundColor:CP.tip,borderColor:CP.border,borderWidth:1,titleColor:CP.dim,bodyColor:CP.dim,
         titleFont:{family:MONO2,size:10},bodyFont:{family:MONO2,size:10},
-        callbacks:{label:c=>` ${c.dataset.label}: ${c.parsed.y?.toFixed(3)}`}}},
+        callbacks:{
+          label:c=>{
+            if(c.dataset.label.startsWith('_avg_')) return null; // hide band helpers
+            return ` ${c.dataset.label}: ${c.parsed.y?.toFixed(3)}`;
+          }
+        }},
+      legend:{labels:{color:CP.dim,font:{family:MONO2,size:10},boxWidth:14,padding:6,
+        filter:(item)=>!item.text.startsWith('_avg_') // hide band helper entries
+      }}},
     scales:{
       x:{type:'linear',title:{display:true,text:'Speed (RPM)',color:CP.dim,font:{family:MONO2,size:10}},ticks:{color:CP.dim,font:{family:MONO2,size:9}},grid:{color:CP.grid},min:Math.min(...allS),max:Math.max(...allS)},
       y0:{type:'linear',position:'left',min:0,max:y0Max,title:{display:tab==='all'||tab==='torque',text:'Torque (N·m)',color:CA,font:{family:MONO2,size:10}},ticks:{color:CA,font:{family:MONO2,size:9}},grid:{color:CP.grid2}},
@@ -6306,18 +6565,81 @@ function zoomScaleOpts(zoom, allS){
 }
 
 // ════════════════════════════════════════════════════════════════════
+//  RAW DATA CACHE — stores pre-interpolation measured points
+//  so the scatter overlay can draw them alongside the smooth curve.
+// ════════════════════════════════════════════════════════════════════
+
+/**
+ * buildRawCache(parsed)
+ * Extracts aligned (Speed, channel…) arrays from the raw parsed rows,
+ * applying only the min-valid-speed filter (no smoothing, no interp).
+ * Returns { S, T, Pin, Pout, eff, PF, It, Im, Ia } arrays or null.
+ */
+function buildRawCache(parsed){
+  if(!parsed||!parsed.rows||!parsed.rows.length) return null;
+  const rows = parsed.rows;
+  const h    = Object.keys(rows[0]||{});
+  const type = parsed.isCoreXLS?'core':parsed.isInterp?'interp':'magtrol';
+  const sc=fcCfg(h,type,'Speed'), tc=fcCfg(h,type,'Torque');
+  if(!sc||!tc) return null;
+  const pc =fcCfg(h,type,'Pin'),  poc=fcCfg(h,type,'Pout');
+  const ec =fcCfg(h,type,'Eff'),  pfc=fcCfg(h,type,'PF');
+  const itc=fcCfg(h,type,'It'),   imc=fcCfg(h,type,'Im'), iac=fcCfg(h,type,'Ia');
+  const gv=(r,c,def)=>{ if(!c)return def; const v=parseFloat(r[c]); return isNaN(v)?def:v; };
+  let S=[],T=[],Pin=[],Pout=[],eff=[],PF=[],It=[],Im=[],Ia=[];
+  rows.forEach(r=>{
+    const s=parseFloat(r[sc]), t=parseFloat(r[tc]);
+    if(isNaN(s)||isNaN(t)) return;
+    S.push(s); T.push(t);
+    Pin.push(gv(r,pc,0)); Pout.push(gv(r,poc,0));
+    eff.push(gv(r,ec,0)); PF.push(gv(r,pfc,1)); It.push(gv(r,itc,0));
+    Im.push(gv(r,imc,0)); Ia.push(gv(r,iac,0));
+  });
+  // Apply the same min-valid-speed filter as procData Step 0
+  const cfg     = window.INTERP_CFG||{};
+  const minSpd  = cfg.minValidSpeedOn!==false ? (cfg.minValidSpeed??200) : 0;
+  const hasAbove= minSpd>0 && S.some(s=>s>=minSpd);
+  if(minSpd>0 && hasAbove){
+    const keep=S.map(s=>s>=minSpd);
+    const flt=arr=>arr.filter((_,i)=>keep[i]);
+    [S,T,Pin,Pout,eff,PF,It,Im,Ia]=[S,T,Pin,Pout,eff,PF,It,Im,Ia].map(flt);
+  }
+  // Sort ascending by speed
+  if(S.length>1){
+    const idx=[...S.keys()].sort((a,b)=>S[a]-S[b]);
+    const srt=arr=>idx.map(i=>arr[i]);
+    [S,T,Pin,Pout,eff,PF,It,Im,Ia]=[S,T,Pin,Pout,eff,PF,It,Im,Ia].map(srt);
+  }
+  return S.length ? {S,T,Pin,Pout,eff,PF,It,Im,Ia} : null;
+}
+
+// Re-render the active chart when the toggle changes
+function rawScatterToggle(){
+  const selEl=document.getElementById('fs');
+  const key=selEl?selEl.value:'';
+  if(key && PF[key]) rc(PF[key], curCt);
+}
+
+// ════════════════════════════════════════════════════════════════════
 //  INTERPOLATION ENGINE v2 — Fitting · Smoothing · Point Exclusion
 // ════════════════════════════════════════════════════════════════════
 
 // ── Fitting state (read by patched procData) ──
 window.INTERP_CFG = {
-  fitMethod : 'linear',   // 'linear' | 'spline' | 'pchip' | 'nearest'
-  smoothType: 'none',     // 'none' | 'moving' | 'gaussian'
-  smoothWin : 5,          // window size (odd, applied to raw data)
-  exclMode  : 'none',     // 'none' | 'iqr' | 'range'
-  iqrFence  : 1.5,
-  exclFrom  : 0,
-  exclTo    : 0
+  fitMethod    : 'linear', // 'linear' | 'spline' | 'pchip' | 'nearest'
+  smoothType   : 'none',  // 'none' | 'moving' | 'gaussian'
+  smoothWin    : 5,       // window size (odd number, applied to raw data before interp)
+  exclMode     : 'none',  // 'none' | 'iqr' | 'range' | 'manual'
+  iqrFence     : 1.5,
+  exclFrom     : 0,
+  exclTo       : 0,
+  // ── Min-valid-speed filter ──
+  // Raw data rows below this speed are excluded from the fit entirely.
+  // Default 200 RPM guards against sparse no-load / stall points that
+  // would otherwise pull the interpolated curve down to zero.
+  // Set to 0 (or disable checkbox) to use all data.
+  minValidSpeed   : 200,
+  minValidSpeedOn : true
 };
 
 // ── UI fit-method hints ──
@@ -6340,6 +6662,21 @@ function sbSmoothTypeChanged(){
   const hint = document.getElementById('sb-smooth-hint');
   if(hint) hint.style.display = t === 'none' ? 'none' : '';
 }
+// ── Update the hint text when min-speed input changes ──
+function sbMinSpeedChanged(){
+  const valEl  = document.getElementById('sb-min-speed-val');
+  const hintEl = document.getElementById('sb-min-speed-hint');
+  const enEl   = document.getElementById('sb-min-speed-en');
+  const msEl   = document.getElementById('sb-min-speed');
+  const v      = Math.max(0, parseFloat(msEl ? msEl.value : 0) || 0);
+  const on     = enEl ? enEl.checked : true;
+  if(valEl)  valEl.textContent = v;
+  if(hintEl) hintEl.style.color = on && v > 0 ? 'var(--accent)' : 'var(--dim)';
+  // Keep INTERP_CFG in sync immediately (no need to wait for procData)
+  window.INTERP_CFG.minValidSpeed   = v;
+  window.INTERP_CFG.minValidSpeedOn = on;
+}
+
 function sbApplyInterpStep(){
   const v = parseInt(document.getElementById('sb-interp-step').value)||1;
   const cfgEl = document.getElementById('cfg-interp-step');
@@ -6349,13 +6686,30 @@ function sbApplyInterpStep(){
   toast(`Interp step set to ${v} RPM`, 'ok');
 }
 
-// Read all live INTERP_CFG values from sidebar UI
+// ── Read all live INTERP_CFG values from sidebar UI into the state object ──
+// Called before every procData run so the pipeline always uses current settings.
 function syncInterpCFG(){
   const g = id => document.getElementById(id);
-  const m = g('sb-fit-method');   if(m) window.INTERP_CFG.fitMethod  = m.value;
-  const s = g('sb-smooth-type');  if(s) window.INTERP_CFG.smoothType = s.value;
-  const w = g('sb-smooth-win');   if(w) window.INTERP_CFG.smoothWin  = Math.max(3, parseInt(w.value)||5);
-  const step = g('sb-interp-step'); if(step){ CFG_READER.interpStep = Math.max(1,parseInt(step.value)||1); }
+
+  // Fitting
+  const m = g('sb-fit-method');
+  if(m) window.INTERP_CFG.fitMethod = m.value;
+
+  // Smoothing
+  const s = g('sb-smooth-type');
+  if(s) window.INTERP_CFG.smoothType = s.value;
+  const w = g('sb-smooth-win');
+  if(w) window.INTERP_CFG.smoothWin = Math.max(3, parseInt(w.value) || 5);
+
+  // Speed step (stored in CFG_READER so it persists with the rest of reader config)
+  const stepEl = g('sb-interp-step');
+  if(stepEl) CFG_READER.interpStep = Math.max(1, parseInt(stepEl.value) || 1);
+
+  // Min-valid-speed filter
+  const msEl  = g('sb-min-speed');
+  const msEn  = g('sb-min-speed-en');
+  if(msEl)  window.INTERP_CFG.minValidSpeed   = Math.max(0, parseFloat(msEl.value) || 0);
+  if(msEn)  window.INTERP_CFG.minValidSpeedOn = msEn.checked;
 }
 
 // ── Smoothing: apply to (xs, ys) arrays before interpolation ──
@@ -6725,8 +7079,11 @@ function applyCFGReaderToUI(){
   const sbSmt  = g('sb-smooth-type'); if(sbSmt)  sbSmt.value  = ic.smoothType||'none';
   const sbWin  = g('sb-smooth-win');  if(sbWin)  sbWin.value  = ic.smoothWin||5;
   const sbEx   = g('sb-excl-mode');   if(sbEx)   sbEx.value   = ic.exclMode||'none';
-  // trigger conditional row visibility + status badge
-  sbFitMethodChanged(); sbSmoothTypeChanged(); sbExclModeChanged(); _renderExclStatus();
+  // Restore min-valid-speed filter
+  const sbMs   = g('sb-min-speed');    if(sbMs)   sbMs.value  = ic.minValidSpeed ?? 200;
+  const sbMsEn = g('sb-min-speed-en'); if(sbMsEn) sbMsEn.checked = ic.minValidSpeedOn !== false;
+  // Trigger all conditional UI updates + status badge
+  sbFitMethodChanged(); sbSmoothTypeChanged(); sbExclModeChanged(); sbMinSpeedChanged(); _renderExclStatus();
 }
 
 // ── Core column order UI ──
@@ -6889,25 +7246,56 @@ window._getCFGInterpStep = function(){ return Math.max(1,CFG_READER.interpStep||
     const step = Math.max(1, CFG_READER.interpStep||1);
     const method = cfg.fitMethod||'linear';
 
-    // ── Extract raw columns ──
+    // ── Extract raw columns — row-aligned: skip any row where Speed or Torque is NaN ──
     const mdf=parseInt(document.querySelector('input[name="mdf"]:checked').value);
     const pc=fcCfg(h,type,'Pin'), poc=fcCfg(h,type,'Pout');
     const ec2=fcCfg(h,type,'Eff'), pfc2=fcCfg(h,type,'PF');
     const itc=fcCfg(h,type,'It'), imc=fcCfg(h,type,'Im'), iac=fcCfg(h,type,'Ia');
     const vc=fcCfg(h,type,'Volts'), dc=fcCfg(h,type,'Dir');
-    const col=(c,def)=>c?rows.map(r=>parseFloat(r[c])):rows.map(()=>def);
-    let S=col(sc,0),T=col(tc,0),P=col(pc,0),Po=col(poc,0),ef=col(ec2,0),pf=col(pfc2,1),It=col(itc,0);
-    let Im=(mdf===0&&imc)?col(imc,0):null, Ia=(mdf===0&&iac)?col(iac,0):null;
+    const gv=(r,c,def)=>{ if(!c) return def; const v=parseFloat(r[c]); return isNaN(v)?def:v; };
+    // Build aligned arrays — only keep rows where Speed AND Torque are valid numbers
+    let S=[],T=[],P=[],Po=[],ef=[],pf=[],It=[],Im=[],Ia=[];
+    rows.forEach(r=>{
+      const s=parseFloat(r[sc]), t=parseFloat(r[tc]);
+      if(isNaN(s)||isNaN(t)) return; // skip malformed rows
+      S.push(s); T.push(t);
+      P.push(gv(r,pc,0)); Po.push(gv(r,poc,0));
+      ef.push(gv(r,ec2,0)); pf.push(gv(r,pfc2,1)); It.push(gv(r,itc,0));
+      if(mdf===0&&imc) Im.push(gv(r,imc,0));
+      if(mdf===0&&iac) Ia.push(gv(r,iac,0));
+    });
+    if(mdf!==0||!imc) Im=null;
+    if(mdf!==0||!iac) Ia=null;
     const Volt=vc?parseFloat(rows[1]?.[vc])||0:0, dir=dc?(rows[1]?.[dc]||'FWD'):'FWD';
-    const ml=Math.min(S.length,T.length,P.length,Po.length,ef.length,pf.length,It.length);
-    [S,T,P,Po,ef,pf,It]=[S,T,P,Po,ef,pf,It].map(a=>a.slice(0,ml).map(v=>isNaN(v)?0:v));
-    if(Im)Im=Im.slice(0,ml).map(v=>isNaN(v)?0:v);
-    if(Ia)Ia=Ia.slice(0,ml).map(v=>isNaN(v)?0:v);
-    // Sort ascending
-    if(S.length>1&&S[S.length-1]<S[0]){
+    // Sort ascending by speed (handles descending MDF files)
+    if(S.length>1){
       const idx=[...S.keys()].sort((a,b)=>S[a]-S[b]);
       [S,T,P,Po,ef,pf,It]=[S,T,P,Po,ef,pf,It].map(a=>idx.map(i=>a[i]));
-      if(Im)Im=idx.map(i=>Im[i]); if(Ia)Ia=idx.map(i=>Ia[i]);
+      if(Im) Im=idx.map(i=>Im[i]); if(Ia) Ia=idx.map(i=>Ia[i]);
+    }
+
+    // ── Step 0: Min-valid-speed filter ──
+    // Drops raw data rows below the configured threshold BEFORE smoothing and fitting.
+    // Purpose: prevent a single stall/no-load point at 0 RPM (where Pout=0, Eff=0)
+    //          from pulling the interpolated curve down to zero across the gap
+    //          between 0 RPM and the first real measurement.
+    // Only active when the checkbox is on AND minValidSpeed > 0 AND the data
+    // actually has points above the threshold (safety guard for low-speed motors).
+    const minSpd    = cfg.minValidSpeedOn !== false ? (cfg.minValidSpeed ?? 200) : 0;
+    const hasAbove  = minSpd > 0 && S.some(s => s >= minSpd);
+    if(minSpd > 0 && hasAbove){
+      // Build a keep-mask: true = keep row, false = discard (below threshold)
+      const keepMask = S.map(s => s >= minSpd);
+      const nDropped = keepMask.filter(k => !k).length;
+      if(nDropped > 0){
+        // Filter every channel array with the same mask to keep alignment
+        const flt = arr => arr.filter((_, i) => keepMask[i]);
+        S  = flt(S);  T  = flt(T);  P  = flt(P);  Po = flt(Po);
+        ef = flt(ef); pf = flt(pf); It = flt(It);
+        if(Im) Im = flt(Im);
+        if(Ia) Ia = flt(Ia);
+        log(`Min-speed filter: dropped ${nDropped} raw point(s) below ${minSpd} RPM`, 'info');
+      }
     }
 
     // ── Step 1: Data-point exclusion (committed set only — user must explicitly apply) ──
