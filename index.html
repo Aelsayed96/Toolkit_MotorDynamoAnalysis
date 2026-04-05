@@ -6889,32 +6889,25 @@ window._getCFGInterpStep = function(){ return Math.max(1,CFG_READER.interpStep||
     const step = Math.max(1, CFG_READER.interpStep||1);
     const method = cfg.fitMethod||'linear';
 
-    // ── Extract raw columns — row-aligned: skip any row where Speed or Torque is NaN ──
+    // ── Extract raw columns ──
     const mdf=parseInt(document.querySelector('input[name="mdf"]:checked').value);
     const pc=fcCfg(h,type,'Pin'), poc=fcCfg(h,type,'Pout');
     const ec2=fcCfg(h,type,'Eff'), pfc2=fcCfg(h,type,'PF');
     const itc=fcCfg(h,type,'It'), imc=fcCfg(h,type,'Im'), iac=fcCfg(h,type,'Ia');
     const vc=fcCfg(h,type,'Volts'), dc=fcCfg(h,type,'Dir');
-    const gv=(r,c,def)=>{ if(!c) return def; const v=parseFloat(r[c]); return isNaN(v)?def:v; };
-    // Build aligned arrays — only keep rows where Speed AND Torque are valid numbers
-    let S=[],T=[],P=[],Po=[],ef=[],pf=[],It=[],Im=[],Ia=[];
-    rows.forEach(r=>{
-      const s=parseFloat(r[sc]), t=parseFloat(r[tc]);
-      if(isNaN(s)||isNaN(t)) return; // skip malformed rows
-      S.push(s); T.push(t);
-      P.push(gv(r,pc,0)); Po.push(gv(r,poc,0));
-      ef.push(gv(r,ec2,0)); pf.push(gv(r,pfc2,1)); It.push(gv(r,itc,0));
-      if(mdf===0&&imc) Im.push(gv(r,imc,0));
-      if(mdf===0&&iac) Ia.push(gv(r,iac,0));
-    });
-    if(mdf!==0||!imc) Im=null;
-    if(mdf!==0||!iac) Ia=null;
+    const col=(c,def)=>c?rows.map(r=>parseFloat(r[c])):rows.map(()=>def);
+    let S=col(sc,0),T=col(tc,0),P=col(pc,0),Po=col(poc,0),ef=col(ec2,0),pf=col(pfc2,1),It=col(itc,0);
+    let Im=(mdf===0&&imc)?col(imc,0):null, Ia=(mdf===0&&iac)?col(iac,0):null;
     const Volt=vc?parseFloat(rows[1]?.[vc])||0:0, dir=dc?(rows[1]?.[dc]||'FWD'):'FWD';
-    // Sort ascending by speed (handles descending MDF files)
-    if(S.length>1){
+    const ml=Math.min(S.length,T.length,P.length,Po.length,ef.length,pf.length,It.length);
+    [S,T,P,Po,ef,pf,It]=[S,T,P,Po,ef,pf,It].map(a=>a.slice(0,ml).map(v=>isNaN(v)?0:v));
+    if(Im)Im=Im.slice(0,ml).map(v=>isNaN(v)?0:v);
+    if(Ia)Ia=Ia.slice(0,ml).map(v=>isNaN(v)?0:v);
+    // Sort ascending
+    if(S.length>1&&S[S.length-1]<S[0]){
       const idx=[...S.keys()].sort((a,b)=>S[a]-S[b]);
       [S,T,P,Po,ef,pf,It]=[S,T,P,Po,ef,pf,It].map(a=>idx.map(i=>a[i]));
-      if(Im) Im=idx.map(i=>Im[i]); if(Ia) Ia=idx.map(i=>Ia[i]);
+      if(Im)Im=idx.map(i=>Im[i]); if(Ia)Ia=idx.map(i=>Ia[i]);
     }
 
     // ── Step 1: Data-point exclusion (committed set only — user must explicitly apply) ──
