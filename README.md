@@ -1,7 +1,7 @@
 # Dynamometer Analysis Toolkit
 
 <p align="center">
-  <img src="https://ar.wikipedia.org/wiki/%D9%85%D9%84%D9%81:Elaraby-group-logo.png" height="80" alt="ELARABY Group"/>
+  <img src="https://ar.wikipedia.org/wiki/%D9%85%D9%84%D9%81: -group-logo.png" height="80" alt="  Group"/>
 </p>
 
 <p align="center">
@@ -12,7 +12,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/platform-Browser-blue?style=flat-square"/>
   <img src="https://img.shields.io/badge/license-Proprietary-red?style=flat-square"/>
-  <img src="https://img.shields.io/badge/built%20by-ELARABY%20Group-orange?style=flat-square"/>
+  <img src="https://img.shields.io/badge/built%20by- %20Group-orange?style=flat-square"/>
   <img src="https://img.shields.io/badge/stack-HTML%20%2F%20JS%20%2F%20Chart.js-yellow?style=flat-square"/>
 </p>
 
@@ -39,8 +39,6 @@ The **Dynamometer Analysis Toolkit** is a single-file, self-contained web applic
 
 ## Screenshots
 
-<img width="1857" height="968" alt="image" src="https://github.com/user-attachments/assets/17853df8-9eae-42fc-a3fa-54e248eccb5c" />
-<img width="1223" height="1995" alt="image" src="https://github.com/user-attachments/assets/1f173068-bafd-4057-a284-f614871a0a22" />
 
 
 ---
@@ -219,12 +217,12 @@ Toolkit_MotorDynamoAnalysis/
 
 ## Contributing
 
-This is an internal ELARABY Group engineering tool. For bug reports or feature requests, please open an issue or contact the Motor Testing team directly.
+This is an internal   Group engineering tool. For bug reports or feature requests, please open an issue or contact the Motor Testing team directly.
 
 ---
 
 ## License
 
-Proprietary — ELARABY Group. All rights reserved.
+Proprietary —   Group. All rights reserved.
 
 Not for redistribution without written permission.
