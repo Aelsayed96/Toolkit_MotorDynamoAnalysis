@@ -537,7 +537,7 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
   </a>
   <div class="ht">
     <h1>Dynamometer Analysis Tool — V 9.1</h1>
-    <span>Motor Performance Analyzer · El Araby Group</span>
+    <span>Motor Performance Analyzer · El    </span>
   </div>
   <div class="hr">
     <div class="sp"><span class="sdot"></span><span id="st">READY</span></div>
@@ -1579,9 +1579,9 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
         <div><label class="fl">Report Header — Title Prefix</label>
           <input type="text" id="pdf-title-prefix" value="Motor Performance Report"></div>
         <div><label class="fl">Report Header — Organization</label>
-          <input type="text" id="pdf-org" value="El Araby Group · Dynamometer Lab"></div>
+          <input type="text" id="pdf-org" value="El     · Dynamometer Lab"></div>
         <div><label class="fl">Report Footer Text</label>
-          <input type="text" id="pdf-footer" value="Dynamometer Analysis Tool · El Araby Group"></div>
+          <input type="text" id="pdf-footer" value="Dynamometer Analysis Tool · El    "></div>
         <div><label class="fl">Accent Color (hex)</label>
           <div style="display:flex;gap:6px;align-items:center;margin-top:2px;">
             <input type="text" id="pdf-accent" value="1e3a8a" style="font-family:var(--mono);flex:1;" placeholder="1e3a8a">
@@ -1640,9 +1640,9 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:10px;">
-        <div><label class="fl">Author / Organization</label><input type="text" id="set-author" value="El Araby Group · Dynamometer Lab"></div>
+        <div><label class="fl">Author / Organization</label><input type="text" id="set-author" value="El     · Dynamometer Lab"></div>
         <div><label class="fl">Report Title Prefix</label><input type="text" id="set-title-prefix" value="Motor Performance Analysis Report"></div>
-        <div><label class="fl">Footer Text (fancyhdr)</label><input type="text" id="set-footer" value="Dynamometer Analysis Tool · El Araby Group"></div>
+        <div><label class="fl">Footer Text (fancyhdr)</label><input type="text" id="set-footer" value="Dynamometer Analysis Tool · El    "></div>
         <div><label class="fl">Date Format</label>
           <div class="rg">
             <label class="ro"><input type="radio" name="setdate" value="auto" checked><span>Auto (today)</span></label>
@@ -1879,8 +1879,8 @@ const PDF_DEFAULTS={
   paper:'A4', orient:'portrait',
   dpi:2, chartW:900, chartH:380,
   titlePrefix:'Motor Performance Report',
-  org:'El Araby Group · Dynamometer Lab',
-  footer:'Dynamometer Analysis Tool · El Araby Group',
+  org:'El     · Dynamometer Lab',
+  footer:'Dynamometer Analysis Tool · El    ',
   accent:'1e3a8a',
   incChart:true, incRegions:true, incMeta:true
 };
@@ -4474,7 +4474,7 @@ document.getElementById('mtrExpLatex').addEventListener('click',()=>{
   tex+=`\\newcommand{\\Tied}{\\textcolor{neutral}{Tied}}\n\n`;
   tex+=`\\begin{document}\n\n`;
   tex+=`\\title{\\textbf{Motor Performance Comparison}\\\\[6pt]{\\large ${lAe} vs.\\ ${lBe}}}\n`;
-  tex+=`\\author{El Araby Group $\\cdot$ Dynamometer Lab}\n`;
+  tex+=`\\author{El     $\\cdot$ Dynamometer Lab}\n`;
   tex+=`\\date{\\today}\n\\maketitle\n\n`;
 
   // ── TABLE (longtable, respects mtrDeltaMode + mtrShowBest) ──
@@ -4756,7 +4756,7 @@ document.getElementById('mtrExpLatexTex').addEventListener('click',()=>{
   L.push('');
   L.push('\\title{\\textbf{Motor Performance Comparison}\\\\');
   L.push('       {\\large '+lAe+' vs.\\ '+lBe+'}}');
-  L.push('\\author{El Araby Group $\\cdot$ Dynamometer Lab}');
+  L.push('\\author{El     $\\cdot$ Dynamometer Lab}');
   L.push('\\date{\\today}');
   L.push('\\maketitle');
   L.push('\\tableofcontents');
@@ -4982,7 +4982,7 @@ tbody td{padding:4px 8px;border-bottom:1px solid #e2e8f0;font-family:'JetBrains 
 <div style="font-size:7.5pt;color:#94a3b8">${ts}</div>
 </div></div>
 ${htmlBody}
-<div class="foot">Dynamometer Analysis Tool · El Araby Group · ${ts}</div>
+<div class="foot">Dynamometer Analysis Tool · El     · ${ts}</div>
 </body></html>`);
   w.document.close();
 }
@@ -4999,9 +4999,9 @@ document.getElementById('rpvrow').style.display='none';
 const SET_DEFAULTS={
   docclass:'report', paper:'a4paper', orient:'portrait',
   marginTop:'2.5cm', marginBot:'2.5cm', marginLeft:'2.5cm', marginRight:'2cm',
-  author:'El Araby Group · Dynamometer Lab',
+  author:'El     · Dynamometer Lab',
   titlePrefix:'Motor Performance Analysis Report',
-  footer:'Dynamometer Analysis Tool · El Araby Group',
+  footer:'Dynamometer Analysis Tool · El    ',
   dateMode:'auto', dateCustom:'',
   mainfont:'lmodern', sansfont:'helvet', monofont:'inconsolata',
   fontsize:'11pt', linespacing:'1.15', paragraph:'skip',
