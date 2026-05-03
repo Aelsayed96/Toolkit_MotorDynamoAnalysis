@@ -531,8 +531,8 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
 
 <div class="shell">
 <header>
-  <a class="logo-link" href="https://upload.wikimedia.org/wikipedia/commons/3/37/Elaraby-group-logo.png" target="_blank">
-    <img class="logo-img" src="https://upload.wikimedia.org/wikipedia/commons/3/37/Elaraby-group-logo.png" alt="El Araby"
+  <a class="logo-link" href="" target="_blank">
+    <img class="logo-img" src="" alt=""
       onerror="this.style.display='none';this.parentElement.innerHTML='<div style=\'background:var(--accent);color:#fff;padding:4px 9px;border-radius:5px;font-family:var(--mono);font-size:.7rem;font-weight:bold\'>EA</div>';">
   </a>
   <div class="ht">
@@ -1038,7 +1038,7 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
         <div id="mtrFlA" style="font-family:var(--mono);font-size:.62rem;color:var(--ok);display:flex;align-items:center;gap:5px;"><span id="mtrFlA-name"></span><button id="mtrFlA-del" onclick="mtrDelFile('A')" style="display:none;background:none;border:none;cursor:pointer;color:var(--err);font-size:.8rem;padding:0;" title="Remove">✕</button></div>
         <div style="height:1px;background:var(--border);margin:4px 0;"></div>
         <div style="font-family:var(--mono);font-size:.59rem;color:var(--accent2);letter-spacing:.07em;font-weight:700;">MOTOR B</div>
-        <div><label class="fl">Name</label><input type="text" id="mtrLblB" value="Motor B" placeholder="e.g. ELARABY 18&quot;"/></div>
+        <div><label class="fl">Name</label><input type="text" id="mtrLblB" value="Motor B" placeholder="e.g.  18&quot;"/></div>
         <div style="display:flex;flex-direction:column;gap:3px;">
           <label class="fl">File Type</label>
           <div class="rg">
@@ -5159,7 +5159,7 @@ function buildPreamble(title=''){
   lines.push(`% ── Headers/Footers ──`);
   lines.push(`\\pagestyle{fancy}\\fancyhf{}`);
   lines.push(`\\setlength{\\headheight}{24pt}`);
-  lines.push(`\\lhead{\\raisebox{-2pt}{\\includegraphics[height=18pt]{Elaraby-group-logo.png}}}`);
+  lines.push(`\\lhead{\\raisebox{-2pt}{\\includegraphics[height=18pt]{-group-logo.png}}}`);
   lines.push(`\\rhead{\\footnotesize\\textcolor{accent}{${SET.titlePrefix||'Report'}}}`);
   lines.push(`\\chead{\\footnotesize ${SET.author||''}}`);
   lines.push(`\\rfoot{\\footnotesize Page \\thepage}`);
